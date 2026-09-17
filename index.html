@@ -103,12 +103,19 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
  font-size:18px;font-weight:700;text-align:center;cursor:pointer;
 }
 .playerSelect:focus{outline:3px solid rgba(82,104,232,.22);border-color:#5268e8}
+
+.setupSelect{
+ width:min(320px,92%);min-height:54px;padding:10px 44px 10px 16px;margin:8px 0 18px;
+ border-radius:12px;border:2px solid #bbc7dd;background:#fff;
+ font-size:17px;font-weight:700;text-align:center;cursor:pointer;
+}
+.setupSelect:focus{outline:3px solid rgba(82,104,232,.22);border-color:#5268e8}
 </style>
 </head>
 <body>
 <div id="startScreen" class="screen">
  <div class="startCard">
-  <div class="badge">Memory Game • Version 47</div>
+  <div class="badge">Memory Game • Version 49</div>
   <div class="big">🐾 English Memory Match</div>
   <p>Choose the number of players and a category, then start the game.</p>
   <label><b>Number of Players</b><br>
@@ -126,18 +133,18 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
    </select>
   </label>
   <h2 style="margin:12px 0 8px">Choose a Category</h2>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0 18px">
-   <button class="primary setupGenre" data-genre="food">🍽️ Food</button>
-   <button class="primary setupGenre selectedGenre" data-genre="animals">🐾 Animals</button>
-   <button class="primary setupGenre" data-genre="sports">🏅 Sports</button>
-   <button class="primary setupGenre" data-genre="fruit">🍎 Fruit</button>
-   <button class="primary setupGenre" data-genre="transportation">🚗 Transportation</button>
-   <button class="primary setupGenre" data-genre="clothes">👕 Clothes</button>
-   <button class="primary setupGenre" data-genre="home">🏠 Home & Objects</button>
-   <button class="primary setupGenre" data-genre="plants">🥦 Vegetables & Plants</button>
-   <button class="primary setupGenre" data-genre="nature">🌦️ Weather & Nature</button>
-   <button class="primary setupGenre" data-genre="music">🎵 Music</button>
-  </div>
+  <select id="categorySelect" class="setupSelect" aria-label="Choose a category">
+   <option value="animals" selected>🐾 Animals</option>
+   <option value="food">🍽️ Food</option>
+   <option value="sports">🏅 Sports</option>
+   <option value="fruit">🍎 Fruit</option>
+   <option value="transportation">🚗 Transportation</option>
+   <option value="clothes">👕 Clothes & Accessories</option>
+   <option value="home">🏠 Home & Objects</option>
+   <option value="plants">🥦 Vegetables & Plants</option>
+   <option value="nature">🌦️ Weather & Nature</option>
+   <option value="music">🎵 Music</option>
+  </select>
   <h2 style="margin:16px 0 8px">Difficulty Level</h2>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 20px">
    <button class="primary difficultyBtn selectedDifficulty" data-difficulty="easy">Easy</button>
@@ -157,7 +164,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 </div>
 
 <div id="app">
- <div class="top"><h2 style="margin:5px">🐾 English Memory Match <span class="badge">Version 47</span></h2>
+ <div class="top"><h2 style="margin:5px">🐾 English Memory Match <span class="badge">Version 49</span></h2>
   <div class="stats"><div class="pill">Pairs <span id="pairs">0</span>/<span id="pairTotal">6</span></div></div>
  </div>
 <span id="currentPlayer" style="display:none">1</span>
@@ -923,10 +930,9 @@ $("voiceToggle").onclick=()=>{
  if(paused)voiceOn();
  else{voiceOff();setMessage("Voice is off. Press the Voice button when you are ready.");}
 }
-document.querySelectorAll(".setupGenre").forEach(btn=>btn.onclick=()=>{
- selectedGenre=btn.dataset.genre;
- document.querySelectorAll(".setupGenre").forEach(b=>b.classList.toggle("selectedGenre",b===btn));
-});
+$("categorySelect").onchange=()=>{
+ selectedGenre=$("categorySelect").value;
+};
 document.querySelectorAll(".difficultyBtn").forEach(btn=>btn.onclick=()=>{
  selectedDifficulty=btn.dataset.difficulty;
  document.querySelectorAll(".difficultyBtn").forEach(b=>b.classList.toggle("selectedDifficulty",b===btn));
@@ -947,8 +953,8 @@ $("startGame").onclick=()=>{
 $("scoreRestart").onclick=()=>{$("scoreScreen").style.display="none";$("app").style.display="none";$("startScreen").style.display="flex"};
 $("restart").onclick=()=>{gameStarted=false;paused=true;try{recognition.stop()}catch(e){};$("app").style.display="none";$("startScreen").style.display="flex"}
 const tut=[
- {title:"Choose a card",demo:"5️⃣",text:"Say the number of the card you want to reveal.",main:"Card five",alts:["Five","Number five","Open card five","Choose card five","Show number five"]},
  {title:"Practise the object names",demo:"🎯",text:"Push any object name below to hear its American English pronunciation.",main:"",alts:[]},
+ {title:"Choose a card",demo:"5️⃣",text:"Say the number of the card you want to reveal.",main:"Card five",alts:["Five","Number five","Open card five","Choose card five","Show number five"]},
  {title:"Practise all card numbers",demo:"🔢",text:"Push any number below to hear its American English pronunciation.",main:"One",alts:["One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve"]}
 ];let ti=0;
 function refreshCategoryTutorial(){
