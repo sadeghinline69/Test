@@ -739,7 +739,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
 <body>
-<div class="onlineReleaseLabel" aria-label="Online release 6">Online 6</div>
+<div class="onlineReleaseLabel" aria-label="Online release 7">Online 7</div>
 <div id="startScreen" class="screen">
  <div class="startCard">
   <div class="big">🐾 English Memory Match</div>
@@ -1616,13 +1616,14 @@ function renderOnlineLiveScoreboard(){
  if(!onlineMode)return;
  const box=$("liveStats");
  if(!box)return;
- box.innerHTML=onlineRoster.map((p,i)=>`<span class="pill">${i+1===player?"▶️ ":""}${p.name}: <b>${scores[i+1]||0}</b> matches</span>`).join("");
+ box.innerHTML=onlineRoster.map((p,i)=>`<span class="pill">${i+1===player?"▶️ ":""}${p.name}: <b>${scores[i+1]||0}</b> matches · ⏱️ <b>${formatOnlineTime(onlineElapsedFor(i+1))}</b></span>`).join("");
 }
 function displayOnlineFinalScoreboard(){
  voiceOff();gameStarted=false;
- const ranked=onlineRoster.map((p,i)=>({name:p.name,score:scores[i+1]||0})).sort((a,b)=>b.score-a.score);
- const rows=ranked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}${i===0?" 🏆":""}</td><td>${r.score}</td></tr>`).join("");
- $("scoreContent").innerHTML=`<h2>🏆 Online Scoreboard</h2><table class="scoreTable"><thead><tr><th>Rank</th><th>Player</th><th>Correct Matches</th></tr></thead><tbody>${rows}</tbody></table>`;
+ if(onlineHost&&onlineTurnStartedAt)commitOnlineTurnTime(player);
+ const ranked=onlineRoster.map((p,i)=>({name:p.name,score:scores[i+1]||0,time:onlineElapsedFor(i+1)})).sort((a,b)=>b.score-a.score || a.time-b.time);
+ const rows=ranked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}${i===0?" 🏆":""}</td><td>${r.score}</td><td>${formatOnlineTime(r.time)}</td></tr>`).join("");
+ $("scoreContent").innerHTML=`<h2>🏆 Online Scoreboard</h2><p>Highest correct matches wins. If tied, the player with less total playing time wins.</p><table class="scoreTable"><thead><tr><th>Rank</th><th>Player</th><th>Correct Matches</th><th>Total Time</th></tr></thead><tbody>${rows}</tbody></table>`;
  $("scoreScreen").style.display="flex";
 }
 function finishOnlineSharedGame(){
@@ -1966,11 +1967,23 @@ showTut();
 // The room host is authoritative. If the host closes the page, the room ends.
 let onlineMode=false, onlineHost=false, onlinePeer=null, hostConn=null, peerConns=[];
 let onlineRoomCode="", onlineMe="", onlineRoster=[];
+let onlineTimes={}, onlineTurnStartedAt=0;
 function myOnlineIndex(){
  const peerId=onlinePeer&&onlinePeer.id;
  if(peerId){const i=onlineRoster.findIndex(x=>x.peer===peerId);if(i>=0)return i+1;}
  return 0;
 }
+function onlineElapsedFor(index){
+ const base=Number(onlineTimes[index]||0);
+ return base + ((gameStarted&&onlineMode&&index===player&&onlineTurnStartedAt)?Math.max(0,(performance.now()-onlineTurnStartedAt)/1000):0);
+}
+function commitOnlineTurnTime(index){
+ if(!onlineMode||!onlineHost||!onlineTurnStartedAt||index!==player)return;
+ onlineTimes[index]=Number(onlineTimes[index]||0)+Math.max(0,(performance.now()-onlineTurnStartedAt)/1000);
+ onlineTurnStartedAt=0;
+}
+function startOnlineTurnClock(){if(onlineMode&&onlineHost)onlineTurnStartedAt=performance.now();}
+function formatOnlineTime(sec){sec=Math.max(0,Number(sec)||0);return sec.toFixed(1)+" s";}
 function ostatus(t){const e=document.getElementById("onlineStatus");if(e)e.textContent=t}
 function makeRoomCode(){return Math.random().toString(36).slice(2,8).toUpperCase()}
 function safeName(){return ($("onlineName").value||"Player").trim().slice(0,20)||"Player"}
@@ -2005,7 +2018,7 @@ function startPrivateOnlineChallenge(animal,prompt){
  });
 }
 function serializeOnlineState(){return {
- type:"state", deck:deck.map(c=>({...c})), player, scores:{...scores},
+ type:"state", deck:deck.map(c=>({...c})), player, scores:{...scores}, onlineTimes:{...onlineTimes},
  mismatches:playerMismatches,matches:playerSuccessfulMatches, first:first?first.id:null,second:second?second.id:null,
  locked,awaitingName,matchedAnimal:matchedAnimal?{...matchedAnimal}:null,pairs:+$("pairs").textContent||0,
  message:$("message").textContent, roster:onlineRoster, size:selectedSize,start:startingNumber,genre:selectedGenre,difficulty:selectedDifficulty
@@ -2024,7 +2037,7 @@ function concealTransientOnlineCardsForViewer(viewerIndex){
 function applyOnlineState(s){
  if(!s||s.type!=="state")return;
  selectedSize=s.size;startingNumber=s.start;selectedGenre=s.genre;selectedDifficulty=s.difficulty;
- deck=s.deck||[];player=s.player||1;scores=s.scores||{};playerMismatches=s.mismatches||0;playerSuccessfulMatches=s.matches||0;
+ deck=s.deck||[];player=s.player||1;scores=s.scores||{};onlineTimes=s.onlineTimes||onlineTimes||{};playerMismatches=s.mismatches||0;playerSuccessfulMatches=s.matches||0;
  first=s.first!=null?deck.find(c=>c.id===s.first)||null:null;second=s.second!=null?deck.find(c=>c.id===s.second)||null:null;
  locked=!!s.locked;awaitingName=!!s.awaitingName;matchedAnimal=s.matchedAnimal;onlineRoster=s.roster||onlineRoster;
  $("pairs").textContent=s.pairs||0;$("pairTotal").textContent=boardSizes[selectedSize].pairs;setMessage(s.message||"");
@@ -2082,7 +2095,8 @@ function resolveOnlineNameResult(actorIdx,ok){
   else onlineSendToPlayer(actorIdx,{type:"privateFeedback",text:"Wrong",message:"Wrong. Turn passes to the next player."});
   first=second=null;matchedAnimal=null;locked=false;
   $("namePrompt").style.display="none";
-  player=player%numPlayers+1;
+  commitOnlineTurnTime(player);
+  player=player%numPlayers+1;startOnlineTurnClock();
   renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
   setMessage(`${onlineRoster[player-1]?.name||("Player "+player)}'s turn.`);
  }
@@ -2123,7 +2137,7 @@ function startHostedOnlineGame(){
  $("startScreen").style.display="none";$("app").style.display="block";$("onlineRoomBar").style.display="block";$("onlineRoomBar").textContent=`🌐 Room ${onlineRoomCode}`;
  $("transcript").style.display=gameMode==="exam"?"none":"";gameStarted=true;manualVoiceOff=false;paused=true;
  // Shared board: all players use one board; turns rotate after each completed pair attempt.
- scores={};for(let i=1;i<=numPlayers;i++)scores[i]=0;playerResults=[];player=1;masterLayout=createMasterLayout();deck=freshDeckFromMaster();
+ scores={};onlineTimes={};for(let i=1;i<=numPlayers;i++){scores[i]=0;onlineTimes[i]=0;}playerResults=[];player=1;onlineTurnStartedAt=performance.now();masterLayout=createMasterLayout();deck=freshDeckFromMaster();
  first=second=matchedAnimal=null;awaitingName=false;answerArmed=false;locked=false;playerMismatches=0;playerSuccessfulMatches=0;
  $("pairs").textContent=0;$("pairTotal").textContent=boardSizes[selectedSize].pairs;renderBoard();updateRosterUI();renderOnlineLiveScoreboard();setMessage(`${onlineRoster[0].name}'s turn.`);
  const state=serializeOnlineState();onlineSendAll({type:"start",roster:onlineRoster,size:selectedSize,start:startingNumber,genre:selectedGenre,difficulty:selectedDifficulty,mode:gameMode,state});broadcastOnlineState();
@@ -2184,7 +2198,8 @@ function hostProcessOnlineCard(n,actorIdx){
    setTimeout(()=>{
     if(!onlineMode||!onlineHost||!first||!second)return;
     first=second=null;matchedAnimal=null;locked=false;
-    player=player%numPlayers+1;
+    commitOnlineTurnTime(player);
+    player=player%numPlayers+1;startOnlineTurnClock();
     renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
     setMessage(`${onlineRoster[player-1]?.name||("Player "+player)}'s turn.`);
     broadcastOnlineState();
@@ -2219,6 +2234,8 @@ applyNameResult=function(ok){
  if(onlineMode&&onlineHost){resolveOnlineNameResult(myOnlineIndex(),!!ok);return}
  originalApplyNameResult(ok);
 };
+
+setInterval(()=>{if(onlineMode&&gameStarted)renderOnlineLiveScoreboard();},250);
 </script>
 
 </body>
