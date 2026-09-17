@@ -115,7 +115,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <body>
 <div id="startScreen" class="screen">
  <div class="startCard">
-  <div class="badge">Memory Game • Version 51</div>
+  <div class="badge">Memory Game • Version 53</div>
   <div class="big">🐾 English Memory Match</div>
   <p>Choose the number of players and a category, then start the game.</p>
   <label><b>Number of Players</b><br>
@@ -164,7 +164,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 </div>
 
 <div id="app">
- <div class="top"><h2 style="margin:5px">🐾 English Memory Match <span class="badge">Version 51</span></h2>
+ <div class="top"><h2 style="margin:5px">🐾 English Memory Match <span class="badge">Version 53</span></h2>
   <div class="stats"><div class="pill">Pairs <span id="pairs">0</span>/<span id="pairTotal">6</span></div></div>
  </div>
 <span id="currentPlayer" style="display:none">1</span>
@@ -963,6 +963,7 @@ function refreshCategoryTutorial(){
  d.title=`Practise the ${label} names`;
  d.text=`Push any ${label} name below to hear its American English pronunciation and see its picture.`;
  const items=(Array.isArray(animals)&&animals.length)?animals:(categories[selectedGenre]||categories.animals);
+ d.items=items;
  d.alts=items.map(a=>a.name);
  d.main=d.alts[0]||"";
  d.demo=(items[0]&&items[0].icon)||"🎯";
@@ -977,7 +978,7 @@ function announceTutorialPage(){
  // Automatically show the same visual as the first spoken item.
  $("tDemo").classList.remove("tutorialClickedPreview");
  if(ti===0){
-  const item=animals.find(a=>a.name.toLowerCase()===d.main.toLowerCase());
+  const item=(d.items||[]).find(a=>a.name.toLowerCase()===d.main.toLowerCase());
   if(item){
    $("tDemo").classList.add("tutorialClickedPreview");
    $("tDemo").textContent=item.icon;
@@ -1007,8 +1008,8 @@ function showTut(){
   const phrase=d.alts[+b.dataset.i];
   speak(phrase);
 
-  if(ti===1){
-   const item=animals.find(a=>a.name.toLowerCase()===phrase.toLowerCase());
+  if(ti===0){
+   const item=(d.items||[]).find(a=>a.name.toLowerCase()===phrase.toLowerCase());
    if(item){
     $("tDemo").classList.add("tutorialClickedPreview");
     $("tDemo").textContent=item.icon;
@@ -1040,7 +1041,15 @@ $("closeTut").onclick=()=>{
   setTimeout(()=>voiceOn(),300);
  }
 }
-$("hearShow").onclick=()=>{speak(tut[ti].main);animateDemo()}
+$("hearShow").onclick=()=>{
+ const d=tut[ti];
+ speak(d.main);
+ if(ti===0){
+  const item=(d.items||[]).find(a=>a.name.toLowerCase()===d.main.toLowerCase());
+  if(item){$("tDemo").classList.add("tutorialClickedPreview");$("tDemo").textContent=item.icon;}
+ }
+ animateDemo();
+}
 $("prevT").onclick=()=>{ti=(ti+tut.length-1)%tut.length;showTut();announceTutorialPage()}
 $("nextT").onclick=()=>{ti=(ti+1)%tut.length;showTut();announceTutorialPage()}
 showTut();
