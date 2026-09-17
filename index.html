@@ -739,7 +739,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
 <body>
-<div class="onlineReleaseLabel" aria-label="Online release 3">Online 4</div>
+<div class="onlineReleaseLabel" aria-label="Online release 5">Online 5</div>
 <div id="startScreen" class="screen">
  <div class="startCard">
   <div class="big">🐾 English Memory Match</div>
@@ -2203,7 +2203,7 @@ applyNameResult=function(ok){
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js", {updateViaCache:"none"}).catch(err => {
+    navigator.serviceWorker.register("./service-worker.js", {updateViaCache:"none"}).then(reg => reg.update()).catch(err => {
       console.log("Service worker registration failed:", err);
     });
   });
