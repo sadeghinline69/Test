@@ -110,12 +110,38 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
  font-size:17px;font-weight:700;text-align:center;cursor:pointer;
 }
 .setupSelect:focus{outline:3px solid rgba(82,104,232,.22);border-color:#5268e8}
+
+.creatorCredit{
+ margin-top:20px;padding-top:14px;border-top:1px solid #d9e0ec;
+ font-size:14px;line-height:1.6;color:#667085;text-align:center;
+}
+.creatorCredit strong{color:#344054}
+.creatorCredit span{font-size:12px}
+
+#startGame{
+ background:#d92d20;
+ border-color:#d92d20;
+ color:white;
+}
+#startGame:hover{background:#b42318;border-color:#b42318}
+
+#startScreen h2{
+ font-size:17px;
+ line-height:1.15;
+ margin-top:9px !important;
+ margin-bottom:5px !important;
+}
+#startScreen .creatorCredit{
+ margin-top:12px;
+ padding-top:9px;
+ line-height:1.4;
+}
 </style>
 </head>
 <body>
 <div id="startScreen" class="screen">
  <div class="startCard">
-  <div class="badge">Memory Game • Version 55</div>
+  <div class="badge">Memory Game • Version 58</div>
   <div class="big">🐾 English Memory Match</div>
   <p>Choose the number of players and a category, then start the game.</p>
   <label><b>Number of Players</b><br>
@@ -160,11 +186,15 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
    <button class="primary sizeBtn" data-size="veryLarge">Very Large<br><small>6 × 4</small></button>
   </div>
   <button class="primary" id="startGame">Start Game</button>
+  <div class="creatorCredit">
+   Designed &amp; Created by <strong>Sadegh Mosleh</strong><br>
+   <span>© 2026 Sadegh Mosleh. All rights reserved.</span>
+  </div>
  </div>
 </div>
 
 <div id="app">
- <div class="top"><h2 style="margin:5px">🐾 English Memory Match <span class="badge">Version 55</span></h2>
+ <div class="top"><h2 style="margin:5px">🐾 English Memory Match <span class="badge">Version 58</span></h2>
   <div class="stats"><div class="pill">Pairs <span id="pairs">0</span>/<span id="pairTotal">6</span></div></div>
  </div>
 <span id="currentPlayer" style="display:none">1</span>
