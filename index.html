@@ -739,7 +739,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
 <body>
-<div class="onlineReleaseLabel" aria-label="Online release 1">Online 1</div>
+<div class="onlineReleaseLabel" aria-label="Online release 3">Online 3</div>
 <div id="startScreen" class="screen">
  <div class="startCard">
   <div class="big">🐾 English Memory Match</div>
@@ -2010,7 +2010,11 @@ function applyOnlineState(s){
  if(awaitingName && myIndex===player && matchedAnimal){
   $("promptAnimal").textContent=matchedAnimal.icon;$("namePrompt").style.display="flex";
   $("nameStatus").textContent="Say the object name.";answerArmed=true;paused=false;startVocabularyListening();
- } else if(!awaitingName){$("namePrompt").style.display="none";answerArmed=false;}
+ } else {
+  // A naming challenge is private to the active player.
+  $("namePrompt").style.display="none";answerArmed=false;
+  if(myIndex!==player){try{if(running)recognition.stop()}catch(e){}}
+ }
 }
 function attachGuest(c){
  peerConns.push(c);
@@ -2075,14 +2079,62 @@ $("createRoomBtn").onclick=createOnlineRoom;$("joinRoomBtn").onclick=joinOnlineR
 const originalChooseCard=chooseCard;
 function hostProcessOnlineCard(n,actorIdx){
  if(!onlineMode||!onlineHost||actorIdx!==player||locked||awaitingName)return;
- originalChooseCard(n);
- // If a guest is choosing, the host is only the authority: do not reveal
- // that guest's temporary card choices on the host's screen.
+ const c=deck[n-startingNumber];
+ if(!c||c.matched||c===first)return;
+
+ // Online mode has its own pair-resolution flow. The active player chooses
+ // both cards. A player's temporary cards, object audio and naming challenge
+ // are private to that player.
  const hostIdx=onlineRoster.findIndex(x=>x.peer===onlinePeer.id)+1;
- if(actorIdx!==hostIdx)concealTransientOnlineCardsForViewer(hostIdx);
- // Keep the same player active after the first card. The normal game logic
- // advances to the next player only after the second card/pair is resolved.
- setTimeout(broadcastOnlineState,40);
+ if(actorIdx===hostIdx){reveal(c);speak(c.name);}
+ if(!first){
+  first=c;
+  setMessage(`Card ${n} revealed. Choose another card.`);
+  broadcastOnlineState();
+ }else{
+  second=c;locked=true;
+  setMessage("Checking the pair...");
+  broadcastOnlineState();
+
+  if(first.pair===second.pair){
+   matchedAnimal=first;
+   // Keep the same player's turn. Start the English naming challenge.
+   setTimeout(()=>{
+    if(!onlineMode||!onlineHost||!first||!second)return;
+    if(actorIdx===hostIdx){
+     beginNameChallenge();
+    }else{
+     // Host keeps authoritative challenge state but must not see/hear
+     // another player's private matching-pair/naming screen.
+     awaitingName=true;answerArmed=false;locked=true;
+     $("namePrompt").style.display="none";
+    }
+    broadcastOnlineState();
+   },1500);
+  }else{
+   // Wrong pair: show it to the selecting player, then close it and pass turn.
+   setTimeout(()=>{
+    if(!onlineMode||!onlineHost||!first||!second)return;
+    setMessage("Not a match.");
+    if(actorIdx===hostIdx)speak("Not a match.");
+    broadcastOnlineState();
+   },1000);
+   setTimeout(()=>{
+    if(!onlineMode||!onlineHost||!first||!second)return;
+    first=second=null;matchedAnimal=null;locked=false;
+    player=player%numPlayers+1;
+    renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
+    setMessage(`${onlineRoster[player-1]?.name||("Player "+player)}'s turn.`);
+    broadcastOnlineState();
+   },2200);
+  }
+ }
+
+ // Keep the host's screen private when another player is taking the turn.
+ if(actorIdx!==hostIdx){
+  concealTransientOnlineCardsForViewer(hostIdx);
+  $("namePrompt").style.display="none";
+ }
 }
 chooseCard=function(n){
  if(onlineMode&&!onlineHost){
