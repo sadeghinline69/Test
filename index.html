@@ -89,12 +89,17 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 @media(max-width:650px){
  .sizeBtn{font-size:12px!important;padding:9px 3px!important}
 }
+
+.hybridPhoto{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block}
+.card.revealed .hybridPhoto,.card.matched .hybridPhoto{position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px)}
+.promptHybrid{width:220px;height:165px;object-fit:cover;border-radius:16px;margin:8px auto}
+.tutorialHybrid{width:190px;height:140px;object-fit:cover;border-radius:14px;margin:auto}
 </style>
 </head>
 <body>
 <div id="startScreen" class="screen">
  <div class="startCard">
-  <div class="badge">Memory Game • Version 32</div>
+  <div class="badge">Memory Game • Version 34</div>
   <div class="big">🐾 English Memory Match</div>
   <p>Choose the number of players and a category, then start the game.</p>
   <label><b>Players (1–10)</b><br>
@@ -126,7 +131,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 </div>
 
 <div id="app">
- <div class="top"><h2 style="margin:5px">🐾 English Memory Match <span class="badge">Version 32</span></h2>
+ <div class="top"><h2 style="margin:5px">🐾 English Memory Match <span class="badge">Version 34</span></h2>
   <div class="stats"><div class="pill">Player <span id="currentPlayer">1</span></div><div class="pill">Pairs <span id="pairs">0</span>/<span id="pairTotal">6</span></div></div>
  </div>
  <div id="players" class="players"></div>
@@ -403,26 +408,26 @@ const categories={
   {name:"cantaloupe",icon:"🍈"},
   {name:"clementine",icon:"🍊"},
   {name:"mandarin",icon:"🍊"},
-  {name:"quince",icon:"🟡"},
-  {name:"kumquat",icon:"🟠"},
-  {name:"pomelo",icon:"🟡"},
-  {name:"rambutan",icon:"🔴"},
-  {name:"durian",icon:"🟢"},
-  {name:"jackfruit",icon:"🟢"},
-  {name:"mangosteen",icon:"🟣"},
+  {name:"quince",icon:"🍐"},
+  {name:"kumquat",icon:"🍊"},
+  {name:"pomelo",icon:"🍊"},
+  {name:"rambutan",icon:"🍒"},
+  {name:"durian",icon:"🍈"},
+  {name:"jackfruit",icon:"🍈"},
+  {name:"mangosteen",icon:"🍇"},
   {name:"starfruit",icon:"⭐"},
-  {name:"tamarind",icon:"🟤"},
+  {name:"tamarind",icon:"🫘"},
   {name:"plantain",icon:"🍌"},
-  {name:"breadfruit",icon:"🟢"},
+  {name:"breadfruit",icon:"🍈"},
   {name:"elderberry",icon:"🫐"},
   {name:"boysenberry",icon:"🫐"},
   {name:"currant",icon:"🔴"},
   {name:"loganberry",icon:"🫐"},
-  {name:"longan",icon:"🟤"},
-  {name:"soursop",icon:"🟢"},
-  {name:"salak",icon:"🟤"},
-  {name:"feijoa",icon:"🟢"},
-  {name:"physalis",icon:"🟠"}
+  {name:"longan",icon:"🍒"},
+  {name:"soursop",icon:"🍐"},
+  {name:"salak",icon:"🍐"},
+  {name:"feijoa",icon:"🥝"},
+  {name:"physalis",icon:"🍊"}
  ]
 };
 const boardSizes={
@@ -434,6 +439,18 @@ const boardSizes={
 };
 let selectedSize="medium";
 let selectedDifficulty="easy";
+const photoOnlyObjects=new Set(["quince", "kumquat", "pomelo", "rambutan", "durian", "jackfruit", "mangosteen", "starfruit", "tamarind", "plantain", "breadfruit", "elderberry", "boysenberry", "currant", "loganberry", "longan", "soursop", "salak", "feijoa", "physalis"]);
+function objectPhotoURL(name){
+ return "https://loremflickr.com/420/320/"+encodeURIComponent(name+",fruit")+"/all?lock="+
+  Array.from(name).reduce((a,c)=>a+c.charCodeAt(0),0);
+}
+function useOnlinePhoto(name){return photoOnlyObjects.has(name);}
+function objectVisual(c,cls=""){
+ if(useOnlinePhoto(c.name)){
+  return `<img class="hybridPhoto ${cls}" src="${objectPhotoURL(c.name)}" alt="${c.name}" draggable="false">`;
+ }
+ return `<span class="animal ${cls}">${c.icon}</span>`;
+}
 function pickSix(pool,difficulty=selectedDifficulty,count=null){
  const ranges={easy:[0,20],medium:[20,40],hard:[40,60]};
  const [a,b]=ranges[difficulty]||ranges.easy;
@@ -519,10 +536,10 @@ function startPlayerBoard(){
 function renderBoard(){
  const cfg=boardSizes[selectedSize];
  $("board").style.gridTemplateColumns=`repeat(${cfg.cols}, minmax(0,1fr))`;
- $("board").innerHTML=deck.map(c=>`<button class="card ${c.matched?"matched":""}" data-id="${c.id}">${c.matched?`<span class="animal">${c.icon}</span>`:c.id}</button>`).join("");
+ $("board").innerHTML=deck.map(c=>`<button class="card ${c.matched?"matched":""}" data-id="${c.id}">${c.matched?objectVisual(c):c.id}</button>`).join("");
  document.querySelectorAll(".card").forEach(b=>b.onclick=()=>chooseCard(+b.dataset.id));
 }
-function reveal(c){let b=document.querySelector(`.card[data-id="${c.id}"]`);b.classList.add("revealed");b.innerHTML=`<span class="animal">${c.icon}</span>`}
+function reveal(c){let b=document.querySelector(`.card[data-id="${c.id}"]`);b.classList.add("revealed");b.innerHTML=objectVisual(c)}
 function hide(c){if(c.matched)return;let b=document.querySelector(`.card[data-id="${c.id}"]`);b.classList.remove("revealed");b.innerHTML=c.id}
 function setMessage(x){$("message").textContent=x}
 function chooseCard(n){
@@ -550,7 +567,7 @@ function randomNamingPrompt(){
 function beginNameChallenge(){
  voiceOff();
  awaitingName=true;answerArmed=false;locked=true;
- $("promptAnimal").textContent=matchedAnimal.icon;
+ $("promptAnimal").innerHTML=objectVisual(matchedAnimal,"promptHybrid");
  const prompt=randomNamingPrompt();
 
  // RED first: vocabulary microphone is OFF while the game gives the instruction.
@@ -805,7 +822,7 @@ function announceTutorialPage(){
   const item=animals.find(a=>a.name.toLowerCase()===d.main.toLowerCase());
   if(item){
    $("tDemo").classList.add("tutorialClickedPreview");
-   $("tDemo").textContent=item.icon;
+   $("tDemo").innerHTML=objectVisual(item,"tutorialHybrid");
   }
  }else if(ti===2){
   const words=["one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty","twenty one","twenty two","twenty three","twenty four"];
@@ -825,7 +842,8 @@ function showTut(){
  let d=tut[ti];
  $("tTitle").textContent=d.title;
  $("tDemo").classList.remove("tutorialClickedPreview");
- $("tDemo").textContent=d.demo;
+ if(ti===1 && animals[0]) $("tDemo").innerHTML=objectVisual(animals[0],"tutorialHybrid");
+ else $("tDemo").textContent=d.demo;
  $("tText").textContent=d.text;
  $("alts").innerHTML=d.alts.map((x,i)=>`<button class="alt" data-i="${i}">${x}</button>`).join("");
  document.querySelectorAll(".alt").forEach(b=>b.onclick=()=>{
@@ -836,7 +854,7 @@ function showTut(){
    const item=animals.find(a=>a.name.toLowerCase()===phrase.toLowerCase());
    if(item){
     $("tDemo").classList.add("tutorialClickedPreview");
-    $("tDemo").textContent=item.icon;
+    $("tDemo").innerHTML=objectVisual(item,"tutorialHybrid");
    }
   }else if(ti===2){
    const words=["one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty","twenty one","twenty two","twenty three","twenty four"];
