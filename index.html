@@ -692,6 +692,22 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
  color:#1f6b3a!important;
 }
 
+
+/* Strong black title, slightly larger */
+#startScreen .big{
+ color:#000000!important;
+ font-size:clamp(22px,6.6vw,29px)!important;
+ font-weight:900!important;
+ white-space:nowrap!important;
+ letter-spacing:-0.75px!important;
+}
+@media (max-width:360px){
+ #startScreen .big{
+  font-size:19px!important;
+  letter-spacing:-0.9px!important;
+ }
+}
+
 </style>
 </head>
 <body>
@@ -1555,10 +1571,97 @@ function finishGame(){
  $("scoreScreen").style.display="flex";
  speak(`Player ${winner.player} is the winner.`);
 }
+
+// Context-aware, forgiving card-number recognition.
+// Because only the currently visible card numbers are valid, we can safely infer
+// the intended card from imperfect speech-recognition transcripts.
+function normalizeCardSpeech(s){
+ return String(s||"").toLowerCase()
+  .replace(/[’']/g,"")
+  .replace(/[-–—]/g," ")
+  .replace(/[.,!?;:]/g," ")
+  .replace(/\b(the|please|card|number|open|choose|show|select|pick|turn|flip|reveal|press|click|i|want|want to|give me)\b/g," ")
+  .replace(/\s+/g," ").trim();
+}
+function editDistance(a,b){
+ a=String(a); b=String(b);
+ const dp=Array(b.length+1).fill(0).map((_,j)=>j);
+ for(let i=1;i<=a.length;i++){
+  let prev=dp[0]; dp[0]=i;
+  for(let j=1;j<=b.length;j++){
+   const old=dp[j];
+   dp[j]=Math.min(dp[j]+1,dp[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));
+   prev=old;
+  }
+ }
+ return dp[b.length];
+}
+function spokenFormsForCard(n){
+ const words=numberToWords(n).toLowerCase();
+ const compact=words.replace(/\s+/g,"");
+ const forms=new Set([String(n),words,compact]);
+
+ // Common ASR variants for tens: "twenty four" can arrive as "24", "twentyfour",
+ // or occasionally with a nearby-sounding final digit.
+ const parts=words.split(/\s+/);
+ if(parts.length===2) forms.add(parts.join("-"));
+
+ // Add conservative pronunciation/ASR confusions for individual digits.
+ const aliases={
+  one:["won"], two:["to","too"], three:["tree"], four:["for","fore"],
+  five:["fife"], six:["sicks"], seven:["sevan"], eight:["ate"], nine:["niner"]
+ };
+ for(const [word,alts] of Object.entries(aliases)){
+  if(parts.includes(word)){
+   for(const alt of alts){
+    forms.add(parts.map(x=>x===word?alt:x).join(" "));
+    forms.add(parts.map(x=>x===word?alt:x).join(""));
+   }
+  }
+ }
+ return [...forms];
+}
+function parseCardForgiving(raw){
+ // Keep the original parser as first choice.
+ const exact=parseCard(raw);
+ if(exact!==null && exact!==undefined &&
+    exact>=startingNumber && exact<startingNumber+deck.length) return exact;
+
+ const q=normalizeCardSpeech(raw);
+ if(!q) return null;
+
+ // Extract any numeric token appearing in a longer transcript.
+ const nums=String(raw).match(/\d{1,4}/g)||[];
+ for(const token of nums){
+  const n=+token;
+  if(n>=startingNumber && n<startingNumber+deck.length) return n;
+ }
+
+ // Compare only against numbers actually present on this board.
+ let best=null, bestScore=Infinity, second=Infinity;
+ for(let n=startingNumber;n<startingNumber+deck.length;n++){
+  for(const form of spokenFormsForCard(n)){
+   const f=normalizeCardSpeech(form);
+   if(!f) continue;
+   const d=editDistance(q,f);
+   const scale=Math.max(q.length,f.length);
+   const score=d/Math.max(1,scale);
+   if(score<bestScore){second=bestScore;bestScore=score;best=n;}
+   else if(score<second) second=score;
+  }
+ }
+
+ // Deliberately forgiving, but require a reasonably clear unique best match.
+ if(best!==null && bestScore<=0.34 && (second-bestScore>=0.055 || bestScore<=0.18)){
+  return best;
+ }
+ return null;
+}
+
 function handleSpeech(text){
  $("transcript").textContent='Heard: “'+text+'”';
  if(awaitingName){if(answerArmed)checkAnimal(text);return}
- let n=parseCard(text);
+ let n=parseCardForgiving(text);
  if(n&&n>=startingNumber&&n<startingNumber+deck.length){
   clearTimeout(cardRetryTimer);
   chooseCard(n);
