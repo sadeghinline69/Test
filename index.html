@@ -80,10 +80,10 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 .setupGenre{opacity:.72;filter:saturate(.7)}
 .setupGenre.selectedGenre{opacity:1;outline:4px solid #1f9d55;filter:none;transform:scale(1.02)}
 
-.difficultyBtn{opacity:.72;filter:saturate(.7)}
+.difficultyBtn{opacity:1;filter:none;background:#fff!important;color:#344054!important;border-color:#bbc7dd!important}
 .difficultyBtn.selectedDifficulty{opacity:1;outline:4px solid #1f9d55;filter:none;transform:scale(1.02)}
 
-.sizeBtn{opacity:.72;filter:saturate(.7);padding:10px 5px!important}
+.sizeBtn{opacity:1;filter:none;padding:10px 5px!important;background:#fff!important;color:#344054!important;border-color:#bbc7dd!important}
 .sizeBtn.selectedSize{opacity:1;outline:4px solid #1f9d55;filter:none;transform:scale(1.02)}
 .sizeBtn small{font-size:12px}
 @media(max-width:650px){
@@ -111,6 +111,14 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 }
 .setupSelect:focus{outline:3px solid rgba(82,104,232,.22);border-color:#5268e8}
 
+.otherSettings{margin:8px 0 10px}
+#otherSettingsBtn{
+ width:min(320px,92%);min-height:46px;background:#fff!important;color:#344054!important;
+ border:2px solid #bbc7dd!important;border-radius:12px;font-size:16px;font-weight:800;
+}
+#otherSettingsPanel{display:none;margin:8px auto 4px;padding:10px 12px 2px;width:min(320px,92%);box-sizing:border-box;background:#f8fafc;border:1px solid #d9e0ec;border-radius:12px}
+#otherSettingsPanel.open{display:block}
+#otherSettingsPanel h2{margin:2px 0 5px!important}
 .creatorCredit{
  margin-top:20px;padding-top:14px;border-top:1px solid #d9e0ec;
  font-size:14px;line-height:1.6;color:#667085;text-align:center;
@@ -230,13 +238,10 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
    <option value="nature">🌦️ Weather & Nature</option>
    <option value="music">🎵 Music</option>
   </select>
-  <h2 style="margin:12px 0 8px">Starting Number</h2>
-  <input id="startingNumber" class="setupSelect" type="number" value="20" min="1" max="75" step="1"
-   inputmode="numeric" aria-label="Starting card number" style="box-sizing:border-box">
   <h2 style="margin:16px 0 8px">Difficulty Level</h2>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 20px">
-   <button class="primary difficultyBtn selectedDifficulty" data-difficulty="easy">Easy</button>
-   <button class="primary difficultyBtn" data-difficulty="medium">Medium</button>
+   <button class="primary difficultyBtn" data-difficulty="easy">Easy</button>
+   <button class="primary difficultyBtn selectedDifficulty" data-difficulty="medium">Medium</button>
    <button class="primary difficultyBtn" data-difficulty="hard">Hard</button>
   </div>
   <h2 style="margin:16px 0 8px">Table Size</h2>
@@ -248,6 +253,14 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
    <button class="primary sizeBtn" data-size="veryLarge">Very Large<br><small>6 × 4</small></button>
   </div>
   <button class="primary" id="startGame">Start Game</button>
+  <div class="otherSettings">
+   <button type="button" id="otherSettingsBtn">Other Settings ▾</button>
+   <div id="otherSettingsPanel">
+    <h2>Starting Number</h2>
+    <input id="startingNumber" class="setupSelect" type="number" value="20" min="1" step="1"
+     inputmode="numeric" aria-label="Starting card number" style="box-sizing:border-box;margin-bottom:8px">
+   </div>
+  </div>
   <div class="creatorCredit">
    Designed &amp; Created by <strong>Sadegh Mosleh</strong><br>
    <span>© 2026 Sadegh Mosleh. All rights reserved.</span>
@@ -665,7 +678,7 @@ const boardSizes={
  veryLarge:{rows:6,cols:4,pairs:12}
 };
 let selectedSize="medium";
-let selectedDifficulty="easy";
+let selectedDifficulty="medium";
 function difficultyPool(pool,difficulty){
  // Ignore any empty entries, then divide the real emoji vocabulary into 3 groups.
  const clean=pool.filter(x=>x && x.name && x.icon);
@@ -741,25 +754,38 @@ function normalize(s){return s.toLowerCase().replace(/[^\w\s-]/g," ").replace(/\
 const smallNumberWords=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
 const tensNumberWords={20:"twenty",30:"thirty",40:"forty",50:"fifty",60:"sixty",70:"seventy",80:"eighty",90:"ninety"};
 function numberToWords(n){
- if(n<20)return smallNumberWords[n];
- const ten=Math.floor(n/10)*10,unit=n%10;
- return tensNumberWords[ten]+(unit?" "+smallNumberWords[unit]:"");
+ n=Math.floor(Number(n));
+ if(n<20)return smallNumberWords[n]||"";
+ if(n<100){
+  const ten=Math.floor(n/10)*10,unit=n%10;
+  return tensNumberWords[ten]+(unit?" "+smallNumberWords[unit]:"");
+ }
+ if(n<1000){
+  const h=Math.floor(n/100),rest=n%100;
+  return smallNumberWords[h]+" hundred"+(rest?" "+numberToWords(rest):"");
+ }
+ if(n<10000){
+  const th=Math.floor(n/1000),rest=n%1000;
+  return smallNumberWords[th]+" thousand"+(rest?" "+numberToWords(rest):"");
+ }
+ return String(n);
 }
 function titleNumber(n){return numberToWords(n).replace(/\b\w/g,c=>c.toUpperCase())}
 function readStartingNumber(){
  let n=parseInt($("startingNumber").value,10);
  if(!Number.isFinite(n))n=20;
- n=Math.max(1,Math.min(75,n));
+ n=Math.max(1,Math.min(9976,n)); // +23 keeps the largest board at or below 9999
  $("startingNumber").value=n;
  return n;
 }
 function parseCard(text){
- let s=normalize(text),m=s.match(/\b([1-9]|[1-9][0-9])\b/);
+ let s=normalize(text),m=s.match(/\b([1-9][0-9]{0,3})\b/);
  if(m)return +m[1];
  const max=startingNumber+deck.length-1;
+ // Only the current board's numbers are candidates, so spoken-number matching stays precise.
  for(let n=max;n>=startingNumber;n--){
   const w=numberToWords(n);
-  if(new RegExp("\\b"+w+"\\b").test(s))return n;
+  if(w && new RegExp("\\b"+w+"\\b").test(s))return n;
  }
  const aliases={1:["won"],2:["to","too"],3:["tree"],4:["for","fore"],5:["fife"],6:["sicks"],7:["sevin"],8:["ate"],9:["niner"]};
  for(const [n,arr] of Object.entries(aliases))
@@ -1106,6 +1132,11 @@ $("voiceToggle").onclick=()=>{
 }
 $("categorySelect").onchange=()=>{
  selectedGenre=$("categorySelect").value;
+};
+$("otherSettingsBtn").onclick=()=>{
+ const panel=$("otherSettingsPanel");
+ const open=panel.classList.toggle("open");
+ $("otherSettingsBtn").textContent=open?"Other Settings ▴":"Other Settings ▾";
 };
 $("startingNumber").onchange=()=>{
  startingNumber=readStartingNumber();
