@@ -709,6 +709,15 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 }
 
 </style>
+
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#6d5dfc">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Memory Match">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+
 </head>
 <body>
 <div id="startScreen" class="screen">
@@ -1886,5 +1895,16 @@ $("prevT").onclick=()=>{ti=(ti+tut.length-1)%tut.length;showTut();announceTutori
 $("nextT").onclick=()=>{ti=(ti+1)%tut.length;showTut();announceTutorialPage()}
 showTut();
 </script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(err => {
+      console.log("Service worker registration failed:", err);
+    });
+  });
+}
+</script>
+
 </body>
 </html>
