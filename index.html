@@ -739,7 +739,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
 <body>
-<div class="onlineReleaseLabel" aria-label="Online release 8">Online 8</div>
+<div class="onlineReleaseLabel" aria-label="Online release 10">Online 10</div>
 <div id="startScreen" class="screen">
  <div class="startCard">
   <div class="big">🐾 English Memory Match</div>
@@ -1990,9 +1990,14 @@ function formatOnlineTime(sec){sec=Math.max(0,Number(sec)||0);return sec.toFixed
 function ostatus(t){const e=document.getElementById("onlineStatus");if(e)e.textContent=t}
 function makeRoomCode(){return Math.random().toString(36).slice(2,8).toUpperCase()}
 function safeName(){return ($("onlineName").value||"Player").trim().slice(0,20)||"Player"}
+function escapeHtml(v){const d=document.createElement("div");d.textContent=String(v);return d.innerHTML}
 function updateRosterUI(){
- const text=onlineRoster.map((p,i)=>`${i+1}. ${p.name}`).join(" • ");
- $("onlinePlayers").textContent=text||"Waiting for players…";
+ const box=$("onlinePlayers");
+ if(onlineRoster.length){
+  const heading=`${onlineRoster.length} player${onlineRoster.length===1?"":"s"} in the room`;
+  const rows=onlineRoster.map((p,i)=>`<div style="padding:3px 0;font-weight:800">Player ${i+1}: ${escapeHtml(p.name)}</div>`).join("");
+  box.innerHTML=`<div style="font-weight:900;margin-bottom:3px">${heading}</div>${rows}`;
+ }else{box.textContent="Waiting for players…";}
  if(onlineMode && gameStarted){
   $("players").innerHTML=onlineRoster.map((p,i)=>`<div class="playerBox ${i+1===player?"active":""}">${p.name}</div>`).join("");
   renderOnlineLiveScoreboard();
@@ -2092,8 +2097,16 @@ function resolveOnlineNameResult(actorIdx,ok){
   scores[player]=(scores[player]||0)+1;
   playerSuccessfulMatches++;
   $("pairs").textContent=deck.filter(x=>x.matched).length/2;
-  if(actorIdx===hostIdx){speak("Correct");setMessage("Correct! You play again.");}
-  else onlineSendToPlayer(actorIdx,{type:"privateFeedback",text:"Correct",message:"Correct! You play again."});
+  if(actorIdx===hostIdx){
+   setMessage("Correct! You play again.");
+   speak("Correct",1,()=>{
+    // A correct answer keeps the same turn, so immediately restore card-number voice listening.
+    if(onlineMode&&onlineHost&&gameStarted&&myOnlineIndex()===player&&!awaitingName){
+     manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();
+    }
+   });
+  }
+  else onlineSendToPlayer(actorIdx,{type:"privateFeedback",text:"Correct",message:"Correct! You play again.",resumeTurnVoice:true});
   first=second=null;matchedAnimal=null;locked=false;
   $("namePrompt").style.display="none";
   renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
@@ -2129,7 +2142,15 @@ function joinOnlineRoom(){
   hostConn.on("open",()=>{hostConn.send({type:"hello",name:onlineMe});$("roomCodeLabel").textContent=onlineRoomCode;$("roomReady").style.display="block";$("onlineStartBtn").style.display="none";ostatus("Connected. Waiting for the host to start.")});
   hostConn.on("data",m=>{
    if(m.type==="privateCard"){speak(m.name||"");}
-   else if(m.type==="privateFeedback"){if(m.text)speak(m.text);if(m.message)setMessage(m.message);}
+   else if(m.type==="privateFeedback"){
+    if(m.message)setMessage(m.message);
+    const resume=()=>{
+     if(m.resumeTurnVoice&&gameStarted&&myOnlineIndex()===player&&!awaitingName){
+      manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();
+     }
+    };
+    if(m.text)speak(m.text,1,resume);else resume();
+   }
    else if(m.type==="privateChallenge"){startPrivateOnlineChallenge(m.animal,m.prompt);}
    else if(m.type==="roster"){onlineRoster=m.roster||[];updateRosterUI()}
    else if(m.type==="start"){onlineRoster=m.roster||onlineRoster;selectedSize=m.size;startingNumber=m.start;selectedGenre=m.genre;selectedDifficulty=m.difficulty;gameMode=m.mode;gameStarted=true;paused=true;$("startScreen").style.display="none";$("app").style.display="block";$("onlineRoomBar").style.display="block";$("onlineRoomBar").textContent=`🌐 Room ${onlineRoomCode}`;applyOnlineState(m.state)}
