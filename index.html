@@ -115,13 +115,13 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <body>
 <div id="startScreen" class="screen">
  <div class="startCard">
-  <div class="badge">Memory Game • Version 53</div>
+  <div class="badge">Memory Game • Version 55</div>
   <div class="big">🐾 English Memory Match</div>
   <p>Choose the number of players and a category, then start the game.</p>
   <label><b>Number of Players</b><br>
    <select id="playerCount" class="playerSelect" aria-label="Number of players">
-    <option value="1">1 Player</option>
-    <option value="2" selected>2 Players</option>
+    <option value="1" selected>1 Player</option>
+    <option value="2">2 Players</option>
     <option value="3">3 Players</option>
     <option value="4">4 Players</option>
     <option value="5">5 Players</option>
@@ -164,7 +164,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 </div>
 
 <div id="app">
- <div class="top"><h2 style="margin:5px">🐾 English Memory Match <span class="badge">Version 53</span></h2>
+ <div class="top"><h2 style="margin:5px">🐾 English Memory Match <span class="badge">Version 55</span></h2>
   <div class="stats"><div class="pill">Pairs <span id="pairs">0</span>/<span id="pairTotal">6</span></div></div>
  </div>
 <span id="currentPlayer" style="display:none">1</span>
@@ -602,7 +602,7 @@ function pickSix(pool,difficulty=selectedDifficulty,count=null){
 let selectedGenre="animals";
 let animals=pickSix(categories.animals,selectedDifficulty);
 let deck=[],first=null,second=null,locked=false,awaitingName=false,matchedAnimal=null;
-let player=1,numPlayers=2,scores={},recognition=null,running=false,paused=true,gameStarted=false,preferredVoice=null,answerArmed=false;
+let player=1,numPlayers=2,scores={},recognition=null,running=false,paused=true,gameStarted=false,preferredVoice=null,answerArmed=false,manualVoiceOff=false;
 let masterLayout=null, playerResults=[];
 let playerStartTime=0, playerMismatches=0, playerSuccessfulMatches=0, liveTimerId=null;
 
@@ -911,7 +911,7 @@ function voiceOff(){
  try{if(recognition&&running)recognition.stop()}catch(e){}
 }
 function voiceOn(){
- if(!gameStarted||awaitingName)return;
+ if(!gameStarted||awaitingName||manualVoiceOff)return;
  paused=false; updateVoiceButton(); startRecognition();
  setMessage(`Player ${player}: say a card number.`);
 }
@@ -927,8 +927,14 @@ $("answerBtn").onclick=()=>{
 };
 $("voiceToggle").onclick=()=>{
  if(awaitingName)return;
- if(paused)voiceOn();
- else{voiceOff();setMessage("Voice is off. Press the Voice button when you are ready.");}
+ if(paused){
+  manualVoiceOff=false;
+  voiceOn();
+ }else{
+  manualVoiceOff=true;
+  voiceOff();
+  setMessage("Voice is off. Press the Voice button when you are ready.");
+ }
 }
 $("categorySelect").onchange=()=>{
  selectedGenre=$("categorySelect").value;
@@ -947,7 +953,7 @@ $("startGame").onclick=()=>{
  numPlayers=Math.max(1,Math.min(10,+$("playerCount").value||2));
  animals=pickSix(categories[selectedGenre],selectedDifficulty,boardSizes[selectedSize].pairs);
  $("startScreen").style.display="none";$("app").style.display="block";
- gameStarted=true;paused=true;buildGame();updateVoiceButton();
+ gameStarted=true;manualVoiceOff=false;paused=true;buildGame();updateVoiceButton();
  setMessage("Voice is OFF. Get ready to start.");
 }
 $("scoreRestart").onclick=()=>{$("scoreScreen").style.display="none";$("app").style.display="none";$("startScreen").style.display="flex"};
