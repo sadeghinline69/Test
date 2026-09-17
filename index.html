@@ -739,7 +739,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
 <body>
-<div class="onlineReleaseLabel" aria-label="Online release 5">Online 5</div>
+<div class="onlineReleaseLabel" aria-label="Online release 6">Online 6</div>
 <div id="startScreen" class="screen">
  <div class="startCard">
   <div class="big">🐾 English Memory Match</div>
@@ -1966,6 +1966,11 @@ showTut();
 // The room host is authoritative. If the host closes the page, the room ends.
 let onlineMode=false, onlineHost=false, onlinePeer=null, hostConn=null, peerConns=[];
 let onlineRoomCode="", onlineMe="", onlineRoster=[];
+function myOnlineIndex(){
+ const peerId=onlinePeer&&onlinePeer.id;
+ if(peerId){const i=onlineRoster.findIndex(x=>x.peer===peerId);if(i>=0)return i+1;}
+ return 0;
+}
 function ostatus(t){const e=document.getElementById("onlineStatus");if(e)e.textContent=t}
 function makeRoomCode(){return Math.random().toString(36).slice(2,8).toUpperCase()}
 function safeName(){return ($("onlineName").value||"Player").trim().slice(0,20)||"Player"}
@@ -2025,8 +2030,10 @@ function applyOnlineState(s){
  $("pairs").textContent=s.pairs||0;$("pairTotal").textContent=boardSizes[selectedSize].pairs;setMessage(s.message||"");
  renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
  if(s.finished){displayOnlineFinalScoreboard();return;}
- const myIndex=onlineRoster.findIndex(x=>x.name===onlineMe)+1;
+ const myIndex=myOnlineIndex();
  concealTransientOnlineCardsForViewer(myIndex);
+ // Do not leak the active player's private turn feedback to the other screens.
+ if(myIndex && myIndex!==player){setMessage(`${onlineRoster[player-1]?.name||("Player "+player)} is playing. Wait for your turn.`);}
  // Only the active remote player receives the naming controls.
  if(awaitingName && myIndex===player && matchedAnimal){
   // The targeted privateChallenge message controls this player's prompt, sound and microphone.
@@ -2049,25 +2056,37 @@ function attachGuest(c){
    if(idx===player)hostProcessOnlineCard(m.id,idx);
   }else if(m.type==="nameResult" && gameStarted){
    const idx=onlineRoster.findIndex(x=>x.peer===c.peer)+1;
-   if(idx===player&&awaitingName&&first&&second){
-    const ok=!!m.ok;awaitingName=false;answerArmed=false;
-    if(ok){
-     first.matched=second.matched=true;scores[player]=(scores[player]||0)+1;playerSuccessfulMatches++;
-     $("pairs").textContent=deck.filter(x=>x.matched).length/2;
-     onlineSendToPlayer(idx,{type:"privateFeedback",text:"Correct",message:"Correct! You play again."});
-     first=second=null;matchedAnimal=null;locked=false;renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
-     if(deck.every(x=>x.matched)){finishOnlineSharedGame();}
-     else setMessage(`${onlineRoster[player-1]?.name||("Player "+player)} plays again.`);
-    }else{
-     onlineSendToPlayer(idx,{type:"privateFeedback",text:"Wrong",message:"Wrong. Turn passes to the next player."});
-     first=second=null;matchedAnimal=null;locked=false;player=player%numPlayers+1;
-     renderBoard();updateRosterUI();renderOnlineLiveScoreboard();setMessage(`${onlineRoster[player-1]?.name||("Player "+player)}'s turn.`);
-    }
-    setTimeout(broadcastOnlineState,30);
-   }
+   resolveOnlineNameResult(idx,!!m.ok);
   }
  });
  c.on("close",()=>{onlineRoster=onlineRoster.filter(x=>x.peer!==c.peer);updateRosterUI();onlineSendAll({type:"roster",roster:onlineRoster,room:onlineRoomCode})});
+}
+function resolveOnlineNameResult(actorIdx,ok){
+ if(!onlineMode||!onlineHost||actorIdx!==player||!awaitingName||!first||!second)return;
+ awaitingName=false;answerArmed=false;
+ const hostIdx=myOnlineIndex();
+ if(ok){
+  first.matched=second.matched=true;
+  scores[player]=(scores[player]||0)+1;
+  playerSuccessfulMatches++;
+  $("pairs").textContent=deck.filter(x=>x.matched).length/2;
+  if(actorIdx===hostIdx){speak("Correct");setMessage("Correct! You play again.");}
+  else onlineSendToPlayer(actorIdx,{type:"privateFeedback",text:"Correct",message:"Correct! You play again."});
+  first=second=null;matchedAnimal=null;locked=false;
+  $("namePrompt").style.display="none";
+  renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
+  if(deck.every(x=>x.matched)){finishOnlineSharedGame();return;}
+  setMessage(`${onlineRoster[player-1]?.name||("Player "+player)} plays again.`);
+ }else{
+  if(actorIdx===hostIdx){speak("Wrong");setMessage("Wrong. Turn passes to the next player.");}
+  else onlineSendToPlayer(actorIdx,{type:"privateFeedback",text:"Wrong",message:"Wrong. Turn passes to the next player."});
+  first=second=null;matchedAnimal=null;locked=false;
+  $("namePrompt").style.display="none";
+  player=player%numPlayers+1;
+  renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
+  setMessage(`${onlineRoster[player-1]?.name||("Player "+player)}'s turn.`);
+ }
+ setTimeout(broadcastOnlineState,30);
 }
 function createOnlineRoom(){
  if(typeof Peer==="undefined"){ostatus("Online library could not load. Check your internet connection.");return}
@@ -2181,14 +2200,14 @@ function hostProcessOnlineCard(n,actorIdx){
 }
 chooseCard=function(n){
  if(onlineMode&&!onlineHost){
-  const idx=onlineRoster.findIndex(x=>x.name===onlineMe)+1;
-  if(idx!==player){setMessage("Wait for your turn.");return}
+  const idx=myOnlineIndex();
+  if(!idx||idx!==player){setMessage("Wait for your turn.");return}
   if(hostConn&&hostConn.open)hostConn.send({type:"choose",id:n});
   return;
  }
  if(onlineMode&&onlineHost){
-  const idx=onlineRoster.findIndex(x=>x.peer===onlinePeer.id)+1;
-  if(idx!==player){setMessage("Wait for your turn.");return}
+  const idx=myOnlineIndex();
+  if(!idx||idx!==player){setMessage("Wait for your turn.");return}
   hostProcessOnlineCard(n,idx);
   return;
  }
@@ -2197,17 +2216,9 @@ chooseCard=function(n){
 const originalApplyNameResult=applyNameResult;
 applyNameResult=function(ok){
  if(onlineMode&&!onlineHost){if(hostConn&&hostConn.open)hostConn.send({type:"nameResult",ok:!!ok});$("namePrompt").style.display="none";return}
- originalApplyNameResult(ok);if(onlineMode&&onlineHost)setTimeout(broadcastOnlineState,50);
+ if(onlineMode&&onlineHost){resolveOnlineNameResult(myOnlineIndex(),!!ok);return}
+ originalApplyNameResult(ok);
 };
-</script>
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js", {updateViaCache:"none"}).then(reg => reg.update()).catch(err => {
-      console.log("Service worker registration failed:", err);
-    });
-  });
-}
 </script>
 
 </body>
