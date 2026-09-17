@@ -739,7 +739,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
 <body>
-<div class="onlineReleaseLabel" aria-label="Online release 7">Online 7</div>
+<div class="onlineReleaseLabel" aria-label="Online release 8">Online 8</div>
 <div id="startScreen" class="screen">
  <div class="startCard">
   <div class="big">🐾 English Memory Match</div>
@@ -1967,7 +1967,7 @@ showTut();
 // The room host is authoritative. If the host closes the page, the room ends.
 let onlineMode=false, onlineHost=false, onlinePeer=null, hostConn=null, peerConns=[];
 let onlineRoomCode="", onlineMe="", onlineRoster=[];
-let onlineTimes={}, onlineTurnStartedAt=0;
+let onlineTimes={}, onlineTurnStartedAt=0, onlineLocalTurnStartedAt=0, lastObservedOnlinePlayer=0;
 function myOnlineIndex(){
  const peerId=onlinePeer&&onlinePeer.id;
  if(peerId){const i=onlineRoster.findIndex(x=>x.peer===peerId);if(i>=0)return i+1;}
@@ -1975,7 +1975,10 @@ function myOnlineIndex(){
 }
 function onlineElapsedFor(index){
  const base=Number(onlineTimes[index]||0);
- return base + ((gameStarted&&onlineMode&&index===player&&onlineTurnStartedAt)?Math.max(0,(performance.now()-onlineTurnStartedAt)/1000):0);
+ if(!(gameStarted&&onlineMode&&index===player))return base;
+ if(onlineHost&&onlineTurnStartedAt)return base+Math.max(0,(performance.now()-onlineTurnStartedAt)/1000);
+ if(!onlineHost&&onlineLocalTurnStartedAt)return base+Math.max(0,(performance.now()-onlineLocalTurnStartedAt)/1000);
+ return base;
 }
 function commitOnlineTurnTime(index){
  if(!onlineMode||!onlineHost||!onlineTurnStartedAt||index!==player)return;
@@ -2037,13 +2040,19 @@ function concealTransientOnlineCardsForViewer(viewerIndex){
 function applyOnlineState(s){
  if(!s||s.type!=="state")return;
  selectedSize=s.size;startingNumber=s.start;selectedGenre=s.genre;selectedDifficulty=s.difficulty;
- deck=s.deck||[];player=s.player||1;scores=s.scores||{};onlineTimes=s.onlineTimes||onlineTimes||{};playerMismatches=s.mismatches||0;playerSuccessfulMatches=s.matches||0;
+ deck=s.deck||[];const incomingPlayer=s.player||1;const turnChanged=incomingPlayer!==lastObservedOnlinePlayer;player=incomingPlayer;scores=s.scores||{};onlineTimes=s.onlineTimes||onlineTimes||{};playerMismatches=s.mismatches||0;playerSuccessfulMatches=s.matches||0;
+ if(turnChanged){onlineLocalTurnStartedAt=performance.now();lastObservedOnlinePlayer=player;}
  first=s.first!=null?deck.find(c=>c.id===s.first)||null:null;second=s.second!=null?deck.find(c=>c.id===s.second)||null:null;
  locked=!!s.locked;awaitingName=!!s.awaitingName;matchedAnimal=s.matchedAnimal;onlineRoster=s.roster||onlineRoster;
  $("pairs").textContent=s.pairs||0;$("pairTotal").textContent=boardSizes[selectedSize].pairs;setMessage(s.message||"");
  renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
  if(s.finished){displayOnlineFinalScoreboard();return;}
  const myIndex=myOnlineIndex();
+ if(turnChanged&&myIndex===player&&!awaitingName){
+  manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();
+ }else if(turnChanged&&myIndex&&myIndex!==player){
+  paused=true;updateVoiceButton();try{if(running)recognition.stop()}catch(e){}
+ }
  concealTransientOnlineCardsForViewer(myIndex);
  // Do not leak the active player's private turn feedback to the other screens.
  if(myIndex && myIndex!==player){setMessage(`${onlineRoster[player-1]?.name||("Player "+player)} is playing. Wait for your turn.`);}
@@ -2096,7 +2105,8 @@ function resolveOnlineNameResult(actorIdx,ok){
   first=second=null;matchedAnimal=null;locked=false;
   $("namePrompt").style.display="none";
   commitOnlineTurnTime(player);
-  player=player%numPlayers+1;startOnlineTurnClock();
+  player=player%numPlayers+1;startOnlineTurnClock();lastObservedOnlinePlayer=player;onlineLocalTurnStartedAt=performance.now();
+  if(myOnlineIndex()===player){manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();}else{paused=true;updateVoiceButton();try{if(running)recognition.stop()}catch(e){}}
   renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
   setMessage(`${onlineRoster[player-1]?.name||("Player "+player)}'s turn.`);
  }
@@ -2140,6 +2150,7 @@ function startHostedOnlineGame(){
  scores={};onlineTimes={};for(let i=1;i<=numPlayers;i++){scores[i]=0;onlineTimes[i]=0;}playerResults=[];player=1;onlineTurnStartedAt=performance.now();masterLayout=createMasterLayout();deck=freshDeckFromMaster();
  first=second=matchedAnimal=null;awaitingName=false;answerArmed=false;locked=false;playerMismatches=0;playerSuccessfulMatches=0;
  $("pairs").textContent=0;$("pairTotal").textContent=boardSizes[selectedSize].pairs;renderBoard();updateRosterUI();renderOnlineLiveScoreboard();setMessage(`${onlineRoster[0].name}'s turn.`);
+ lastObservedOnlinePlayer=1;onlineLocalTurnStartedAt=performance.now();manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();
  const state=serializeOnlineState();onlineSendAll({type:"start",roster:onlineRoster,size:selectedSize,start:startingNumber,genre:selectedGenre,difficulty:selectedDifficulty,mode:gameMode,state});broadcastOnlineState();
 }
 // UI mode controls
@@ -2199,7 +2210,8 @@ function hostProcessOnlineCard(n,actorIdx){
     if(!onlineMode||!onlineHost||!first||!second)return;
     first=second=null;matchedAnimal=null;locked=false;
     commitOnlineTurnTime(player);
-    player=player%numPlayers+1;startOnlineTurnClock();
+    player=player%numPlayers+1;startOnlineTurnClock();lastObservedOnlinePlayer=player;onlineLocalTurnStartedAt=performance.now();
+    if(myOnlineIndex()===player){manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();}else{paused=true;updateVoiceButton();try{if(running)recognition.stop()}catch(e){}}
     renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
     setMessage(`${onlineRoster[player-1]?.name||("Player "+player)}'s turn.`);
     broadcastOnlineState();
