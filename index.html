@@ -937,7 +937,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
     <div id="tutorialMiniBoard" class="tutorialMiniBoard"></div>
     <div id="tutorialMiniChallenge" class="nameChallenge" style="display:none">
       <div class="challengeTitle">🎤 Say the name of the matching picture</div>
-      <div id="tutorialChallengeWord" class="challengeWord">dog</div>
+      
       <div class="teacherBtns">
         <button type="button" class="yes">✓</button>
         <button type="button" class="no">✕</button>
@@ -1929,7 +1929,8 @@ const tut=[
  {title:"Practise the object names",demo:"🎯",text:"Push any object name below to hear its American English pronunciation.",main:"",alts:[]},
  {title:"Choose a card",demo:"🔢",text:"Say the number of the card you want to reveal.",main:"Card twenty",alts:["Twenty","Number twenty","Open card twenty","Choose card twenty","Show number twenty"]},
  {title:"Practise all card numbers",demo:"🔢",text:"Push any number below to hear its American English pronunciation.",main:"Twenty",alts:["Twenty"]}
-];let ti=0;
+];let tutorialRestoreVoice=false;
+let ti=0;
 function refreshCategoryTutorial(){
  const d=tut[1];
  const label=selectedGenre==="animals"?"animal":selectedGenre==="fruit"?"fruit":selectedGenre==="food"?"food":selectedGenre==="sports"?"sport":"object";
@@ -1971,19 +1972,18 @@ function playTutorialMiniDemo(){
 
  // First try: 21 dog + 22 horse = not a match.
  tutorialMiniLater(()=>{speak(numberToWords(n1),.78);$("tutorialMiniStatus").textContent=`Say “${titleNumber(n1)}”.`;},600);
- tutorialMiniLater(()=>{drawTutorialMini({0:true});speak("dog",.78);$("tutorialMiniStatus").textContent="Dog.";},2200);
+ tutorialMiniLater(()=>{drawTutorialMini({0:true});$("tutorialMiniStatus").textContent="Card opened.";},2200);
  tutorialMiniLater(()=>{speak(numberToWords(n2),.78);$("tutorialMiniStatus").textContent=`Now say “${titleNumber(n2)}”.`;},4000);
- tutorialMiniLater(()=>{drawTutorialMini({0:true,1:true});speak("horse",.78);$("tutorialMiniStatus").textContent="Horse. Not a match.";},5600);
+ tutorialMiniLater(()=>{drawTutorialMini({0:true,1:true});$("tutorialMiniStatus").textContent="Not a match.";},5600);
  tutorialMiniLater(()=>{speak("Not a match.",.78);},6900);
  tutorialMiniLater(()=>{drawTutorialMini({});$("tutorialMiniStatus").textContent="Try again and remember the pictures.";},8200);
 
  // Second try: 23 dog + 21 dog = match, then naming challenge.
  tutorialMiniLater(()=>{speak(numberToWords(n3),.78);$("tutorialMiniStatus").textContent=`Say “${titleNumber(n3)}”.`;},9800);
- tutorialMiniLater(()=>{drawTutorialMini({2:true});speak("dog",.78);$("tutorialMiniStatus").textContent="Dog.";},11400);
+ tutorialMiniLater(()=>{drawTutorialMini({2:true});$("tutorialMiniStatus").textContent="Card opened.";},11400);
  tutorialMiniLater(()=>{speak(numberToWords(n1),.78);$("tutorialMiniStatus").textContent=`Now say “${titleNumber(n1)}”.`;},13200);
  tutorialMiniLater(()=>{
    drawTutorialMini({0:true,2:true});
-   $("tutorialChallengeWord").textContent="dog";
    $("tutorialMiniChallenge").style.display="block";
    $("tutorialMiniStatus").textContent="They match! Say the picture name.";
  },14800);
@@ -1995,11 +1995,10 @@ function playTutorialMiniDemo(){
 
  // Finish the board: 22 horse + 24 horse.
  tutorialMiniLater(()=>{speak(numberToWords(n2),.78);$("tutorialMiniStatus").textContent=`Now say “${titleNumber(n2)}”.`;},19500);
- tutorialMiniLater(()=>{drawTutorialMini({0:"matched",1:true,2:"matched"});speak("horse",.78);$("tutorialMiniStatus").textContent="Horse.";},21100);
+ tutorialMiniLater(()=>{drawTutorialMini({0:"matched",1:true,2:"matched"});$("tutorialMiniStatus").textContent="Card opened.";},21100);
  tutorialMiniLater(()=>{speak(numberToWords(n4),.78);$("tutorialMiniStatus").textContent=`Now say “${titleNumber(n4)}”.`;},22900);
  tutorialMiniLater(()=>{
    drawTutorialMini({0:"matched",1:true,2:"matched",3:true});
-   $("tutorialChallengeWord").textContent="horse";
    $("tutorialMiniChallenge").style.display="block";
    $("tutorialMiniStatus").textContent="They match! Say the picture name.";
  },24500);
@@ -2088,6 +2087,11 @@ function showTut(){
 }
 function animateDemo(){$("tDemo").animate([{transform:"scale(1)"},{transform:"scale(1.12)"},{transform:"scale(1)"}],{duration:650})}
 $("tutorialBtn").onclick=()=>{
+ tutorialRestoreVoice=!manualVoiceOff;
+ paused=true;
+ try{if(running)recognition.stop()}catch(e){}
+ updateVoiceButton();
+
  // Tutorial always turns the game microphone OFF.
  try{recognition&&recognition.stop()}catch(e){}
  paused=true;
@@ -2098,11 +2102,21 @@ $("tutorialBtn").onclick=()=>{
 $("replayMiniDemo").onclick=()=>playTutorialMiniDemo();
 $("closeTut").onclick=()=>{
  clearTutorialMiniTimers();
+ try{speechSynthesis.cancel()}catch(e){}
+ $("tutorialMiniChallenge").style.display="none";
  $("tutorial").style.display="none";
  // Returning to an active game automatically turns the microphone ON.
  if(gameStarted&&!awaitingName){
   setTimeout(()=>voiceOn(),300);
  }
+
+ if(tutorialRestoreVoice){
+   manualVoiceOff=false;
+   paused=false;
+   updateVoiceButton();
+   if(gameStarted && !awaitingName) setTimeout(startRecognition,250);
+ }
+ tutorialRestoreVoice=false;
 }
 if($("hearShow")) $("hearShow").onclick=()=>{
  const d=tut[ti];
