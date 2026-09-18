@@ -756,7 +756,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
 <body>
-<div class="onlineReleaseLabel" aria-label="Online release 13">Online 13</div>
+<div class="onlineReleaseLabel" aria-label="Online release 14">Online 14</div>
 <div id="startScreen" class="screen">
  <div class="startCard">
   <div class="big">🐾 English Memory Match</div>
@@ -1980,7 +1980,7 @@ showTut();
 </script>
 
 <script>
-// Online multiplayer (Online 13 / internal V113; originally V95): free peer-to-peer rooms using PeerJS cloud signalling.
+// Online multiplayer (Online 14 / internal V114; originally V95): free peer-to-peer rooms using PeerJS cloud signalling.
 // The room host is authoritative. If the host closes the page, the room ends.
 let onlineMode=false, onlineHost=false, onlinePeer=null, hostConn=null, peerConns=[];
 let onlineRoomCode="", onlineMe="", onlineRoster=[];
@@ -2237,8 +2237,18 @@ function startHostedOnlineGame(){
  const state=serializeOnlineState();onlineSendAll({type:"start",roster:onlineRoster,size:selectedSize,start:startingNumber,genre:selectedGenre,difficulty:selectedDifficulty,mode:gameMode,state});broadcastOnlineState();
 }
 // UI mode controls
-$("localPlayBtn").onclick=()=>{onlineMode=false;$("startScreen").classList.remove("onlineSetup");$("onlineLobby").style.display="none";$("playerCountWrap").style.display="";$("startGame").style.display="block";$("liveStats").innerHTML='<span class="pill">⏱️ Time: <b id="liveTime">0.0 s</b></span><span class="pill">❌ Unmatched: <b id="liveMiss">0</b></span><span class="pill">✅ Matches: <b id="liveMatch">0</b></span>'};
-$("onlinePlayBtn").onclick=()=>{onlineMode=true;$("startScreen").classList.add("onlineSetup");$("onlineLobby").style.display="block";$("playerCountWrap").style.display="none";$("startGame").style.display="none"};
+function updatePlayTypeButtons(){
+ const localBtn=$("localPlayBtn"), onlineBtn=$("onlinePlayBtn");
+ localBtn.className=onlineMode?"secondary":"primary";
+ onlineBtn.className=onlineMode?"primary":"secondary";
+ localBtn.style.background=onlineMode?"white":"#23a55a";
+ localBtn.style.color=onlineMode?"":"white";
+ onlineBtn.style.background=onlineMode?"#23a55a":"white";
+ onlineBtn.style.color=onlineMode?"white":"";
+}
+$("localPlayBtn").onclick=()=>{onlineMode=false;updatePlayTypeButtons();$("startScreen").classList.remove("onlineSetup");$("onlineLobby").style.display="none";$("playerCountWrap").style.display="";$("startGame").style.display="block";$("liveStats").innerHTML='<span class="pill">⏱️ Time: <b id="liveTime">0.0 s</b></span><span class="pill">❌ Unmatched: <b id="liveMiss">0</b></span><span class="pill">✅ Matches: <b id="liveMatch">0</b></span>'};
+$("onlinePlayBtn").onclick=()=>{onlineMode=true;updatePlayTypeButtons();$("startScreen").classList.add("onlineSetup");$("onlineLobby").style.display="block";$("playerCountWrap").style.display="none";$("startGame").style.display="none"};
+updatePlayTypeButtons();
 $("showJoinBtn").onclick=()=>{$("joinFields").style.display="block"};
 $("createRoomBtn").onclick=createOnlineRoom;$("joinRoomBtn").onclick=joinOnlineRoom;$("onlineStartBtn").onclick=startHostedOnlineGame;
 // Online turn handling (V100): each player chooses BOTH cards; correct match keeps the turn, wrong match passes it.
