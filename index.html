@@ -747,18 +747,20 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 /* Online/local player emphasis + online two-column scoreboard */
 #players .playerBox{font-size:17px;padding:8px 13px;font-weight:900}
 #players .playerBox.active{border-color:#f28c18;background:#fff1df;color:#9a4b00}
-#players .playerBox.active::before{content:"";display:inline-block;width:15px;height:15px;background:#f28c18;border-radius:3px;margin-right:8px;vertical-align:-2px}
+#players .playerBox.active::before{content:"";display:inline-block;width:23px;height:23px;background:#f28c18;border-radius:4px;margin-right:9px;vertical-align:-6px;box-sizing:border-box;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+#players .playerBox.active::after{content:"";display:inline-block;width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:9px solid #fff;margin-left:-25px;margin-right:12px;vertical-align:-1px;position:relative;left:1px}
 #liveStats.onlineScoreGrid{display:grid !important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 12px;width:min(560px,100%);margin:7px auto !important}
 #liveStats.onlineScoreGrid .onlineScorePlayer{display:flex;align-items:center;gap:9px;background:white;border-radius:14px;padding:9px 11px;box-shadow:0 3px 14px #18366b18;min-width:0}
 #liveStats.onlineScoreGrid .onlineScorePlayer.odd{grid-column:1}
 #liveStats.onlineScoreGrid .onlineScorePlayer.even{grid-column:2}
-#liveStats.onlineScoreGrid .onlineScorePlayer .turnSquare{width:17px;height:17px;border-radius:3px;background:transparent;border:2px solid transparent;flex:0 0 17px}
+#liveStats.onlineScoreGrid .onlineScorePlayer .turnSquare{width:25px;height:25px;border-radius:4px;background:transparent;border:2px solid transparent;flex:0 0 25px;position:relative;box-sizing:border-box}
 #liveStats.onlineScoreGrid .onlineScorePlayer.active .turnSquare{background:#f28c18;border-color:#f28c18}
+#liveStats.onlineScoreGrid .onlineScorePlayer.active .turnSquare::after{content:"";position:absolute;left:8px;top:5px;width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:9px solid #fff}
 #liveStats.onlineScoreGrid .onlineScoreText{min-width:0;text-align:left;line-height:1.2}
 #liveStats.onlineScoreGrid .onlineScoreName{font-size:15px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #liveStats.onlineScoreGrid .onlineScoreMatches{font-size:13px;font-weight:800;margin-top:3px}
 #liveStats.onlineScoreGrid .onlineScoreTime{font-size:12px;font-weight:800;color:#506078;margin-top:3px}
-@media(max-width:380px){#players .playerBox{font-size:15px;padding:7px 10px}#liveStats.onlineScoreGrid{gap:7px}#liveStats.onlineScoreGrid .onlineScorePlayer{padding:8px 7px;gap:6px}#liveStats.onlineScoreGrid .onlineScorePlayer .turnSquare{width:15px;height:15px;flex-basis:15px}.onlineScoreName{font-size:14px !important}}
+@media(max-width:380px){#players .playerBox{font-size:15px;padding:7px 10px}#liveStats.onlineScoreGrid{gap:7px}#liveStats.onlineScoreGrid .onlineScorePlayer{padding:8px 7px;gap:6px}#liveStats.onlineScoreGrid .onlineScorePlayer .turnSquare{width:22px;height:22px;flex-basis:22px}.onlineScoreName{font-size:14px !important}}
 </style>
 
 <link rel="manifest" href="./manifest.webmanifest">
