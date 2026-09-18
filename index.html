@@ -11,7 +11,7 @@ button,input,select{font:inherit;min-height:48px;border-radius:11px;border:1px s
 .roleReveal .bigRole{font-size:31px;font-weight:900;margin:8px 0}.roleReveal .desc{color:#c5cbd4;max-width:420px}
 .roleLocked{min-height:120px;display:flex;align-items:center;justify-content:center;text-align:center;color:#aeb7c5;background:#171b22;border:1px dashed #424b5a;border-radius:16px;padding:18px}@media(max-width:420px){.grid{grid-template-columns:1fr}}
 </style></head><body><main class="w">
-<div style="text-align:right;color:#aeb7c5;font-size:13px;font-weight:800;margin-bottom:4px">Version 20</div><section id="home"><h1>🕵️ Mafia</h1><p class="muted">Online Mafia with an automated moderator.</p><div class="c"><label>Your name</label><input id="nm" maxlength="24"><div class="row" style="margin-top:10px"><button id="create" class="red">Create room</button><button id="showJoin">Join room</button></div><div id="joinBox" class="hide"><input id="codeIn" maxlength="6" placeholder="Room code" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-top:7px">Reconnecting? Enter the same room code and exactly the same player name.</div><button id="join" class="green" style="width:100%;margin-top:8px">Join</button></div></div></section>
+<div style="text-align:right;color:#aeb7c5;font-size:13px;font-weight:800;margin-bottom:4px">Version 21</div><section id="home"><h1>🕵️ Mafia</h1><p class="muted">Online Mafia with an automated moderator.</p><div class="c"><label>Your name</label><input id="nm" maxlength="24"><div class="row" style="margin-top:10px"><button id="create" class="red">Create room</button><button id="showJoin">Join room</button></div><div id="joinBox" class="hide"><input id="codeIn" maxlength="6" placeholder="Room code" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-top:7px">Reconnecting? Enter the same room code and exactly the same player name.</div><button id="join" class="green" style="width:100%;margin-top:8px">Join</button></div></div></section>
 <section id="lobby" class="hide"><div class="c"><div class="muted">ROOM CODE</div><div id="code" class="code"></div></div><div class="c"><h2>Players</h2><div id="roster"></div></div><div id="setup" class="c hide"><h2>Classic scenario</h2><div class="row"><label>Mafia<select id="mc"><option>1</option><option selected>2</option><option>3</option></select></label><label>Doctor<select id="dc"><option selected>1</option><option>0</option></select></label><label>Detective<select id="xc"><option selected>1</option><option>0</option></select></label></div><button id="start" class="red" style="width:100%;margin-top:12px">Start game</button></div><div id="wait" class="c hide">Waiting for the host…</div></section>
 <section id="game" class="hide"><div id="playerNameTop" class="playerNameTop"></div><div id="playerRoleTop" style="text-align:center;font-size:14px;font-weight:800;margin-top:-8px;margin-bottom:12px;min-height:20px"></div><div class="c"><div id="phase" class="phase"></div><div id="day"></div></div>
 <div id="roleCardPanel" class="c">
@@ -39,7 +39,7 @@ $("phase").textContent=S.phase;$("day").textContent=(S.phase==="night"?"Night ":
 $("role").textContent=r;
 $("help").textContent=r==="Mafia"?"You are on the Mafia team. At night, choose a player to eliminate.":r==="Doctor"?"You are a Citizen. At night, choose one living player to protect.":r==="Detective"?"You are a Citizen. At night, choose one living player to investigate.":"You are a Citizen. Discuss during the day and try to identify the Mafia.";
 renderRoleCard();
-$("announce").textContent=S.announcement||"";
+if(!detectiveResultActive)$("announce").textContent=S.announcement||"";
 announcePhaseOnce();
 $("night").classList.toggle("hide",S.phase!=="night"||!a);$("dayCard").classList.toggle("hide",S.phase!=="day");$("end").classList.toggle("hide",S.phase!=="ended");if(S.phase==="night"&&a)nightUI(r);if(S.phase==="day")dayUI();if(S.phase==="ended"){$("winner").textContent=S.winner+" wins!";announceWinnerOnce()}}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -108,13 +108,16 @@ function record(id,r,t){
  if(S.pendingDetective){const q=S.pendingDetective;delete S.pendingDetective;send(conns.get(q.id),{type:"detectiveResult",text:q.text})}
 }
 let detectiveResultTimer=null;
+let detectiveResultActive=false;
 function showDetectiveResult(txt){
- if(S.roles&&S.roles[myId]!=="Detective")return;
+ if(!S.roles||S.roles[myId]!=="Detective")return;
  if(detectiveResultTimer)clearTimeout(detectiveResultTimer);
+ detectiveResultActive=true;
  const box=$("announce");
  box.textContent=txt;
  detectiveResultTimer=setTimeout(()=>{
-   box.textContent=S.announcement||"";
+   detectiveResultActive=false;
+   box.textContent=S.announcement||("Night "+S.day+" begins.");
  },5000);
 }
 function required(){return alive().map(p=>p.id)}
@@ -285,7 +288,7 @@ function host(){isHost=true;room=Math.random().toString(36).slice(2,8).toUpperCa
  conns.set(c.peer,c);S.players.push({id:c.peer,name:m.name});sync()
 }if(m.type==="action")record(c.peer,m.role,m.target);if(m.type==="roleSeen"){S.roleSeen=S.roleSeen||{};S.roleSeen[c.peer]=true;sync()}});c.on("close",()=>{if(S.phase==="lobby"){conns.delete(c.peer);S.players=S.players.filter(p=>p.id!==c.peer);sync()}})});peer.on("error",e=>alert("Connection error: "+e.type))}
 function guest(){isHost=false;room=$("codeIn").value.trim().toUpperCase();if(!/^[A-Z0-9]{6}$/.test(room))return alert("Enter the 6-character room code.");peer=new Peer();peer.on("open",id=>{myId=id;hostConn=peer.connect("mafia-"+room.toLowerCase(),{reliable:true});hostConn.on("open",()=>{send(hostConn,{type:"hello",name:myName});$("code").textContent=room;show("lobby")});hostConn.on("data",m=>{if(m.type==="reconnected"){myId=m.id;roleViewed=true;roleRevealing=false}if(m.type==="state"){let wasLobby=S.phase==="lobby",done=S.mineDone&&S.phase===m.s.phase;S=m.s;if(wasLobby&&S.phase!=="lobby"){roleViewed=false;roleRevealing=false}S.mineDone=done;render()}if(m.type==="private"){$("announce").textContent=m.text}
-   if(m.type==="detectiveResult"){showDetectiveResult(m.text)}
+   if(m.type==="detectiveResult"&&S.roles&&S.roles[myId]==="Detective"){setTimeout(()=>showDetectiveResult(m.text),0)}
    if(m.type==="error")alert(m.text)});hostConn.on("close",()=>alert("Connection lost. If the moderator is still in the game, reopen the game and join again using the same room code and exactly the same player name."))});peer.on("error",e=>alert("Connection error: "+e.type))}
 $("roleBack").onclick=revealRoleOnce;
 $("roleBack").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();revealRoleOnce()}};
