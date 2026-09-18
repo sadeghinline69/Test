@@ -756,7 +756,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
 <body>
-<div class="onlineReleaseLabel" aria-label="Online release 10">Online 11</div>
+<div class="onlineReleaseLabel" aria-label="Online release 12">Online 12</div>
 <div id="startScreen" class="screen">
  <div class="startCard">
   <div class="big">🐾 English Memory Match</div>
@@ -1980,11 +1980,51 @@ showTut();
 </script>
 
 <script>
-// Online multiplayer (V95): free peer-to-peer rooms using PeerJS cloud signalling.
+// Online multiplayer (Online 12 / internal V112; originally V95): free peer-to-peer rooms using PeerJS cloud signalling.
 // The room host is authoritative. If the host closes the page, the room ends.
 let onlineMode=false, onlineHost=false, onlinePeer=null, hostConn=null, peerConns=[];
 let onlineRoomCode="", onlineMe="", onlineRoster=[];
 let onlineTimes={}, onlineTurnStartedAt=0, onlineLocalTurnStartedAt=0, lastObservedOnlinePlayer=0;
+const ONLINE_YOUR_TURN_PHRASES=[
+ "It's your turn. Choose two cards.",
+ "Your turn! Pick your first card.",
+ "You're up! Choose a card.",
+ "It's your move. Choose two cards.",
+ "Your turn now. Go ahead and choose a card.",
+ "You're next! Pick a card to begin your turn."
+];
+const ONLINE_OPPONENT_TURN_PHRASES=[
+ "Your turn is over. It's your opponent's turn now.",
+ "Now it's your opponent's turn.",
+ "Your opponent is up. Please wait for your next turn.",
+ "Turn complete. Your opponent plays next.",
+ "It's your opponent's turn now. Get ready for your next turn.",
+ "Your opponent plays now. Your next turn will come soon."
+];
+const ONLINE_CONTINUE_TURN_PHRASES=[
+ "Great! It's still your turn. Choose another card.",
+ "Nice job! You play again. Pick a card.",
+ "Well done! Keep going. It's still your turn.",
+ "Correct! You earned another turn. Choose a card.",
+ "Excellent! Your turn continues. Pick your next card."
+];
+function randomOnlinePhrase(list){return list[Math.floor(Math.random()*list.length)];}
+function announceOnlineTurn(isMine,continuation=false,onEnd=null){
+ const phrase=randomOnlinePhrase(continuation?ONLINE_CONTINUE_TURN_PHRASES:(isMine?ONLINE_YOUR_TURN_PHRASES:ONLINE_OPPONENT_TURN_PHRASES));
+ speak(phrase,.9,onEnd);
+}
+function activateOnlineTurnVoiceWithAnnouncement(continuation=false){
+ manualVoiceOff=false;paused=true;updateVoiceButton();
+ try{if(running)recognition.stop()}catch(e){}
+ announceOnlineTurn(true,continuation,()=>{
+  if(!onlineMode||!gameStarted||myOnlineIndex()!==player||awaitingName)return;
+  manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();
+ });
+}
+function announceOnlineOpponentTurn(){
+ paused=true;updateVoiceButton();try{if(running)recognition.stop()}catch(e){}
+ announceOnlineTurn(false,false);
+}
 function myOnlineIndex(){
  const peerId=onlinePeer&&onlinePeer.id;
  if(peerId){const i=onlineRoster.findIndex(x=>x.peer===peerId);if(i>=0)return i+1;}
@@ -2071,9 +2111,9 @@ function applyOnlineState(s){
  if(s.finished){displayOnlineFinalScoreboard();return;}
  const myIndex=myOnlineIndex();
  if(turnChanged&&myIndex===player&&!awaitingName){
-  manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();
+  activateOnlineTurnVoiceWithAnnouncement(false);
  }else if(turnChanged&&myIndex&&myIndex!==player){
-  paused=true;updateVoiceButton();try{if(running)recognition.stop()}catch(e){}
+  announceOnlineOpponentTurn();
  }
  concealTransientOnlineCardsForViewer(myIndex);
  // Do not leak the active player's private turn feedback to the other screens.
@@ -2117,9 +2157,10 @@ function resolveOnlineNameResult(actorIdx,ok){
   if(actorIdx===hostIdx){
    setMessage("Correct! You play again.");
    speak("Correct",1,()=>{
-    // A correct answer keeps the same turn, so immediately restore card-number voice listening.
+    // A correct answer keeps the same turn. Announce that the player plays again,
+    // then restore card-number voice listening after the announcement finishes.
     if(onlineMode&&onlineHost&&gameStarted&&myOnlineIndex()===player&&!awaitingName){
-     manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();
+     activateOnlineTurnVoiceWithAnnouncement(true);
     }
    });
   }
@@ -2136,7 +2177,7 @@ function resolveOnlineNameResult(actorIdx,ok){
   $("namePrompt").style.display="none";
   commitOnlineTurnTime(player);
   player=player%numPlayers+1;startOnlineTurnClock();lastObservedOnlinePlayer=player;onlineLocalTurnStartedAt=performance.now();
-  if(myOnlineIndex()===player){manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();}else{paused=true;updateVoiceButton();try{if(running)recognition.stop()}catch(e){}}
+  if(myOnlineIndex()===player){activateOnlineTurnVoiceWithAnnouncement(false);}else{announceOnlineOpponentTurn();}
   renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
   setMessage(`${onlineRoster[player-1]?.name||("Player "+player)}'s turn.`);
  }
@@ -2166,7 +2207,9 @@ function joinOnlineRoom(){
       manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();
      }
     };
-    if(m.text)speak(m.text,1,resume);else resume();
+    if(m.text)speak(m.text,1,()=>{
+     if(m.resumeTurnVoice)activateOnlineTurnVoiceWithAnnouncement(true);else resume();
+    });else if(m.resumeTurnVoice)activateOnlineTurnVoiceWithAnnouncement(true);else resume();
    }
    else if(m.type==="privateChallenge"){startPrivateOnlineChallenge(m.animal,m.prompt);}
    else if(m.type==="roster"){onlineRoster=m.roster||[];updateRosterUI()}
@@ -2188,7 +2231,7 @@ function startHostedOnlineGame(){
  scores={};onlineTimes={};for(let i=1;i<=numPlayers;i++){scores[i]=0;onlineTimes[i]=0;}playerResults=[];player=1;onlineTurnStartedAt=performance.now();masterLayout=createMasterLayout();deck=freshDeckFromMaster();
  first=second=matchedAnimal=null;awaitingName=false;answerArmed=false;locked=false;playerMismatches=0;playerSuccessfulMatches=0;
  $("pairs").textContent=0;$("pairTotal").textContent=boardSizes[selectedSize].pairs;renderBoard();updateRosterUI();renderOnlineLiveScoreboard();setMessage(`${onlineRoster[0].name}'s turn.`);
- lastObservedOnlinePlayer=1;onlineLocalTurnStartedAt=performance.now();manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();
+ lastObservedOnlinePlayer=1;onlineLocalTurnStartedAt=performance.now();activateOnlineTurnVoiceWithAnnouncement(false);
  const state=serializeOnlineState();onlineSendAll({type:"start",roster:onlineRoster,size:selectedSize,start:startingNumber,genre:selectedGenre,difficulty:selectedDifficulty,mode:gameMode,state});broadcastOnlineState();
 }
 // UI mode controls
@@ -2249,7 +2292,7 @@ function hostProcessOnlineCard(n,actorIdx){
     first=second=null;matchedAnimal=null;locked=false;
     commitOnlineTurnTime(player);
     player=player%numPlayers+1;startOnlineTurnClock();lastObservedOnlinePlayer=player;onlineLocalTurnStartedAt=performance.now();
-    if(myOnlineIndex()===player){manualVoiceOff=false;paused=false;updateVoiceButton();startRecognition();}else{paused=true;updateVoiceButton();try{if(running)recognition.stop()}catch(e){}}
+    if(myOnlineIndex()===player){activateOnlineTurnVoiceWithAnnouncement(false);}else{announceOnlineOpponentTurn();}
     renderBoard();updateRosterUI();renderOnlineLiveScoreboard();
     setMessage(`${onlineRoster[player-1]?.name||("Player "+player)}'s turn.`);
     broadcastOnlineState();
