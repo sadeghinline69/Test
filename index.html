@@ -2370,4 +2370,22 @@ setInterval(()=>{if(onlineMode&&gameStarted)renderOnlineLiveScoreboard();},250);
 </script>
 
 </body>
-</html>
+</html><style>
+/* V119: keep surrounding player boxes, remove only the play-button icon */
+#players .playerBox{
+  font-size:15px;
+  padding:6px 10px;
+  font-weight:850;
+  background:#fff;
+  border:2px solid transparent;
+  border-radius:14px;
+}
+#players .playerBox.active{
+  border-color:#f28c18;
+  background:#fff1df;
+  color:#9a4b00;
+}
+#players .playerBox.active::before,
+#players .playerBox.active::after{content:none;display:none}
+@media(max-width:380px){#players .playerBox{font-size:14px;padding:5px 8px}}
+</style>
