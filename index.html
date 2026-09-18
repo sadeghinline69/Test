@@ -772,6 +772,14 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 .tutorialMiniCard.matched{background:#e9ffe9;border-color:#21a447}
 .tutorialMiniHint{font-size:14px;font-weight:800;line-height:1.35;margin:7px auto;max-width:500px}
 @media(max-width:420px){.tutorialMiniBoard{grid-template-columns:repeat(2,74px)}.tutorialMiniCard{width:74px;height:74px}}
+
+#tutorialMiniChallenge{max-width:310px;margin:10px auto;padding:12px 14px;background:#fff;border:2px solid #3157d5;border-radius:16px;box-shadow:0 5px 18px #18366b26;text-align:center}
+#tutorialMiniChallenge .challengeTitle{font-size:14px;font-weight:900;margin-bottom:7px}
+#tutorialMiniChallenge .challengeWord{font-size:24px;font-weight:900;color:#3157d5;margin:4px 0 9px}
+#tutorialMiniChallenge .teacherBtns{display:flex;justify-content:center;gap:12px}
+#tutorialMiniChallenge .teacherBtns button{width:48px;height:38px;border:0;border-radius:10px;color:#fff;font-size:22px;font-weight:900}
+#tutorialMiniChallenge .teacherBtns .yes{background:#24a148}
+#tutorialMiniChallenge .teacherBtns .no{background:#d93025}
 </style>
 
 <link rel="manifest" href="./manifest.webmanifest">
@@ -927,6 +935,14 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
   <div id="tutorialMiniGame" style="display:none">
     <div class="tutorialMiniHint">Watch and listen: say a number to open a card. Find the same picture, then say its English name.</div>
     <div id="tutorialMiniBoard" class="tutorialMiniBoard"></div>
+    <div id="tutorialMiniChallenge" class="nameChallenge" style="display:none">
+      <div class="challengeTitle">🎤 Say the name of the matching picture</div>
+      <div class="challengeWord">dog</div>
+      <div class="teacherBtns">
+        <button type="button" class="yes">✓</button>
+        <button type="button" class="no">✕</button>
+      </div>
+    </div>
     <div id="tutorialMiniStatus" class="tutorialMiniHint">The example will play automatically.</div>
     <button id="replayMiniDemo" class="secondary" type="button">▶ Replay</button>
   </div>
@@ -1949,14 +1965,26 @@ function playTutorialMiniDemo(){
  clearTutorialMiniTimers();
  try{speechSynthesis.cancel()}catch(e){}
  drawTutorialMini({});
+ $("tutorialMiniChallenge").style.display="none";
  $("tutorialMiniStatus").textContent="Listen and watch the example.";
  const n1=startingNumber,n2=startingNumber+2;
  tutorialMiniLater(()=>{speak(numberToWords(n1));$("tutorialMiniStatus").textContent=`Say “${titleNumber(n1)}”.`;},300);
  tutorialMiniLater(()=>{drawTutorialMini({0:true});speak("dog");$("tutorialMiniStatus").textContent="The card opens: dog.";},1250);
  tutorialMiniLater(()=>{speak(numberToWords(n2));$("tutorialMiniStatus").textContent=`Now say “${titleNumber(n2)}”.`;},2350);
- tutorialMiniLater(()=>{drawTutorialMini({0:true,2:true});speak("dog");$("tutorialMiniStatus").textContent="They match! Now say the picture name.";},3300);
- tutorialMiniLater(()=>{speak("dog");$("tutorialMiniStatus").textContent="Say “dog”. Correct! The pair is complete.";},4550);
- tutorialMiniLater(()=>{drawTutorialMini({0:"matched",2:"matched"});},5150);
+ tutorialMiniLater(()=>{
+   drawTutorialMini({0:true,2:true});
+   speak("dog");
+   $("tutorialMiniStatus").textContent="They match! Now say the picture name.";
+   $("tutorialMiniChallenge").style.display="block";
+ },3300);
+ tutorialMiniLater(()=>{
+   speak("dog");
+   $("tutorialMiniStatus").textContent="Say “dog”. Correct! The pair is complete.";
+ },4550);
+ tutorialMiniLater(()=>{
+   $("tutorialMiniChallenge").style.display="none";
+   drawTutorialMini({0:"matched",2:"matched"});
+ },5150);
  tutorialMiniLater(()=>{speak("Great job!");$("tutorialMiniStatus").textContent="Great job! That is how you play.";},5550);
 }
 function announceTutorialPage(){
@@ -2000,7 +2028,8 @@ function showTut(){
  $("alts").parentElement.style.display=mini?"none":"";
  if(mini){
    drawTutorialMini({});
-   playTutorialMiniDemo();
+   $("tutorialMiniChallenge").style.display="none";
+   $("tutorialMiniStatus").textContent="The example will play when you open the tutorial.";
    return;
  }
  clearTutorialMiniTimers();
@@ -2041,7 +2070,7 @@ $("tutorialBtn").onclick=()=>{
  paused=true;
  updateVoiceButton();
  $("tutorial").style.display="flex";
- ti=0;showTut();
+ ti=0;showTut();playTutorialMiniDemo();
 }
 $("replayMiniDemo").onclick=()=>playTutorialMiniDemo();
 $("closeTut").onclick=()=>{
@@ -2061,8 +2090,8 @@ if($("hearShow")) $("hearShow").onclick=()=>{
  }
  animateDemo();
 }
-$("prevT").onclick=()=>{ti=(ti+tut.length-1)%tut.length;showTut();if(!tut[ti].mini)announceTutorialPage()}
-$("nextT").onclick=()=>{ti=(ti+1)%tut.length;showTut();if(!tut[ti].mini)announceTutorialPage()}
+$("prevT").onclick=()=>{ti=(ti+tut.length-1)%tut.length;showTut();if(tut[ti].mini)playTutorialMiniDemo();else announceTutorialPage()}
+$("nextT").onclick=()=>{ti=(ti+1)%tut.length;showTut();if(tut[ti].mini)playTutorialMiniDemo();else announceTutorialPage()}
 showTut();
 </script>
 
