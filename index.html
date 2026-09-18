@@ -756,7 +756,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
 <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 </head>
 <body>
-<div class="onlineReleaseLabel" aria-label="Online release 12">Online 12</div>
+<div class="onlineReleaseLabel" aria-label="Online release 13">Online 13</div>
 <div id="startScreen" class="screen">
  <div class="startCard">
   <div class="big">🐾 English Memory Match</div>
@@ -1980,7 +1980,7 @@ showTut();
 </script>
 
 <script>
-// Online multiplayer (Online 12 / internal V112; originally V95): free peer-to-peer rooms using PeerJS cloud signalling.
+// Online multiplayer (Online 13 / internal V113; originally V95): free peer-to-peer rooms using PeerJS cloud signalling.
 // The room host is authoritative. If the host closes the page, the room ends.
 let onlineMode=false, onlineHost=false, onlinePeer=null, hostConn=null, peerConns=[];
 let onlineRoomCode="", onlineMe="", onlineRoster=[];
@@ -2213,7 +2213,7 @@ function joinOnlineRoom(){
    }
    else if(m.type==="privateChallenge"){startPrivateOnlineChallenge(m.animal,m.prompt);}
    else if(m.type==="roster"){onlineRoster=m.roster||[];updateRosterUI()}
-   else if(m.type==="start"){onlineRoster=m.roster||onlineRoster;selectedSize=m.size;startingNumber=m.start;selectedGenre=m.genre;selectedDifficulty=m.difficulty;gameMode=m.mode;gameStarted=true;paused=true;$("startScreen").style.display="none";$("app").style.display="block";$("onlineRoomBar").style.display="block";$("onlineRoomBar").textContent=`🌐 Room ${onlineRoomCode}`;applyOnlineState(m.state)}
+   else if(m.type==="start"){onlineRoster=m.roster||onlineRoster;selectedSize=m.size;startingNumber=m.start;selectedGenre=m.genre;selectedDifficulty=m.difficulty;gameMode=m.mode;gameStarted=true;paused=true;$("tutorialBtn").style.display=gameMode==="exam"?"none":"";if(gameMode==="exam"){$("tutorial").style.display="none";}$("startScreen").style.display="none";$("app").style.display="block";$("onlineRoomBar").style.display="block";$("onlineRoomBar").textContent=`🌐 Room ${onlineRoomCode}`;applyOnlineState(m.state)}
    else if(m.type==="state")applyOnlineState(m);
    else if(m.type==="roomEnded"){gameStarted=false;setMessage("The host ended the online room.")}
   });
@@ -2224,6 +2224,8 @@ function joinOnlineRoom(){
 function startHostedOnlineGame(){
  if(!onlineHost)return; if(onlineRoster.length<2){ostatus("At least 2 players are needed.");return}
  startingNumber=readStartingNumber();gameMode=$("gameMode").value||"practice";numPlayers=onlineRoster.length;
+ $("tutorialBtn").style.display=gameMode==="exam"?"none":"";
+ if(gameMode==="exam"){$("tutorial").style.display="none";}
  animals=pickSix(categories[selectedGenre],selectedDifficulty,boardSizes[selectedSize].pairs);
  $("startScreen").style.display="none";$("app").style.display="block";$("onlineRoomBar").style.display="block";$("onlineRoomBar").textContent=`🌐 Room ${onlineRoomCode}`;
  $("transcript").style.display=gameMode==="exam"?"none":"";gameStarted=true;manualVoiceOff=false;paused=true;
