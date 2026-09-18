@@ -11,7 +11,7 @@ button,input,select{font:inherit;min-height:48px;border-radius:11px;border:1px s
 .roleReveal .bigRole{font-size:31px;font-weight:900;margin:8px 0}.roleReveal .desc{color:#c5cbd4;max-width:420px}
 .roleLocked{min-height:120px;display:flex;align-items:center;justify-content:center;text-align:center;color:#aeb7c5;background:#171b22;border:1px dashed #424b5a;border-radius:16px;padding:18px}@media(max-width:420px){.grid{grid-template-columns:1fr}}
 </style></head><body><main class="w">
-<div style="text-align:right;color:#aeb7c5;font-size:13px;font-weight:800;margin-bottom:4px">Version 22</div><section id="home"><h1>🕵️ Mafia</h1><p class="muted">Online Mafia with an automated moderator.</p><div class="c"><label>Your name</label><input id="nm" maxlength="24"><div class="row" style="margin-top:10px"><button id="create" class="red">Create room</button><button id="showJoin">Join room</button></div><div id="joinBox" class="hide"><input id="codeIn" maxlength="6" placeholder="Room code" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-top:7px">Reconnecting? Enter the same room code and exactly the same player name.</div><button id="join" class="green" style="width:100%;margin-top:8px">Join</button></div></div></section>
+<div style="text-align:right;color:#aeb7c5;font-size:13px;font-weight:800;margin-bottom:4px">Version 25</div><div id="connStatus" style="position:fixed;right:12px;top:42px;z-index:50;font-size:11px;padding:5px 9px;border-radius:999px;background:#202b38;color:#dce9f7">● Connected</div><section id="home"><h1>🕵️ Mafia</h1><p class="muted">Online Mafia with an automated moderator.</p><div class="c"><label>Your name</label><input id="nm" maxlength="24"><div class="row" style="margin-top:10px"><button id="create" class="red">Create room</button><button id="showJoin">Join room</button></div><div id="joinBox" class="hide"><input id="codeIn" maxlength="6" placeholder="Room code" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-top:7px">Reconnecting? Enter the same room code and exactly the same player name.</div><button id="join" class="green" style="width:100%;margin-top:8px">Join</button></div></div></section>
 <section id="lobby" class="hide"><div class="c"><div class="muted">ROOM CODE</div><div id="code" class="code"></div></div><div class="c"><h2>Players</h2><div id="roster"></div></div><div id="setup" class="c hide"><h2>Classic scenario</h2><div class="row"><label>Mafia<select id="mc"><option>1</option><option selected>2</option><option>3</option></select></label><label>Doctor<select id="dc"><option selected>1</option><option>0</option></select></label><label>Detective<select id="xc"><option selected>1</option><option>0</option></select></label></div><button id="start" class="red" style="width:100%;margin-top:12px">Start game</button></div><div id="wait" class="c hide">Waiting for the host…</div></section>
 <section id="game" class="hide"><div id="playerNameTop" class="playerNameTop"></div><div id="playerRoleTop" style="text-align:center;font-size:14px;font-weight:800;margin-top:-8px;margin-bottom:12px;min-height:20px"></div><div class="c"><div id="phase" class="phase"></div><div id="day"></div></div>
 <div id="roleCardPanel" class="c">
@@ -285,11 +285,18 @@ function host(){isHost=true;room=Math.random().toString(36).slice(2,8).toUpperCa
    sync();
    return;
  }
- conns.set(c.peer,c);S.players.push({id:c.peer,name:m.name});sync()
+ const cleanName=(m.name||"").trim();
+ const duplicate=S.players.some(p=>p.name.trim().toLowerCase()===cleanName.toLowerCase());
+ if(duplicate){
+   send(c,{type:"error",text:"This name is already being used by another player. Please choose a different unique name."});
+   try{c.close()}catch(e){}
+   return;
+ }
+ conns.set(c.peer,c);S.players.push({id:c.peer,name:cleanName});sync()
 }if(m.type==="action")record(c.peer,m.role,m.target);if(m.type==="roleSeen"){S.roleSeen=S.roleSeen||{};S.roleSeen[c.peer]=true;sync()}});c.on("close",()=>{if(S.phase==="lobby"){conns.delete(c.peer);S.players=S.players.filter(p=>p.id!==c.peer);sync()}})});peer.on("error",e=>alert("Connection error: "+e.type))}
 function guest(){isHost=false;room=$("codeIn").value.trim().toUpperCase();if(!/^[A-Z0-9]{6}$/.test(room))return alert("Enter the 6-character room code.");peer=new Peer();peer.on("open",id=>{myId=id;hostConn=peer.connect("mafia-"+room.toLowerCase(),{reliable:true});hostConn.on("open",()=>{send(hostConn,{type:"hello",name:myName});$("code").textContent=room;show("lobby")});hostConn.on("data",m=>{if(m.type==="reconnected"){myId=m.id;roleViewed=true;roleRevealing=false}if(m.type==="state"){let wasLobby=S.phase==="lobby",done=S.mineDone&&S.phase===m.s.phase;S=m.s;if(wasLobby&&S.phase!=="lobby"){roleViewed=false;roleRevealing=false}S.mineDone=done;render()}if(m.type==="private"){$("announce").textContent=m.text}
    if(m.type==="detectiveResult"&&S.roles&&S.roles[myId]==="Detective"){setTimeout(()=>showDetectiveResult(m.text),0)}
-   if(m.type==="error")alert(m.text)});hostConn.on("close",()=>alert("Connection lost. If the moderator is still in the game, reopen the game and join again using the same room code and exactly the same player name."))});peer.on("error",e=>alert("Connection error: "+e.type))}
+   if(m.type==="error")alert(m.text)});hostConn.on("close",hostConnectionLost)});peer.on("error",e=>alert("Connection error: "+e.type))}
 $("roleBack").onclick=revealRoleOnce;
 $("roleBack").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();revealRoleOnce()}};
 $("showJoin").onclick=()=>$("joinBox").classList.toggle("hide");$("create").onclick=()=>{myName=$("nm").value.trim();if(!myName)return alert("Enter your name.");host()};$("join").onclick=()=>{myName=$("nm").value.trim();if(!myName)return alert("Enter your name.");guest()};$("start").onclick=()=>{if(S.players.length<4)return alert("At least 4 players are required.");if(!roles())return;roleViewed=false;roleRevealing=false;S.day=1;S.hasHadNight=false;S.lastNightDeaths=[];S.roleSeen={};S.phase="day";S.announcement="Day 1. Reveal your role card once, then discuss. The moderator starts the first night when ready.";sync()};
@@ -303,6 +310,136 @@ $("noKill").addEventListener("click",e=>{
 })();
 
 
+
+document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="visible" && isHost){
+   setConnStatus("● Connected");
+   try{if(peer&&peer.disconnected&&peer.reconnect)peer.reconnect()}catch(e){}
+ }
+});
+
+
+let takeoverTimer=null;
+let takeoverBusy=false;
+function saveBackupState(){
+ try{
+   if(!isHost&&roomCode&&S&&S.players&&S.players.length)
+     sessionStorage.setItem("mafiaBackup:"+roomCode,JSON.stringify(S));
+ }catch(e){}
+}
+function takeoverCandidate(){
+ const ids=(S.players||[]).filter(p=>S.alive?.[p.id]!==false).map(p=>p.id).sort();
+ return ids.length?ids[0]:null;
+}
+function hostConnectionLost(){
+ if(isHost||takeoverBusy||!roomCode||!myId)return;
+ clearTimeout(takeoverTimer);
+ setConnStatus("● Moderator disconnected — recovering…");
+ takeoverTimer=setTimeout(()=>{
+   if(takeoverCandidate()===myId)becomeBackupHost();
+   else scheduleReconnect();
+ },3000);
+}
+function becomeBackupHost(){
+ if(isHost||takeoverBusy)return;
+ takeoverBusy=true;
+ const oldId=myId;
+ try{if(peer&&!peer.destroyed)peer.destroy()}catch(e){}
+ peer=new Peer("mafia-"+roomCode);
+ peer.on("open",()=>{
+   // This device now owns the room peer ID.
+   const me=S.players.find(p=>p.id===oldId);
+   const newId="mafia-"+roomCode;
+   if(me){
+     me.id=newId;
+     for(const k of ["roles","alive","actions","roleSeen"]){
+       if(S[k]&&Object.prototype.hasOwnProperty.call(S[k],oldId)){
+         S[k][newId]=S[k][oldId]; delete S[k][oldId];
+       }
+     }
+   }
+   myId=newId; isHost=true; takeoverBusy=false; conns=new Map();
+   setConnStatus("● Backup moderator active");
+   peer.on("connection",attachBackupClient);
+   show("game");render();
+ });
+ peer.on("error",()=>{takeoverBusy=false;isHost=false;scheduleReconnect()});
+}
+function attachBackupClient(c){
+ c.on("data",m=>{
+   if(m.type==="hello"){
+     const wanted=(m.name||"").trim().toLowerCase();
+     const p=S.players.find(x=>x.name.trim().toLowerCase()===wanted);
+     if(!p){send(c,{type:"error",text:"Use the exact player name from this game."});return}
+     const old=p.id, neu=c.peer;
+     if(old!==neu){
+       p.id=neu;
+       for(const k of ["roles","alive","actions","roleSeen"]){
+         if(S[k]&&Object.prototype.hasOwnProperty.call(S[k],old)){
+           S[k][neu]=S[k][old];delete S[k][old];
+         }
+       }
+     }
+     conns.set(neu,c);
+     send(c,{type:"reconnected",id:neu});
+     sync(); return;
+   }
+   if(m.type==="action")record(c.peer,m.role,m.target);
+   if(m.type==="roleSeen"){S.roleSeen=S.roleSeen||{};S.roleSeen[c.peer]=true;sync()}
+ });
+ c.on("close",()=>conns.delete(c.peer));
+}
+let reconnectTimer=null;
+let reconnectAttempts=0;
+function setConnStatus(text){
+ const e=$("connStatus"); if(e)e.textContent=text;
+}
+function scheduleReconnect(){
+ if(isHost||S.phase==="ended"||!roomCode||!myName)return;
+ clearTimeout(reconnectTimer);
+ setConnStatus("● Reconnecting…");
+ const delay=Math.min(1000*Math.pow(1.7,reconnectAttempts++),10000);
+ reconnectTimer=setTimeout(()=>attemptReconnect(),delay);
+}
+function attemptReconnect(){
+ if(isHost||!roomCode||!myName)return;
+ try{
+   if(peer && !peer.destroyed){
+     if(peer.disconnected && peer.reconnect)peer.reconnect();
+     if(peer.open){
+       const c=peer.connect("mafia-"+roomCode,{reliable:true});
+       attachReconnectConnection(c);
+       return;
+     }
+   }
+ }catch(e){}
+ scheduleReconnect();
+}
+function attachReconnectConnection(c){
+ hostConn=c;
+ c.on("open",()=>{
+   reconnectAttempts=0;
+   setConnStatus("● Connected");
+   send(c,{type:"hello",name:myName});
+ });
+ c.on("data",m=>{
+   if(m.type==="reconnected"){myId=m.id;roleViewed=true;roleRevealing=false}
+   if(m.type==="state"){S=m.s;saveBackupState();show("game");render()}
+   if(m.type==="detectiveResult"&&S.roles&&S.roles[myId]==="Detective"){setTimeout(()=>showDetectiveResult(m.text),0)}
+   if(m.type==="error")alert(m.text);
+ });
+ c.on("close",hostConnectionLost);
+ c.on("error",hostConnectionLost);
+}
+document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="visible" && !isHost && roomCode && myName){
+   setTimeout(attemptReconnect,250);
+ }
+});
+window.addEventListener("online",()=>{
+ if(!isHost && roomCode && myName)setTimeout(attemptReconnect,250);
+});
+window.addEventListener("offline",()=>setConnStatus("● Offline"));
 window.addEventListener("beforeunload",function(e){
  if(S && S.phase && S.phase!=="lobby" && S.phase!=="ended"){
    e.preventDefault();
