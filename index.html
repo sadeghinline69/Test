@@ -11,7 +11,7 @@ button,input,select{font:inherit;min-height:48px;border-radius:11px;border:1px s
 .roleReveal .bigRole{font-size:31px;font-weight:900;margin:8px 0}.roleReveal .desc{color:#c5cbd4;max-width:420px}
 .roleLocked{min-height:120px;display:flex;align-items:center;justify-content:center;text-align:center;color:#aeb7c5;background:#171b22;border:1px dashed #424b5a;border-radius:16px;padding:18px}@media(max-width:420px){.grid{grid-template-columns:1fr}}
 </style></head><body><main class="w">
-<div style="text-align:right;color:#aeb7c5;font-size:13px;font-weight:800;margin-bottom:4px">Version 16</div><section id="home"><h1>🕵️ Mafia</h1><p class="muted">Online Mafia with an automated moderator.</p><div class="c"><label>Your name</label><input id="nm" maxlength="24"><div class="row" style="margin-top:10px"><button id="create" class="red">Create room</button><button id="showJoin">Join room</button></div><div id="joinBox" class="hide"><input id="codeIn" maxlength="6" placeholder="Room code" style="margin-top:10px"><button id="join" class="green" style="width:100%;margin-top:8px">Join</button></div></div></section>
+<div style="text-align:right;color:#aeb7c5;font-size:13px;font-weight:800;margin-bottom:4px">Version 18</div><div id="detectivePrivate" class="hide" style="position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:9999;max-width:90%;background:#111923;border:2px solid #8bbcff;border-radius:14px;padding:14px 18px;text-align:center;font-weight:900;box-shadow:0 8px 30px rgba(0,0,0,.45)"></div><section id="home"><h1>🕵️ Mafia</h1><p class="muted">Online Mafia with an automated moderator.</p><div class="c"><label>Your name</label><input id="nm" maxlength="24"><div class="row" style="margin-top:10px"><button id="create" class="red">Create room</button><button id="showJoin">Join room</button></div><div id="joinBox" class="hide"><input id="codeIn" maxlength="6" placeholder="Room code" style="margin-top:10px"><button id="join" class="green" style="width:100%;margin-top:8px">Join</button></div></div></section>
 <section id="lobby" class="hide"><div class="c"><div class="muted">ROOM CODE</div><div id="code" class="code"></div></div><div class="c"><h2>Players</h2><div id="roster"></div></div><div id="setup" class="c hide"><h2>Classic scenario</h2><div class="row"><label>Mafia<select id="mc"><option>1</option><option selected>2</option><option>3</option></select></label><label>Doctor<select id="dc"><option selected>1</option><option>0</option></select></label><label>Detective<select id="xc"><option selected>1</option><option>0</option></select></label></div><button id="start" class="red" style="width:100%;margin-top:12px">Start game</button></div><div id="wait" class="c hide">Waiting for the host…</div></section>
 <section id="game" class="hide"><div id="playerNameTop" class="playerNameTop"></div><div id="playerRoleTop" style="text-align:center;font-size:14px;font-weight:800;margin-top:-8px;margin-bottom:12px;min-height:20px"></div><div class="c"><div id="phase" class="phase"></div><div id="day"></div></div>
 <div id="roleCardPanel" class="c">
@@ -96,8 +96,12 @@ function record(id,r,t){
    const target=S.players.find(p=>p.id===t);
    const team=S.roles[t]==="Mafia"?"Mafia":"Citizen";
    const txt=`Player number ${idx} (${target.name}) is ${team}.`;
-   if(id===myId){S.announcement=txt;showDetectiveResult(txt)}
-   else S.pendingDetective={id,text:txt};
+   if(id===myId&&isHost){
+     showDetectiveResult(txt);
+   }else{
+     const detectiveConn=conns.get(id);
+     if(detectiveConn)send(detectiveConn,{type:"detectiveResult",text:txt});
+   }
  }
  if(required().every(x=>S.actions[x]))setTimeout(resolveNight,500);
  sync();
@@ -105,14 +109,15 @@ function record(id,r,t){
 }
 let detectiveResultTimer=null;
 function showDetectiveResult(txt){
+ if(S.roles&&S.roles[myId]!=="Detective")return;
  if(detectiveResultTimer)clearTimeout(detectiveResultTimer);
- const box=$("announce");
+ const box=$("detectivePrivate");
  box.textContent=txt;
- box.classList.add("success");
+ box.classList.remove("hide");
  detectiveResultTimer=setTimeout(()=>{
-   box.classList.remove("success");
-   box.textContent=S.announcement||"";
- },5500);
+   box.classList.add("hide");
+   box.textContent="";
+ },5000);
 }
 function required(){return alive().map(p=>p.id)}
 function resolveNight(){if(!isHost||S.phase!=="night")return;let mv={};Object.values(S.actions).filter(a=>a.role==="Mafia").forEach(a=>mv[a.target]=(mv[a.target]||0)+1);let kill=Object.keys(mv).sort((a,b)=>mv[b]-mv[a])[0],doc=Object.values(S.actions).find(a=>a.role==="Doctor");let text="The city wakes up. ";S.lastNightDeaths=[];if(kill&&(!doc||doc.target!==kill)){S.alive[kill]=false;S.lastNightDeaths.push(kill);text+=S.players.find(p=>p.id===kill).name+" died during the night."}else text+="Nobody died during the night.";S.actions={};S.phase="day";S.announcement=text;win();sync()}
@@ -122,7 +127,7 @@ function dayUI(){
  if(isHost){
    $("dayHostTitle").textContent="Moderator controls";
    $("noKill").textContent="🌙 Start Night";
-   $("noKill").disabled=!everyoneSawRole();
+   $("noKill").disabled=false;
    $("kills").innerHTML="";
    alive().forEach(p=>{
      let b=document.createElement("button");
@@ -135,7 +140,14 @@ function dayUI(){
  }
 }
 function everyoneSawRole(){S.roleSeen=S.roleSeen||{};return alive().every(p=>S.roleSeen[p.id])}
-function requireEveryoneSawRole(){if(everyoneSawRole())return true;const w=alive().filter(p=>!S.roleSeen[p.id]).map(p=>p.name);alert("Please wait. Every living player must finish viewing their role card first."+ (w.length?"\n\nWaiting for: "+w.join(", "):""));return false}
+function requireEveryoneSawRole(){
+ if(everyoneSawRole())return true;
+ const w=alive().filter(p=>!S.roleSeen[p.id]).map(p=>p.name);
+ let msg="You cannot start the night yet. Every player must select and reveal their role card before the game can go to the night phase.";
+ if(w.length)msg+="\n\nStill waiting for: "+w.join(", ");
+ alert(msg);
+ return false;
+}
 function eliminate(id){if(!isHost||!requireEveryoneSawRole())return;const p=S.players.find(x=>x.id===id);if(!p||!S.alive[id])return;const n=S.players.findIndex(x=>x.id===id)+1;if(!confirm("Are you sure you want to eliminate Player number "+n+" ("+p.name+")?"))return;S.alive[id]=false;S.announcement=S.players.find(p=>p.id===id).name+" was eliminated by the daytime vote.";if(!win())sync();else sync()}
 function startNight(){
  if(!isHost)return;
