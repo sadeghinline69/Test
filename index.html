@@ -11,7 +11,7 @@ button,input,select{font:inherit;min-height:48px;border-radius:11px;border:1px s
 .roleReveal .bigRole{font-size:31px;font-weight:900;margin:8px 0}.roleReveal .desc{color:#c5cbd4;max-width:420px}
 .roleLocked{min-height:120px;display:flex;align-items:center;justify-content:center;text-align:center;color:#aeb7c5;background:#171b22;border:1px dashed #424b5a;border-radius:16px;padding:18px}@media(max-width:420px){.grid{grid-template-columns:1fr}}
 </style></head><body><main class="w">
-<div style="text-align:right;color:#aeb7c5;font-size:13px;font-weight:800;margin-bottom:4px">Version 26</div><div id="connStatus" style="position:fixed;right:12px;top:42px;z-index:50;font-size:11px;padding:5px 9px;border-radius:999px;background:#202b38;color:#dce9f7">● Connected</div><section id="home"><h1>🕵️ Mafia</h1><p class="muted">Online Mafia with an automated moderator.</p><div class="c"><label>Your name</label><input id="nm" maxlength="24"><div class="row" style="margin-top:10px"><button id="create" class="red">Create room</button><button id="showJoin">Join room</button></div><div id="joinBox" class="hide"><input id="codeIn" maxlength="6" placeholder="Room code" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-top:7px">Reconnecting? Enter the same room code and exactly the same player name.</div><button id="join" class="green" style="width:100%;margin-top:8px">Join</button></div></div></section>
+<div style="text-align:right;color:#aeb7c5;font-size:13px;font-weight:800;margin-bottom:4px">Version 27</div><div id="connStatus" style="position:fixed;right:12px;top:42px;z-index:50;font-size:11px;padding:5px 9px;border-radius:999px;background:#202b38;color:#dce9f7">● Connected</div><section id="home"><h1>🕵️ Mafia</h1><p class="muted">Online Mafia with an automated moderator.</p><div class="c"><label>Your name</label><input id="nm" maxlength="24"><div class="row" style="margin-top:10px"><button id="create" class="red">Create room</button><button id="showJoin">Join room</button></div><div id="joinBox" class="hide"><input id="codeIn" maxlength="6" placeholder="Room code" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-top:7px">Reconnecting? Enter the same room code and exactly the same player name.</div><button id="join" class="green" style="width:100%;margin-top:8px">Join</button></div></div></section>
 <section id="lobby" class="hide"><div class="c"><div class="muted">ROOM CODE</div><div id="code" class="code"></div></div><div class="c"><h2>Players</h2><div id="roster"></div></div><div id="setup" class="c hide"><h2>Classic scenario</h2><div class="row"><label>Mafia<select id="mc"><option>1</option><option selected>2</option><option>3</option></select></label><label>Doctor<select id="dc"><option selected>1</option><option>0</option></select></label><label>Detective<select id="xc"><option selected>1</option><option>0</option></select></label></div><button id="start" class="red" style="width:100%;margin-top:12px">Start game</button></div><div id="wait" class="c hide">Waiting for the host…</div></section>
 <section id="game" class="hide"><div id="playerNameTop" class="playerNameTop"></div><div id="playerRoleTop" style="text-align:center;font-size:14px;font-weight:800;margin-top:-8px;margin-bottom:12px;min-height:20px"></div><div class="c"><div id="phase" class="phase"></div><div id="day"></div></div>
 <div id="roleCardPanel" class="c">
@@ -28,6 +28,7 @@ let S={players:[],phase:"lobby",day:0,roles:{},alive:{},actions:{},announcement:
 let roleViewed=false,roleRevealing=false,roleHideTimer=null;
 const sections=["home","lobby","game"];function show(x){sections.forEach(y=>$(y).classList.toggle("hide",x!==y))}
 const alive=()=>S.players.filter(p=>S.alive[p.id]), me=()=>S.players.find(p=>p.id===myId);
+const mafiaGunHolder=()=>S.players.find(p=>S.alive[p.id]&&S.roles[p.id]==="Mafia")||null;
 function send(c,m){try{if(c&&c.open)c.send(m)}catch(e){}}
 function viewFor(id){return{...S,roles:{[id]:S.roles[id]},actions:{}}}
 function sync(){if(!isHost)return;conns.forEach((c,id)=>send(c,{type:"state",s:viewFor(id)}));render()}
@@ -56,6 +57,8 @@ function revealRoleOnce(){
  roleHideTimer=setTimeout(()=>{roleRevealing=false;roleViewed=true;renderRoleCard();render();if(isHost){S.roleSeen=S.roleSeen||{};S.roleSeen[myId]=true;sync()}else send(hostConn,{type:"roleSeen"})},4000);
 }
 function nightUI(r){
+ const gun=mafiaGunHolder();
+ const actionRole=(r==="Mafia"&&gun&&gun.id!==myId)?"Citizen":r;
  $("actionTitle").textContent="Choose someone";
  let done=!!S.mineDone;
  $("done").classList.toggle("hide",!done);
@@ -69,7 +72,7 @@ function nightUI(r){
    let b=document.createElement("button");
    b.type="button";
    b.textContent=p.name;
-   b.onclick=()=>act(r,p.id);
+   b.onclick=()=>act(actionRole,p.id);
    $("targets").appendChild(b);
  });
 
@@ -77,7 +80,7 @@ function nightUI(r){
  go.type="button";
  go.textContent="☀ Go to Day";
  go.style.marginTop="14px";
- go.onclick=()=>passNight(r);
+ go.onclick=()=>passNight(actionRole);
  $("targets").appendChild(go);
 }
 function act(r,t){S.mineDone=true;if(isHost)record(myId,r,t);else send(hostConn,{type:"action",role:r,target:t});render()}
@@ -88,7 +91,9 @@ function passNight(r){
  render();
 }
 function record(id,r,t){
- if(S.phase!=="night"||!S.alive[id]||S.roles[id]!==r||!["Mafia","Doctor","Detective","Citizen"].includes(r))return;
+ if(S.phase!=="night"||!S.alive[id]||!["Mafia","Doctor","Detective","Citizen"].includes(r))return;
+ const assigned=S.roles[id], gun=mafiaGunHolder();
+ if(!(assigned===r||(assigned==="Mafia"&&gun&&gun.id!==id&&r==="Citizen")))return;
  if(t===null)return;
  S.actions[id]={role:r,target:t};
  if(r==="Detective"&&t!=="__PASS__"){
