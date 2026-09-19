@@ -1,460 +1,59 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mafia Moderator</title><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Color Detective</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
-body{margin:0;background:#101217;color:#f5f5f5;font:16px system-ui}.w{max-width:720px;margin:auto;padding:18px}.c{background:#1b2029;border:1px solid #333b49;border-radius:18px;padding:17px;margin:12px 0}.hide{display:none!important}
-button,input,select{font:inherit;min-height:48px;border-radius:11px;border:1px solid #414a59;padding:9px 12px}input,select{width:100%;box-sizing:border-box;background:#11151b;color:white}button{font-weight:800;cursor:pointer}.red{background:#cf4545;color:white}.green{background:#278858;color:white}.amber{background:#b87518;color:white}
-.row{display:flex;gap:9px;flex-wrap:wrap}.row>*{flex:1;min-width:120px}.p{display:flex;justify-content:space-between;padding:11px;border-bottom:1px solid #343c49}.dead{opacity:.45;text-decoration:line-through}.code{text-align:center;font-size:30px;font-weight:900;letter-spacing:.12em}.role{text-align:center;font-size:28px;font-weight:900}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.note{background:#29313e;padding:12px;border-radius:11px}.muted{color:#aeb7c5}.phase{font-weight:900;text-transform:uppercase;letter-spacing:.1em}
-.playerNameTop{font-size:22px;font-weight:900;margin:0 0 12px;text-align:center;color:#fff}
-.roleBack{min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(145deg,#202733,#11151c);border:2px solid #566174;border-radius:18px;cursor:pointer;user-select:none}
-.roleBack .mark{font-size:58px}.roleBack .tap{font-weight:900}
-.roleReveal{min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px;border-radius:18px;background:#262d39}
-.roleReveal .bigRole{font-size:31px;font-weight:900;margin:8px 0}.roleReveal .desc{color:#c5cbd4;max-width:420px}
-.roleLocked{min-height:120px;display:flex;align-items:center;justify-content:center;text-align:center;color:#aeb7c5;background:#171b22;border:1px dashed #424b5a;border-radius:16px;padding:18px}@media(max-width:420px){.grid{grid-template-columns:1fr}}
-</style></head><body><main class="w">
-<div style="text-align:right;color:#aeb7c5;font-size:13px;font-weight:800;margin-bottom:4px">Version 27</div><div id="connStatus" style="position:fixed;right:12px;top:42px;z-index:50;font-size:11px;padding:5px 9px;border-radius:999px;background:#202b38;color:#dce9f7">● Connected</div><section id="home"><h1>🕵️ Mafia</h1><p class="muted">Online Mafia with an automated moderator.</p><div class="c"><label>Your name</label><input id="nm" maxlength="24"><div class="row" style="margin-top:10px"><button id="create" class="red">Create room</button><button id="showJoin">Join room</button></div><div id="joinBox" class="hide"><input id="codeIn" maxlength="6" placeholder="Room code" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-top:7px">Reconnecting? Enter the same room code and exactly the same player name.</div><button id="join" class="green" style="width:100%;margin-top:8px">Join</button></div></div></section>
-<section id="lobby" class="hide"><div class="c"><div class="muted">ROOM CODE</div><div id="code" class="code"></div></div><div class="c"><h2>Players</h2><div id="roster"></div></div><div id="setup" class="c hide"><h2>Classic scenario</h2><div class="row"><label>Mafia<select id="mc"><option>1</option><option selected>2</option><option>3</option></select></label><label>Doctor<select id="dc"><option selected>1</option><option>0</option></select></label><label>Detective<select id="xc"><option selected>1</option><option>0</option></select></label></div><button id="start" class="red" style="width:100%;margin-top:12px">Start game</button></div><div id="wait" class="c hide">Waiting for the host…</div></section>
-<section id="game" class="hide"><div id="playerNameTop" class="playerNameTop"></div><div id="playerRoleTop" style="text-align:center;font-size:14px;font-weight:800;margin-top:-8px;margin-bottom:12px;min-height:20px"></div><div class="c"><div id="phase" class="phase"></div><div id="day"></div></div>
-<div id="roleCardPanel" class="c">
- <div id="roleBack" class="roleBack" role="button" tabindex="0" aria-label="Reveal your role once"><div class="mark">🎴</div><div class="tap">Tap to reveal your role</div><div class="muted">You can reveal it only once.</div></div>
- <div id="roleReveal" class="roleReveal hide"><div class="muted">YOUR ROLE</div><div id="role" class="bigRole"></div><div id="help" class="desc"></div><div class="muted" style="margin-top:12px">This card will hide automatically.</div></div>
- <div id="roleLocked" class="roleLocked hide">🔒 Your role card has already been viewed.</div>
-</div><div id="announce" class="note"></div>
-<div id="night" class="c hide"><h2 id="actionTitle"></h2><div id="targets" class="grid"></div><div id="done" class="note hide">Action recorded. Wait for the other players.</div></div>
-<div id="dayCard" class="c hide"><h2>☀️ Daytime</h2><p><b>Talk and vote without the app.</b> After the vote, the host taps the player who received the most votes to mark them dead.</p><div id="players"></div><div id="hostKill" class="hide"><h3 id="dayHostTitle">Moderator controls</h3><div id="kills" class="grid"></div><button id="noKill" type="button" class="amber" style="width:100%;margin-top:9px">🌙 Start Night</button></div></div>
-<div id="end" class="c hide"><h1 id="winner"></h1><p>Game over.</p></div></section>
-</main><script>
-(()=>{const $=x=>document.getElementById(x);let peer,hostConn,isHost=false,room="",myId="",myName="",conns=new Map();
-let S={players:[],phase:"lobby",day:0,roles:{},alive:{},actions:{},announcement:"",winner:""};
-let roleViewed=false,roleRevealing=false,roleHideTimer=null;
-const sections=["home","lobby","game"];function show(x){sections.forEach(y=>$(y).classList.toggle("hide",x!==y))}
-const alive=()=>S.players.filter(p=>S.alive[p.id]), me=()=>S.players.find(p=>p.id===myId);
-const mafiaGunHolder=()=>S.players.find(p=>S.alive[p.id]&&S.roles[p.id]==="Mafia")||null;
-function send(c,m){try{if(c&&c.open)c.send(m)}catch(e){}}
-function viewFor(id){return{...S,roles:{[id]:S.roles[id]},actions:{}}}
-function sync(){if(!isHost)return;conns.forEach((c,id)=>send(c,{type:"state",s:viewFor(id)}));render()}
-function render(){if(S.phase==="lobby"){show("lobby");$("roster").innerHTML=S.players.map((p,i)=>`<div class="p"><span>${i+1}. ${esc(p.name)}</span><b>${p.id===myId?"You":""}</b></div>`).join("");$("setup").classList.toggle("hide",!isHost);$("wait").classList.toggle("hide",isHost);return}
-show("game");let r=S.roles[myId]||"Citizen",a=!!S.alive[myId];
-$("playerNameTop").textContent=(me()&&me().name)||myName||"Player";
-$("playerRoleTop").textContent=(roleViewed&&S.roles&&S.roles[myId])?S.roles[myId]:"";
-$("phase").textContent=S.phase;$("day").textContent=(S.phase==="night"?"Night ":"Day ")+S.day;
-$("role").textContent=r;
-$("help").textContent=r==="Mafia"?"You are on the Mafia team. At night, choose a player to eliminate.":r==="Doctor"?"You are a Citizen. At night, choose one living player to protect.":r==="Detective"?"You are a Citizen. At night, choose one living player to investigate.":"You are a Citizen. Discuss during the day and try to identify the Mafia.";
-renderRoleCard();
-if(!detectiveResultActive)$("announce").textContent=S.announcement||"";
-announcePhaseOnce();
-$("night").classList.toggle("hide",S.phase!=="night"||!a);$("dayCard").classList.toggle("hide",S.phase!=="day");$("end").classList.toggle("hide",S.phase!=="ended");if(S.phase==="night"&&a)nightUI(r);if(S.phase==="day")dayUI();if(S.phase==="ended"){$("winner").textContent=S.winner+" wins!";announceWinnerOnce()}}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function renderRoleCard(){
- if(S.phase==="lobby")return;
- $("roleBack").classList.toggle("hide",roleViewed||roleRevealing);
- $("roleReveal").classList.toggle("hide",!roleRevealing);
- $("roleLocked").classList.toggle("hide",!roleViewed||roleRevealing);
-}
-function revealRoleOnce(){
- if(roleViewed||roleRevealing||S.phase==="lobby"||S.phase==="ended")return;
- roleRevealing=true;renderRoleCard();
- clearTimeout(roleHideTimer);
- roleHideTimer=setTimeout(()=>{roleRevealing=false;roleViewed=true;renderRoleCard();render();if(isHost){S.roleSeen=S.roleSeen||{};S.roleSeen[myId]=true;sync()}else send(hostConn,{type:"roleSeen"})},4000);
-}
-function nightUI(r){
- const gun=mafiaGunHolder();
- const actionRole=(r==="Mafia"&&gun&&gun.id!==myId)?"Citizen":r;
- $("actionTitle").textContent="Choose someone";
- let done=!!S.mineDone;
- $("done").classList.toggle("hide",!done);
- $("targets").classList.toggle("hide",done);
- if(done)return;
-
- let ps=alive().filter(p=>r==="Mafia"||p.id!==myId||r==="Doctor"||r==="Citizen");
- $("targets").innerHTML="";
-
- ps.forEach(p=>{
-   let b=document.createElement("button");
-   b.type="button";
-   b.textContent=p.name;
-   b.onclick=()=>act(actionRole,p.id);
-   $("targets").appendChild(b);
- });
-
- let go=document.createElement("button");
- go.type="button";
- go.textContent="☀ Go to Day";
- go.style.marginTop="14px";
- go.onclick=()=>passNight(actionRole);
- $("targets").appendChild(go);
-}
-function act(r,t){S.mineDone=true;if(isHost)record(myId,r,t);else send(hostConn,{type:"action",role:r,target:t});render()}
-function passNight(r){
- S.mineDone=true;
- if(isHost)record(myId,r,"__PASS__");
- else send(hostConn,{type:"action",role:r,target:"__PASS__"});
- render();
-}
-function record(id,r,t){
- if(S.phase!=="night"||!S.alive[id]||!["Mafia","Doctor","Detective","Citizen"].includes(r))return;
- const assigned=S.roles[id], gun=mafiaGunHolder();
- if(!(assigned===r||(assigned==="Mafia"&&gun&&gun.id!==id&&r==="Citizen")))return;
- if(t===null)return;
- S.actions[id]={role:r,target:t};
- if(r==="Detective"&&t!=="__PASS__"){
-   const idx=S.players.findIndex(p=>p.id===t)+1;
-   const target=S.players.find(p=>p.id===t);
-   const team=S.roles[t]==="Mafia"?"Mafia":"Citizen";
-   const txt=`Player number ${idx} (${target.name}) is ${team}.`;
-   if(id===myId&&isHost){
-     showDetectiveResult(txt);
-   }else{
-     const detectiveConn=conns.get(id);
-     if(detectiveConn)send(detectiveConn,{type:"detectiveResult",text:txt});
-   }
- }
- if(required().every(x=>S.actions[x]))setTimeout(resolveNight,500);
- sync();
- if(S.pendingDetective){const q=S.pendingDetective;delete S.pendingDetective;send(conns.get(q.id),{type:"detectiveResult",text:q.text})}
-}
-let detectiveResultTimer=null;
-let detectiveResultActive=false;
-function showDetectiveResult(txt){
- if(!S.roles||S.roles[myId]!=="Detective")return;
- if(detectiveResultTimer)clearTimeout(detectiveResultTimer);
- detectiveResultActive=true;
- const box=$("announce");
- box.textContent=txt;
- detectiveResultTimer=setTimeout(()=>{
-   detectiveResultActive=false;
-   box.textContent=S.announcement||("Night "+S.day+" begins.");
- },5000);
-}
-function required(){return alive().map(p=>p.id)}
-function resolveNight(){if(!isHost||S.phase!=="night")return;let mv={};Object.values(S.actions).filter(a=>a.role==="Mafia").forEach(a=>mv[a.target]=(mv[a.target]||0)+1);let kill=Object.keys(mv).sort((a,b)=>mv[b]-mv[a])[0],doc=Object.values(S.actions).find(a=>a.role==="Doctor");let text="The city wakes up. ";S.lastNightDeaths=[];if(kill&&(!doc||doc.target!==kill)){S.alive[kill]=false;S.lastNightDeaths.push(kill);text+=S.players.find(p=>p.id===kill).name+" died during the night."}else text+="Nobody died during the night.";S.actions={};S.phase="day";S.announcement=text;win();sync()}
-function dayUI(){
- $("players").innerHTML=S.players.map(p=>`<div class="p ${S.alive[p.id]?"":"dead"}"><span>${esc(p.name)}</span><b>${S.alive[p.id]?"Alive":"Dead"}</b></div>`).join("");
- $("hostKill").classList.toggle("hide",!isHost);
- if(isHost){
-   $("dayHostTitle").textContent="Moderator controls";
-   $("noKill").textContent="🌙 Start Night";
-   $("noKill").disabled=false;
-   $("kills").innerHTML="";
-   alive().forEach(p=>{
-     let b=document.createElement("button");
-     b.type="button";
-     b.textContent="☠ Eliminate "+p.name;
-     b.disabled=!everyoneSawRole();
-     b.onclick=()=>eliminate(p.id);
-     $("kills").appendChild(b);
-   });
- }
-}
-function everyoneSawRole(){S.roleSeen=S.roleSeen||{};return alive().every(p=>S.roleSeen[p.id])}
-function requireEveryoneSawRole(){
- if(everyoneSawRole())return true;
- const w=alive().filter(p=>!S.roleSeen[p.id]).map(p=>p.name);
- let msg="You cannot start the night yet. Every player must select and reveal their role card before the game can go to the night phase.";
- if(w.length)msg+="\n\nStill waiting for: "+w.join(", ");
- alert(msg);
- return false;
-}
-function eliminate(id){if(!isHost||!requireEveryoneSawRole())return;const p=S.players.find(x=>x.id===id);if(!p||!S.alive[id])return;const n=S.players.findIndex(x=>x.id===id)+1;if(!confirm("Are you sure you want to eliminate Player number "+n+" ("+p.name+")?"))return;S.alive[id]=false;S.announcement=S.players.find(p=>p.id===id).name+" was eliminated by the daytime vote.";if(!win())sync();else sync()}
-function startNight(){
- if(!isHost)return;
- if(!requireEveryoneSawRole())return;
- const hadNight=!!S.hasHadNight;
- if(hadNight)S.day++;
- S.hasHadNight=true;
- S.phase="night";
- S.actions={};
- S.mineDone=false;
- S.lastNightDeaths=S.lastNightDeaths||[];
- S.announcement="Night "+S.day+" begins.";
- sync();
-}
-const DAY_PHRASES=[
- "Good morning, city. It is daytime. Everyone, wake up and begin the discussion.",
- "The sun is up. The city is awake. It is time to talk.",
- "Morning has arrived. Wake up, everyone. The day phase begins now.",
- "The night is over. Citizens, open your eyes. It is time for discussion.",
- "A new day begins. Everyone, wake up and face the city.",
- "Daylight has returned. Wake up, everyone. The discussion begins.",
- "The city wakes to a new day. Open your eyes and start talking.",
- "Good morning. It is day now. Everyone may speak."
-];
-const NIGHT_PHRASES=[
- "Night has fallen. Everyone, close your eyes and go to sleep.",
- "The city is going to sleep. It is night. Please close your eyes.",
- "Darkness falls over the city. Everyone, go to sleep.",
- "The day is over. Night begins now. Everyone, close your eyes.",
- "The city grows quiet. It is nighttime. Please go to sleep.",
- "Night has arrived. Everyone, close your eyes and remain silent.",
- "The sun has set. The city sleeps. Night roles, prepare for your turn.",
- "It is night now. Everyone, please sleep. The city must be silent."
-];
-let lastDayPhrase=-1,lastNightPhrase=-1,lastSpokenPhaseKey="";
-function pickDifferent(list,last){
- let i=Math.floor(Math.random()*list.length);
- if(list.length>1&&i===last)i=(i+1+Math.floor(Math.random()*(list.length-1)))%list.length;
- return i;
-}
-function speakText(text,delay=0){
- if(!isHost)return;
- setTimeout(()=>{
-  try{
-   if("speechSynthesis" in window){
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text);
-    u.lang="en-US";u.rate=.88;u.pitch=1;u.volume=1;
-    speechSynthesis.speak(u);
-   }
-  }catch(e){}
- },delay);
-}
-function publicNightResultSpeech(){
- if(!S.hasHadNight)return "";
- const dead=S.lastNightDeaths||[];
- if(dead.length===0){
-   const options=["No one died during the night.","Nobody is dead. The city survived the night.","Nothing happened during the night. Everyone is still alive."];
-   return options[Math.floor(Math.random()*options.length)];
- }
- const labels=dead.map(id=>{
-   const i=S.players.findIndex(p=>p.id===id)+1;
-   const p=S.players.find(p=>p.id===id);
-   return p?`Player number ${i}, ${p.name}`:`Player number ${i}`;
- });
- if(labels.length===1)return labels[0]+" is dead.";
- if(labels.length===2)return labels[0]+" and "+labels[1]+" are dead.";
- return labels.slice(0,-1).join(", ")+", and "+labels[labels.length-1]+" are dead.";
-}
-function announcePhaseOnce(){
- if(!["day","night"].includes(S.phase))return;
- const key=S.phase+"-"+S.day;
- if(lastSpokenPhaseKey===key)return;
- lastSpokenPhaseKey=key;
- let text="";
- if(S.phase==="day"){
-  lastDayPhrase=pickDifferent(DAY_PHRASES,lastDayPhrase);
-  text=DAY_PHRASES[lastDayPhrase];
-  const result=publicNightResultSpeech();
-  if(result)text+=" "+result;
- }else{
-  lastNightPhrase=pickDifferent(NIGHT_PHRASES,lastNightPhrase);text=NIGHT_PHRASES[lastNightPhrase];
- }
- speakText(text,180);
-}
-function playVictoryAnnouncement(team){
- if(!isHost)return;
- try{
-   const AC=window.AudioContext||window.webkitAudioContext;
-   if(AC){
-     const ctx=new AC(),now=ctx.currentTime;
-     [0,.22].forEach((delay,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=i?1046:880;g.gain.setValueAtTime(.0001,now+delay);g.gain.exponentialRampToValueAtTime(.32,now+delay+.015);g.gain.exponentialRampToValueAtTime(.0001,now+delay+.18);o.connect(g);g.connect(ctx.destination);o.start(now+delay);o.stop(now+delay+.2)});
-     setTimeout(()=>{try{ctx.close()}catch(e){}},900);
-   }
- }catch(e){}
- setTimeout(()=>{
-   try{
-     if("speechSynthesis" in window){
-       speechSynthesis.cancel();
-       const u=new SpeechSynthesisUtterance(team+" wins!");
-       u.lang="en-US";u.rate=.82;u.pitch=1;u.volume=1;
-       speechSynthesis.speak(u);
-     }
-   }catch(e){}
- },520);
-}
-function announceWinnerOnce(){
- if(S.phase!=="ended"||!S.winner)return;
- const key=S.winner+"-"+S.day;
- if(window.__mafiaWinnerKey===key)return;
- window.__mafiaWinnerKey=key;
- playVictoryAnnouncement(S.winner);
-}
-function win(){let a=alive(),m=a.filter(p=>S.roles[p.id]==="Mafia").length,c=a.length-m;if(m===0){S.phase="ended";S.winner="Citizen team";S.announcement="Citizen team wins! All Mafia players have been eliminated.";return true}if(m>=c){S.phase="ended";S.winner="Mafia team";S.announcement="Mafia team wins! The number of living Mafia is now equal to or greater than the number of living Citizens.";return true}return false}
-function roles(){let n=S.players.length,m=+$("mc").value,d=+$("dc").value,x=+$("xc").value;if(m+d+x>=n){alert("Reduce special roles. At least one ordinary Citizen is required.");return false}let a=[...Array(m).fill("Mafia"),...Array(d).fill("Doctor"),...Array(x).fill("Detective"),...Array(n-m-d-x).fill("Citizen")];for(let i=a.length-1;i;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}S.players.forEach((p,i)=>{S.roles[p.id]=a[i];S.alive[p.id]=true});return true}
-function host(){isHost=true;room=Math.random().toString(36).slice(2,8).toUpperCase();myId="host-"+Math.random().toString(36).slice(2);S.players=[{id:myId,name:myName}];peer=new Peer("mafia-"+room.toLowerCase());peer.on("open",()=>{$("code").textContent=room;show("lobby");render()});peer.on("connection",c=>{c.on("data",m=>{if(m.type==="hello"){
- if(S.phase!=="lobby"){
-   const wanted=(m.name||"").trim().toLowerCase();
-   const oldPlayer=S.players.find(p=>p.name.trim().toLowerCase()===wanted);
-   if(!oldPlayer)return send(c,{type:"error",text:"Game already started. To reconnect, enter the exact name you used in this game."});
-   const oldId=oldPlayer.id;
-   const newId=c.peer;
-   if(oldId!==newId){
-     oldPlayer.id=newId;
-     if(S.roles&&Object.prototype.hasOwnProperty.call(S.roles,oldId)){S.roles[newId]=S.roles[oldId];delete S.roles[oldId]}
-     if(S.alive&&Object.prototype.hasOwnProperty.call(S.alive,oldId)){S.alive[newId]=S.alive[oldId];delete S.alive[oldId]}
-     if(S.actions&&Object.prototype.hasOwnProperty.call(S.actions,oldId)){S.actions[newId]=S.actions[oldId];delete S.actions[oldId]}
-     if(S.roleSeen&&Object.prototype.hasOwnProperty.call(S.roleSeen,oldId)){S.roleSeen[newId]=S.roleSeen[oldId];delete S.roleSeen[oldId]}
-     conns.delete(oldId);
-   }
-   conns.set(newId,c);
-   send(c,{type:"reconnected",id:newId});
-   send(c,{type:"state",s:viewFor(newId)});
-   sync();
-   return;
- }
- const cleanName=(m.name||"").trim();
- const duplicate=S.players.some(p=>p.name.trim().toLowerCase()===cleanName.toLowerCase());
- if(duplicate){
-   send(c,{type:"error",text:"This name is already being used by another player. Please choose a different unique name."});
-   try{c.close()}catch(e){}
-   return;
- }
- conns.set(c.peer,c);S.players.push({id:c.peer,name:cleanName});sync()
-}if(m.type==="action")record(c.peer,m.role,m.target);if(m.type==="roleSeen"){S.roleSeen=S.roleSeen||{};S.roleSeen[c.peer]=true;sync()}});c.on("close",()=>{if(S.phase==="lobby"){conns.delete(c.peer);S.players=S.players.filter(p=>p.id!==c.peer);sync()}})});peer.on("error",e=>alert("Connection error: "+e.type))}
-function guest(){isHost=false;room=$("codeIn").value.trim().toUpperCase();if(!/^[A-Z0-9]{6}$/.test(room))return alert("Enter the 6-character room code.");rememberSession();peer=new Peer();peer.on("open",id=>{myId=id;hostConn=peer.connect("mafia-"+room.toLowerCase(),{reliable:true});hostConn.on("open",()=>{send(hostConn,{type:"hello",name:myName});$("code").textContent=room;show("lobby")});hostConn.on("data",m=>{if(m.type==="reconnected"){myId=m.id;roleViewed=true;roleRevealing=false}if(m.type==="state"){let wasLobby=S.phase==="lobby",done=S.mineDone&&S.phase===m.s.phase;S=m.s;if(wasLobby&&S.phase!=="lobby"){roleViewed=false;roleRevealing=false}S.mineDone=done;render()}if(m.type==="private"){$("announce").textContent=m.text}
-   if(m.type==="detectiveResult"&&S.roles&&S.roles[myId]==="Detective"){setTimeout(()=>showDetectiveResult(m.text),0)}
-   if(m.type==="error")alert(m.text)});hostConn.on("close",hostConnectionLost)});peer.on("error",e=>alert("Connection error: "+e.type))}
-$("roleBack").onclick=revealRoleOnce;
-$("roleBack").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();revealRoleOnce()}};
-$("showJoin").onclick=()=>$("joinBox").classList.toggle("hide");$("create").onclick=()=>{myName=$("nm").value.trim();if(!myName)return alert("Enter your name.");host()};$("join").onclick=()=>{myName=$("nm").value.trim();if(!myName)return alert("Enter your name.");guest()};$("start").onclick=()=>{if(S.players.length<4)return alert("At least 4 players are required.");if(!roles())return;roleViewed=false;roleRevealing=false;S.day=1;S.hasHadNight=false;S.lastNightDeaths=[];S.roleSeen={};S.phase="day";S.announcement="Day 1. Reveal your role card once, then discuss. The moderator starts the first night when ready.";sync()};
-$("noKill").onclick=null;
-$("noKill").addEventListener("click",e=>{
- e.preventDefault();
- e.stopPropagation();
- if(!isHost)return;
- startNight();
-});
-})();
-
-
-
-document.addEventListener("visibilitychange",()=>{
- if(document.visibilityState==="visible" && isHost){
-   setConnStatus("● Connected");
-   try{if(peer&&peer.disconnected&&peer.reconnect)peer.reconnect()}catch(e){}
- }
-});
-
-
-let takeoverTimer=null;
-let takeoverBusy=false;
-function saveBackupState(){
- try{
-   if(!isHost&&roomCode&&S&&S.players&&S.players.length)
-     sessionStorage.setItem("mafiaBackup:"+roomCode,JSON.stringify(S));
- }catch(e){}
-}
-function takeoverCandidate(){
- const ids=(S.players||[]).filter(p=>S.alive?.[p.id]!==false).map(p=>p.id).sort();
- return ids.length?ids[0]:null;
-}
-function hostConnectionLost(){
- if(isHost||takeoverBusy||!roomCode||!myId)return;
- clearTimeout(takeoverTimer);
- setConnStatus("● Moderator disconnected — recovering…");
- takeoverTimer=setTimeout(()=>{
-   if(takeoverCandidate()===myId)becomeBackupHost();
-   else scheduleReconnect();
- },3000);
-}
-function becomeBackupHost(){
- if(isHost||takeoverBusy)return;
- takeoverBusy=true;
- const oldId=myId;
- try{if(peer&&!peer.destroyed)peer.destroy()}catch(e){}
- rememberSession();peer=new Peer("mafia-"+roomCode);
- peer.on("open",()=>{
-   // The backup owns the room connection, but keeps its original player identity.
-   myId=oldId; isHost=true; takeoverBusy=false; conns=new Map();
-   setConnStatus("● Backup moderator active");
-   peer.on("connection",attachBackupClient);
-   show("game");render();
- });
- peer.on("error",()=>{takeoverBusy=false;isHost=false;scheduleReconnect()});
-}
-function attachBackupClient(c){
- c.on("data",m=>{
-   if(m.type==="hello"){
-     const wanted=(m.name||"").trim().toLowerCase();
-     const p=S.players.find(x=>x.name.trim().toLowerCase()===wanted);
-     if(!p){send(c,{type:"error",text:"Use the exact player name from this game."});return}
-     const old=p.id, neu=c.peer;
-     if(old!==neu){
-       p.id=neu;
-       for(const k of ["roles","alive","actions","roleSeen"]){
-         if(S[k]&&Object.prototype.hasOwnProperty.call(S[k],old)){
-           S[k][neu]=S[k][old];delete S[k][old];
-         }
-       }
-     }
-     conns.set(neu,c);
-     send(c,{type:"reconnected",id:neu});
-     sync(); return;
-   }
-   if(m.type==="action")record(c.peer,m.role,m.target);
-   if(m.type==="roleSeen"){S.roleSeen=S.roleSeen||{};S.roleSeen[c.peer]=true;sync()}
- });
- c.on("close",()=>conns.delete(c.peer));
-}
-let reconnectTimer=null;
-let reconnectAttempts=0;
-function setConnStatus(text){
- const e=$("connStatus"); if(e)e.textContent=text;
-}
-function scheduleReconnect(){
- if(isHost||S.phase==="ended"||!roomCode||!myName)return;
- clearTimeout(reconnectTimer);
- setConnStatus("● Reconnecting…");
- const delay=Math.min(1000*Math.pow(1.7,reconnectAttempts++),10000);
- reconnectTimer=setTimeout(()=>attemptReconnect(),delay);
-}
-function attemptReconnect(){
- if(isHost||!roomCode||!myName)return;
- try{
-   if(peer && !peer.destroyed){
-     if(peer.disconnected && peer.reconnect)peer.reconnect();
-     if(peer.open){
-       const c=peer.connect("mafia-"+roomCode,{reliable:true});
-       attachReconnectConnection(c);
-       return;
-     }
-   }
- }catch(e){}
- scheduleReconnect();
-}
-function attachReconnectConnection(c){
- hostConn=c;
- c.on("open",()=>{
-   reconnectAttempts=0;
-   setConnStatus("● Connected");
-   send(c,{type:"hello",name:myName});
- });
- c.on("data",m=>{
-   if(m.type==="reconnected"){myId=m.id;roleViewed=true;roleRevealing=false}
-   if(m.type==="state"){S=m.s;saveBackupState();show("game");render()}
-   if(m.type==="detectiveResult"&&S.roles&&S.roles[myId]==="Detective"){setTimeout(()=>showDetectiveResult(m.text),0)}
-   if(m.type==="error")alert(m.text);
- });
- c.on("close",hostConnectionLost);
- c.on("error",hostConnectionLost);
-}
-document.addEventListener("visibilitychange",()=>{
- if(document.visibilityState==="visible" && !isHost && roomCode && myName){
-   setTimeout(attemptReconnect,250);
- }
-});
-window.addEventListener("online",()=>{
- if(!isHost && roomCode && myName)setTimeout(attemptReconnect,250);
-});
-window.addEventListener("offline",()=>setConnStatus("● Offline"));
-
-function rememberSession(){
- try{
-   if(roomCode)localStorage.setItem("mafiaLastRoom",roomCode);
-   if(myName)localStorage.setItem("mafiaLastName",myName);
- }catch(e){}
-}
-window.addEventListener("load",()=>{
- try{
-   const n=localStorage.getItem("mafiaLastName");
-   const r=localStorage.getItem("mafiaLastRoom");
-   if(n&&$("name"))$("name").value=n;
-   if(r&&$("code"))$("code").value=r;
- }catch(e){}
-});
-window.addEventListener("beforeunload",function(e){
- if(S && S.phase && S.phase!=="lobby" && S.phase!=="ended"){
-   e.preventDefault();
-   e.returnValue="The game will end or you may lose your connection if you refresh or leave this page.";
-   return e.returnValue;
- }
-});
+:root{--bg:#eef7ff;--ink:#16324a;--card:#fff;--blue:#2878ff;--red:#ef476f;--green:#24b47e;--shadow:0 10px 28px #16324a20}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(160deg,#dff3ff,#fff4df);color:var(--ink);min-height:100vh}.ver{position:fixed;z-index:99;right:10px;top:10px;background:#17324d;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}.screen{display:none;min-height:100vh;padding:54px 16px 24px}.screen.active{display:flex;flex-direction:column;align-items:center}.panel{width:min(720px,100%);background:#ffffffdd;border-radius:24px;padding:22px;box-shadow:var(--shadow);backdrop-filter:blur(8px)}h1{font-size:clamp(30px,8vw,54px);margin:8px 0;text-align:center}h2{text-align:center}.sub{text-align:center;opacity:.75;margin-bottom:20px}.row{display:flex;gap:10px;flex-wrap:wrap}.btn,button,select,input{font:inherit}.btn,button{border:0;border-radius:16px;padding:14px 18px;font-weight:800;cursor:pointer}.primary{background:var(--blue);color:white}.secondary{background:#e9f1ff;color:#19436d}.danger{background:var(--red);color:white}.wide{width:100%;margin-top:10px}.field{margin:13px 0}.field label{display:block;font-weight:800;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:2px solid #d9e6f2;border-radius:12px;background:#fff}.topbar{width:min(850px,100%);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:12px}.pill{background:#fff;padding:10px 14px;border-radius:16px;box-shadow:var(--shadow);font-weight:900}.timer{font-size:24px;text-align:center}.score{text-align:right}.board{width:min(850px,100%);display:grid;gap:12px;grid-template-columns:repeat(2,1fr)}.color-card{min-height:120px;border-radius:24px;box-shadow:var(--shadow);border:5px solid transparent;transition:.18s transform,.18s filter,.18s border;position:relative}.color-card.locked{cursor:default}.color-card.ready{cursor:pointer}.color-card.speaking{transform:scale(1.07);filter:brightness(1.18);border-color:#fff;box-shadow:0 0 0 5px #2878ff,0 14px 32px #16324a30}.status{width:min(850px,100%);margin:14px 0;background:#fff;border-radius:18px;padding:13px;text-align:center;font-weight:800;min-height:50px;box-shadow:var(--shadow)}.overlay{position:fixed;inset:0;background:#10273dcc;display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.overlay.show{display:flex}.dialog{width:min(460px,100%);background:#fff;border-radius:26px;padding:24px;text-align:center}.swatch{height:130px;border-radius:20px;margin:14px 0}.mic{font-size:46px}.feedback{font-size:22px;font-weight:900;min-height:32px}.tutorial-demo{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini{height:85px;border-radius:18px}.colors-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.learn{height:80px;border-radius:16px;color:#fff;text-shadow:0 1px 3px #000;font-weight:900}.scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:10px;border-bottom:1px solid #dce7ef;text-align:center}.winner{font-size:28px;font-weight:1000;text-align:center;margin:14px}.hidden{display:none!important}@media(min-width:650px){.board{grid-template-columns:repeat(3,1fr)}.color-card{min-height:145px}.colors-list{grid-template-columns:repeat(3,1fr)}}
+</style></head><body><div class="ver">Version 1</div>
+<section id="home" class="screen active"><div class="panel"><h1>🎨 Color Detective</h1><div class="sub">Listen. Detect. Speak.</div><button class="btn primary wide" onclick="chooseMode('local')">📱 Local Game</button><button class="btn primary wide" onclick="chooseMode('online')">🌐 Online Game</button><button class="btn secondary wide" onclick="openTutorial()">📘 Tutorial</button><p class="sub" style="margin-top:20px">Designed &amp; Created by Sadegh Mosleh · © 2026</p></div></section>
+<section id="setup" class="screen"><div class="panel"><h2 id="setupTitle">Game Setup</h2><div id="localFields"><div class="field"><label>Number of Players</label><select id="playerCount"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div><div id="names"></div></div><div id="onlineFields" class="hidden"><div class="field"><label>Your name</label><input id="onlineName" placeholder="Player name"></div><button class="btn secondary wide" onclick="createRoom()">Create Room</button><div class="field"><label>Room code</label><input id="roomCode" maxlength="6" placeholder="ABC123"></div><button class="btn secondary wide" onclick="joinRoom()">Join Room</button><div id="roomInfo" class="sub"></div></div>
+<div class="field"><label>Difficulty</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div><div class="field"><label>Game Size</label><select id="size"><option value="4">Very Small — 4 colors</option><option value="6" selected>Small — 6 colors</option><option value="8">Medium — 8 colors</option><option value="10">Large — 10 colors</option><option value="12">Very Large — 12 colors</option></select></div><div class="field"><label>Game Time</label><select id="duration"><option value="30">30 seconds</option><option value="60" selected>60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option></select></div><button id="startBtn" class="btn primary wide" onclick="startConfiguredGame()">Start Game</button><button class="btn secondary wide" onclick="show('home')">Back</button></div></section>
+<section id="transition" class="screen"><div class="panel"><h1 id="turnTitle">Ready?</h1><p class="sub">Your timer begins when you press Start.</p><button class="btn primary wide" onclick="beginPlayer()">▶ Start</button></div></section>
+<section id="game" class="screen"><div class="topbar"><div class="pill" id="who">Player</div><div class="pill timer">⏱ <span id="time">60</span></div><div class="pill score">⭐ <span id="score">0</span></div></div><div class="status" id="status">Listen carefully…</div><div id="board" class="board"></div><button id="replay" class="btn secondary" style="margin-top:14px" onclick="replayRound()">🔊 Replay once</button></section>
+<section id="results" class="screen"><div class="panel"><h1>🏆 Results</h1><div id="winner" class="winner"></div><table class="scoreboard"><thead><tr><th>Player</th><th>Score</th><th>Rounds</th><th>Correct</th><th>Wrong</th></tr></thead><tbody id="resultRows"></tbody></table><button class="btn primary wide" onclick="location.reload()">Play Again</button></div></section>
+<section id="tutorial" class="screen"><div class="panel"><h1>📘 Tutorial</h1><div id="tut1"><h2>1. How to Play</h2><p>Listen as each color lights up. One color will be pronounced incorrectly. As soon as a card has been pronounced, you may select it.</p><div class="tutorial-demo"><div class="mini" style="background:#e53935"></div><div class="mini" style="background:#1e88e5"></div><div class="mini" style="background:#43a047;box-shadow:0 0 0 5px #2878ff"></div><div class="mini" style="background:#fdd835"></div></div><p><b>Example:</b> if the green card is called “Blue”, tap the green card. Then say its real name: “Green”.</p><p>✅ Right card + right spoken name: <b>+1</b><br>🟠 Right card + wrong spoken name: <b>−1</b><br>❌ Wrong card: <b>−2</b></p><button class="btn primary wide" onclick="tutPage(2)">Next</button></div><div id="tut2" class="hidden"><h2>2. Practise Color Names</h2><p class="sub">Tap a color to hear its English name.</p><div id="learnColors" class="colors-list"></div><button class="btn secondary wide" onclick="tutPage(1)">Previous</button><button class="btn primary wide" onclick="show('home')">Done</button></div></div></section>
+<div id="speakOverlay" class="overlay"><div class="dialog"><h2>🎤 What color is this?</h2><div id="answerSwatch" class="swatch"></div><div class="mic">🎙️</div><p id="listenText">Say the color name…</p><div id="feedback" class="feedback"></div><button id="retryMic" class="btn secondary wide hidden" onclick="listenForAnswer()">Try microphone again</button><div id="manualFallback" class="hidden"><p>Speech recognition is unavailable. Teacher/manual check:</p><div class="row"><button class="btn primary" onclick="manualJudge(true)">✓ Correct</button><button class="btn danger" onclick="manualJudge(false)">✕ Wrong</button></div></div></div></div>
+<script>
+const VERSION=1;
+const COLORS={easy:[['Red','#e53935'],['Blue','#1e88e5'],['Green','#43a047'],['Yellow','#fdd835'],['Black','#202124'],['White','#f7f7f7']],medium:[['Red','#e53935'],['Blue','#1e88e5'],['Green','#43a047'],['Yellow','#fdd835'],['Black','#202124'],['White','#f7f7f7'],['Orange','#fb8c00'],['Purple','#8e24aa'],['Pink','#ec407a'],['Brown','#795548'],['Gray','#80868b'],['Cyan','#00acc1']],hard:[['Red','#e53935'],['Blue','#1e88e5'],['Green','#43a047'],['Yellow','#fdd835'],['Black','#202124'],['White','#f7f7f7'],['Orange','#fb8c00'],['Purple','#8e24aa'],['Pink','#ec407a'],['Brown','#795548'],['Gray','#80868b'],['Turquoise','#26a69a'],['Navy','#152b5b'],['Beige','#d8c6a5'],['Maroon','#7b1f36'],['Violet','#7e57c2'],['Lime','#8bc34a'],['Gold','#d4af37'],['Silver','#a7a9ac'],['Coral','#ff7043']]};
+let mode='local',players=[],pi=0,score=0,rounds=0,correct=0,wrong=0,endAt=0,timer=null,round=null,replayed=false,roundNo=0,seed=1,settings={};let peer=null,conns=[],hostConn=null,isHost=false,roomPlayers=[],onlineFinished={};
+function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function chooseMode(m){mode=m;show('setup');document.getElementById('setupTitle').textContent=m==='local'?'📱 Local Game':'🌐 Online Game';document.getElementById('localFields').classList.toggle('hidden',m!=='local');document.getElementById('onlineFields').classList.toggle('hidden',m!=='online');document.getElementById('startBtn').classList.toggle('hidden',m==='online');renderNames()}
+function renderNames(){let n=+document.getElementById('playerCount').value,out='';for(let i=0;i<n;i++)out+=`<div class="field"><label>Player ${i+1}</label><input class="pname" value="Player ${i+1}"></div>`;document.getElementById('names').innerHTML=out}document.getElementById('playerCount').onchange=renderNames;
+function readSettings(){return {difficulty:difficulty.value,size:+size.value,duration:+duration.value}}
+function startConfiguredGame(){settings=readSettings();players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));seed=(Date.now()>>>0);pi=0;showTransition()}
+function showTransition(){turnTitle.textContent=`${players[pi].name}, get ready!`;show('transition')}
+function beginPlayer(){score=rounds=correct=wrong=roundNo=0;seed=(settings.baseSeed??seed);document.getElementById('who').textContent=players[pi].name;scoreUI();show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);nextRound()}
+function tick(){let left=Math.max(0,Math.ceil((endAt-performance.now())/1000));time.textContent=left;if(performance.now()>=endAt)finishPlayer()}
+function scoreUI(){document.getElementById('score').textContent=score}
+function rng(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+function shuffled(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function makeRound(){let pool=COLORS[settings.difficulty],n=Math.min(settings.size,pool.length),cards=shuffled(pool).slice(0,n),bad=Math.floor(rng()*n),wrongNames=pool.filter(x=>x[0]!==cards[bad][0]),said=wrongNames[Math.floor(rng()*wrongNames.length)][0];return {cards,bad,said,index:0,active:-1,stopped:false}}
+function nextRound(){if(performance.now()>=endAt)return finishPlayer();rounds++;roundNo++;replayed=false;round=makeRound();renderBoard();status.textContent=`Round ${roundNo} — Listen carefully…`;speakSequence()}
+function renderBoard(){board.innerHTML='';round.cards.forEach((c,i)=>{let b=document.createElement('button');b.className='color-card locked';b.style.background=c[1];b.setAttribute('aria-label',`Color card ${i+1}`);b.onclick=()=>pick(i);board.appendChild(b)});replay.disabled=false}
+function say(text,onend){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.82;u.onend=()=>onend&&onend();u.onerror=()=>onend&&onend();speechSynthesis.speak(u)}
+function speakSequence(){round.index=0;round.stopped=false;stepSpeak()}
+function stepSpeak(){if(!round||round.stopped||performance.now()>=endAt)return;let i=round.index;if(i>=round.cards.length){status.textContent='Choose the color that was pronounced incorrectly.';return}let els=[...board.children];els.forEach(e=>e.classList.remove('speaking'));let e=els[i];e.classList.add('speaking');let spoken=i===round.bad?round.said:round.cards[i][0];say(spoken,()=>{e.classList.remove('speaking');e.classList.remove('locked');e.classList.add('ready');round.active=Math.max(round.active,i);round.index++;setTimeout(stepSpeak,220)})}
+function pick(i){if(!round||round.stopped||i>round.active||performance.now()>=endAt)return;round.stopped=true;speechSynthesis.cancel();if(i!==round.bad){score-=2;wrong++;scoreUI();flash(`❌ Wrong card. −2`,nextRound);return}status.textContent='Correct card! Now say its real color.';openSpeak(round.cards[i])}
+function flash(t,cb){status.textContent=t;setTimeout(()=>{if(performance.now()<endAt)cb();else finishPlayer()},700)}
+function openSpeak(c){answerSwatch.style.background=c[1];speakOverlay.classList.add('show');feedback.textContent='';retryMic.classList.add('hidden');manualFallback.classList.add('hidden');setTimeout(listenForAnswer,250)}
+function listenForAnswer(){if(performance.now()>=endAt)return closeSpeechAndFinish();let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){manualFallback.classList.remove('hidden');listenText.textContent='Microphone speech recognition is not supported here.';return}let r=new SR();r.lang='en-US';r.interimResults=false;r.maxAlternatives=3;listenText.textContent='Listening…';r.onresult=e=>{let heard=[...e.results[0]].map(x=>x.transcript.trim().toLowerCase());judgeSpeech(heard)};r.onerror=()=>{listenText.textContent='I could not hear you.';retryMic.classList.remove('hidden')};r.start()}
+function judgeSpeech(heard){let target=round.cards[round.bad][0].toLowerCase();let ok=heard.some(x=>x===target||x.includes(target));if(ok){score+=1;correct++;feedback.textContent='✅ Correct! +1';say('Correct',()=>setTimeout(closeAndNext,250))}else{score-=1;wrong++;feedback.textContent=`❌ Not correct. The color is ${round.cards[round.bad][0]}. −1`;say(`The color is ${round.cards[round.bad][0]}`,()=>setTimeout(closeAndNext,350))}scoreUI()}
+function manualJudge(ok){if(ok){score++;correct++;feedback.textContent='✅ Correct! +1'}else{score--;wrong++;feedback.textContent=`❌ The color is ${round.cards[round.bad][0]}. −1`}scoreUI();setTimeout(closeAndNext,650)}
+function closeAndNext(){speakOverlay.classList.remove('show');if(performance.now()<endAt)nextRound();else finishPlayer()}
+function closeSpeechAndFinish(){speakOverlay.classList.remove('show');finishPlayer()}
+function replayRound(){if(replayed||!round||round.stopped)return;replayed=true;replay.disabled=true;speechSynthesis.cancel();[...board.children].forEach(e=>{e.classList.add('locked');e.classList.remove('ready','speaking')});round.active=-1;speakSequence()}
+function finishPlayer(){if(!timer)return;clearInterval(timer);timer=null;speechSynthesis.cancel();speakOverlay.classList.remove('show');let res={name:players[pi].name,score,rounds,correct,wrong};players[pi]={...players[pi],...res};if(mode==='online'){sendFinish(res);return}pi++;if(pi<players.length)showTransition();else showResults(players)}
+function showResults(arr){let sorted=[...arr].sort((a,b)=>b.score-a.score||b.rounds-a.rounds);let best=sorted[0]?.score,wins=sorted.filter(x=>x.score===best);winner.textContent=wins.length===1?`🎉 ${wins[0].name} wins!`:`🤝 Tie: ${wins.map(x=>x.name).join(' & ')}`;resultRows.innerHTML=sorted.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.score}</td><td>${x.rounds}</td><td>${x.correct}</td><td>${x.wrong}</td></tr>`).join('');show('results');say(wins.length===1?`${wins[0].name} wins`:'It is a tie')}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function openTutorial(){tutPage(1);let all=COLORS.medium;learnColors.innerHTML=all.map(c=>`<button class="learn" style="background:${c[1]}" onclick="say('${c[0]}')">${c[0]}</button>`).join('');show('tutorial')}
+function tutPage(n){tut1.classList.toggle('hidden',n!==1);tut2.classList.toggle('hidden',n!==2)}
+// Online: host distributes one shared seed/settings; each phone plays independently, then shares final scores.
+function code(){return Math.random().toString(36).slice(2,8).toUpperCase()}
+function createRoom(){let name=onlineName.value.trim()||'Host',c=code();roomCode.value=c;isHost=true;peer=new Peer('color-detective-'+c);peer.on('open',()=>{roomPlayers=[name];roomInfo.textContent=`Room ${c} — waiting for players…`;startBtn.classList.remove('hidden');startBtn.textContent='Start Online Game';startBtn.onclick=startOnlineHost});peer.on('connection',conn=>{conns.push(conn);conn.on('data',d=>hostData(conn,d));conn.on('open',()=>conn.send({type:'helloHost'}))});peer.on('error',e=>roomInfo.textContent='Connection error: '+e.type)}
+function joinRoom(){let name=onlineName.value.trim();let c=roomCode.value.trim().toUpperCase();if(!name||!c)return alert('Enter your name and room code.');isHost=false;peer=new Peer();peer.on('open',()=>{hostConn=peer.connect('color-detective-'+c,{reliable:true});hostConn.on('open',()=>{hostConn.send({type:'join',name});roomInfo.textContent=`Joined room ${c}. Waiting for host…`});hostConn.on('data',guestData);hostConn.on('close',()=>roomInfo.textContent='Host disconnected.');});peer.on('error',e=>roomInfo.textContent='Connection error: '+e.type)}
+function hostData(conn,d){if(d.type==='join'){if(roomPlayers.includes(d.name)){conn.send({type:'reject',msg:'That name is already used.'});return}conn.playerName=d.name;roomPlayers.push(d.name);broadcast({type:'lobby',players:roomPlayers});roomInfo.textContent=`Room ${roomCode.value}: ${roomPlayers.join(', ')}`}if(d.type==='finish'){onlineFinished[d.result.name]=d.result;checkOnlineDone()}}
+function guestData(d){if(d.type==='lobby')roomInfo.textContent='Players: '+d.players.join(', ');if(d.type==='reject')alert(d.msg);if(d.type==='start'){settings=d.settings;settings.baseSeed=d.seed;players=[{name:onlineName.value.trim()}];pi=0;show('transition');turnTitle.textContent=`${players[0].name}, get ready!`;window._onlineTotal=d.players}if(d.type==='results')showResults(d.results)}
+function broadcast(d){conns.forEach(c=>{if(c.open)c.send(d)})}
+function startOnlineHost(){settings=readSettings();let name=onlineName.value.trim()||'Host';seed=(Date.now()>>>0);settings.baseSeed=seed;onlineFinished={};broadcast({type:'start',settings,seed,players:roomPlayers.length});players=[{name}];pi=0;window._onlineTotal=roomPlayers.length;show('transition');turnTitle.textContent=`${name}, get ready!`}
+function sendFinish(res){if(isHost){onlineFinished[res.name]=res;checkOnlineDone()}else{hostConn.send({type:'finish',result:res});status.textContent='Finished! Waiting for other players…';show('game')}}
+function checkOnlineDone(){if(Object.keys(onlineFinished).length>=window._onlineTotal){let results=Object.values(onlineFinished);broadcast({type:'results',results});showResults(results)}else{status.textContent='Finished! Waiting for other players…'}}
 </script></body></html>
