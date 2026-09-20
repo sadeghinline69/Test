@@ -28,7 +28,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 </style>
 </head>
 <body>
-<div class="version">Version 3</div>
+<div class="version">Version 7</div>
 
 <section id="home" class="screen active"><div class="panel">
 <h1>🧮 Math Detective</h1><p class="sub">Think. Choose. Speak.</p>
@@ -65,7 +65,9 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <div class="ops">
 <button class="op" onclick="answer('+')">+</button><button class="op" onclick="answer('-')">−</button>
 <button class="op" onclick="answer('*')">×</button><button class="op" onclick="answer('/')">÷</button>
-</div></div>
+</div>
+<button class="btn secondary" style="margin-top:24px;min-width:150px" onclick="skipQuestion()">⏭ Skip</button>
+</div>
 <div class="actions"><button class="btn secondary" onclick="returnHome()">⌂ Main Menu</button><button class="btn secondary" onclick="openTutorial()">📘 Tutorial</button><button class="btn secondary" onclick="restartSame()">↻ Restart</button></div>
 </section>
 
@@ -78,21 +80,18 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <p class="sub">Find the missing mathematical operation.</p>
 <div class="tutEq">−8 □ −6 = −2</div>
 <div class="tutOps"><div>+</div><div id="tutorialMinus" style="outline:4px solid #24b47e">− ✓</div><div>×</div><div>÷</div></div>
-<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. Here the correct operator is <b>minus</b>.</div>
-<button class="btn primary wide" onclick="playTutorialOperator()">🔊 Hear the operator: Minus</button>
-<p class="sub">The tutorial says the operator name just like the voice answer you can give during the game.</p>
+<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. Here the correct operator is <b>minus</b>.<br><br>If you do not know the answer, tap <b>Skip</b> to move to the next question with <b>no points lost</b>.</div>
 <div class="tutNav"><button class="btn secondary" onclick="closeTutorial()">← Back to Game</button><button class="btn primary" onclick="tutorialPage(2)">Next →</button></div>
 </div>
 <div id="tut2" class="hidden">
 <h2>2. Operation Names</h2>
-<p class="sub">Tap each operation to hear its accepted names.</p>
+<p class="sub">The first operation is pronounced automatically. Tap any operation to hear its accepted names.</p>
 <div class="synGrid">
 <button class="synCard" onclick="speakOperationSet('plus')"><div class="synOp">+</div><div class="synWords">Plus · Add · Addition · Added</div></button>
 <button class="synCard" onclick="speakOperationSet('minus')"><div class="synOp">−</div><div class="synWords">Minus · Subtract · Subtraction · Take away</div></button>
 <button class="synCard" onclick="speakOperationSet('multiply')"><div class="synOp">×</div><div class="synWords">Times · Multiply · Multiplied · Multiplication</div></button>
 <button class="synCard" onclick="speakOperationSet('divide')"><div class="synOp">÷</div><div class="synWords">Divide · Divided by · Division · Over</div></button>
 </div>
-<button class="btn primary wide" onclick="playAllOperations()">🔊 Hear All Operations &amp; Synonyms</button>
 <div class="tutNav"><button class="btn secondary" onclick="tutorialPage(1)">← Previous</button><button class="btn secondary" onclick="closeTutorial()">Back to Game</button></div>
 </div>
 </div></section>
@@ -133,6 +132,13 @@ function generate(){
 function fmt(n){return n<0?`(${n})`:String(n)}
 function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`}
 function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;if(op===current.op){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1';speak('Correct')}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`;speak('Wrong')}$('score').textContent=score;setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}
+function skipQuestion(){
+ if(locked||!current||performance.now()>=endAt)return;
+ locked=true;
+ $('feedback').className='feedback';
+ $('feedback').textContent='Skipped — no points lost';
+ setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},350)
+}
 function symbol(op){return op==='*'?'×':op==='/'?'÷':op}
 function speak(t){if(!('speechSynthesis'in window))return;let was=wantListening;stopListening();let u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.9;u.onend=()=>{if(was&&$('game').classList.contains('active'))startListening()};speechSynthesis.cancel();speechSynthesis.speak(u)}
 const voiceMap={'+':['plus','add','addition','added'],'-':['minus','subtract','subtraction','take away'],'*':['times','multiply','multiplied','multiplication','cross'],'/':['divide','divided','division','over']};
@@ -140,15 +146,33 @@ function detectVoice(t){t=t.toLowerCase().replace(/[^a-z ]/g,' ');for(const [op,
 function startListening(){wantListening=true;if(recognition)return;let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;let r=new SR();recognition=r;r.lang='en-US';r.continuous=false;r.interimResults=false;r.maxAlternatives=5;r.onresult=e=>{let heard=[...e.results[0]].map(x=>x.transcript);recognition=null;let op=heard.map(detectVoice).find(Boolean);if(op){$('feedback').textContent='';answer(op)}else if(!locked&&$('game').classList.contains('active')){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.';if(wantListening)setTimeout(startListening,220)}else if(wantListening&&!locked)setTimeout(startListening,180)};r.onerror=e=>{if(!locked&&$('game').classList.contains('active')&&e.error!=='aborted'){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.'}};r.onend=()=>{if(recognition===r)recognition=null;if(wantListening&&!locked&&$('game').classList.contains('active'))setTimeout(startListening,220)};try{r.start()}catch(e){recognition=null}}
 function stopListening(){wantListening=false;if(recognition){try{recognition.abort()}catch(e){}recognition=null}}
 function openTutorial(){tutorialPausedAt=performance.now();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();tutorialPage(1);show('tutorial');setTimeout(playTutorialOperator,350)}
-function tutorialPage(n){speechSynthesis.cancel();$('tut1').classList.toggle('hidden',n!==1);$('tut2').classList.toggle('hidden',n!==2);if(n===1)setTimeout(playTutorialOperator,250)}
+function tutorialPage(n){speechSynthesis.cancel();$('tut1').classList.toggle('hidden',n!==1);$('tut2').classList.toggle('hidden',n!==2);if(n===1)setTimeout(playTutorialOperator,250);if(n===2)setTimeout(()=>speakOperationSet('plus'),300)}
 function tutorialSay(text,done){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.82;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
 function playTutorialOperator(){tutorialSay('Minus')}
 function speakOperationSet(which){let texts={plus:'Plus. Add. Addition. Added.',minus:'Minus. Subtract. Subtraction. Take away.',multiply:'Times. Multiply. Multiplied. Multiplication.',divide:'Divide. Divided by. Division. Over.'};tutorialSay(texts[which])}
 function playAllOperations(){tutorialSay('Plus. Add. Addition. Added. Minus. Subtract. Subtraction. Take away. Times. Multiply. Multiplied. Multiplication. Divide. Divided by. Division. Over.')}
 function closeTutorial(){let paused=performance.now()-tutorialPausedAt;endAt+=paused;show('game');timer=setInterval(tick,100);startListening()}
-function restartSame(){clearInterval(timer);stopListening();beginPlayer()}
+function restartSame(){
+ clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();
+ // A restart is a fresh game: use a new seed so the mathematics sequence changes.
+ seed=(Date.now()>>>0);
+ settings.baseSeed=seed;
+ if(mode==='online'&&isHost){
+   onlineFinished={};
+   broadcast({type:'start',settings,seed,players:onlineTotal});
+ }
+ beginPlayer()
+}
 function finishPlayer(){if(!timer)return;clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();let res={name:players[pi].name,score,questions,correct,wrong};players[pi]={...players[pi],...res};if(mode==='online'){sendFinish(res);return}pi++;if(pi<players.length)showTransition();else showResults()}
-function showResults(){let sorted=[...players].sort((a,b)=>b.correct-a.correct||b.score-a.score||a.wrong-b.wrong);let best=sorted[0]?.correct,w=sorted.filter(x=>x.correct===best);$('winner').textContent=w.length===1?`🎉 ${w[0].name} wins!`:`🤝 Tie: ${w.map(x=>x.name).join(' & ')}`;$('resultRows').innerHTML=sorted.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.correct}</td><td>${x.wrong}</td><td>${x.score}</td><td>${x.questions}</td></tr>`).join('');show('results')}
+function showResults(results){
+ if(Array.isArray(results)) players=results;
+ let sorted=[...players].sort((a,b)=>b.score-a.score||b.correct-a.correct||a.wrong-b.wrong);
+ let best=sorted[0]?.score;
+ let w=sorted.filter(x=>x.score===best);
+ $('winner').textContent=w.length===1?`🎉 ${w[0].name} wins!`:`🤝 ${w.map(x=>x.name).join(' & ')} win!`;
+ $('resultRows').innerHTML=sorted.map((x,i)=>`<tr><td>${i+1}. ${esc(x.name)}</td><td>${x.correct}</td><td>${x.wrong}</td><td><b>${x.score}</b></td><td>${x.questions}</td></tr>`).join('');
+ show('results')
+}
 function playAgain(){pi=0;showTransition()}
 function returnHome(){clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();show('home')}
 
