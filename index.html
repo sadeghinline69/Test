@@ -28,8 +28,6 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 </style>
 </head>
 <body>
-<div class="version">Version 16</div>
-
 <section id="home" class="screen active"><div class="panel">
 <h1>🧮 Math Detective</h1><p class="sub">Think. Choose. Speak.</p>
 <button class="btn primary wide" onclick="chooseMode('local')">📱 Local Game</button>
@@ -219,33 +217,109 @@ function returnHome(){clearInterval(timer);timer=null;stopListening();speechSynt
 
 function roomCodeNew(){return Math.random().toString(36).slice(2,8).toUpperCase()}
 function readOnlineSettings(){return {gameMode:$('gameMode').value,difficulty:$('difficulty').value,duration:+$('duration').value}}
+let activeRoomCode='',recoverTimer=null,recoveringRoom=false;
+function setupHostPeer(c,recovery=false){
+ activeRoomCode=c;recoveringRoom=recovery;
+ if(recoverTimer){clearTimeout(recoverTimer);recoverTimer=null}
+ try{if(peer&&!peer.destroyed)peer.destroy()}catch(e){}
+ peer=new Peer('math-detective-'+c);
+ peer.on('open',()=>{
+   recoveringRoom=false;
+   $('roomInfo').textContent=recovery?`Room ${c} reconnected — waiting for players…`:`Room ${c} — waiting for players…`;
+   $('startBtn').classList.remove('hidden');$('startBtn').textContent='Start Online Game';$('startBtn').onclick=startOnlineHost;
+ });
+ peer.on('connection',conn=>{
+   conns=conns.filter(x=>x&&x.open);
+   conns.push(conn);
+   conn.on('data',d=>hostData(conn,d));
+   conn.on('close',()=>{conns=conns.filter(x=>x!==conn)});
+ });
+ peer.on('disconnected',()=>scheduleRoomRecovery());
+ peer.on('close',()=>{if(isHost&&activeRoomCode)scheduleRoomRecovery()});
+ peer.on('error',e=>{
+   const temporary=['network','server-error','socket-error','socket-closed','disconnected','browser-incompatible'];
+   if(isHost&&activeRoomCode&&(temporary.includes(e.type)||document.hidden)){
+     $('roomInfo').textContent=`Room ${c} temporarily disconnected — reconnecting…`;
+     scheduleRoomRecovery();
+   }else if(e.type==='unavailable-id'&&recoveringRoom){
+     $('roomInfo').textContent=`Room ${c} is reconnecting…`;
+     recoverTimer=setTimeout(()=>setupHostPeer(c,true),900);
+   }else{
+     $('roomInfo').textContent='Connection error: '+e.type;
+   }
+ });
+}
+function scheduleRoomRecovery(){
+ if(!isHost||!activeRoomCode||recoverTimer)return;
+ $('roomInfo').textContent=`Room ${activeRoomCode} temporarily disconnected — reconnecting…`;
+ recoverTimer=setTimeout(()=>{
+   recoverTimer=null;
+   if(!isHost||!activeRoomCode)return;
+   try{
+     if(peer&&!peer.destroyed&&peer.disconnected&&peer.reconnect){
+       peer.reconnect();
+       $('roomInfo').textContent=`Reconnecting room ${activeRoomCode}…`;
+       return;
+     }
+   }catch(e){}
+   setupHostPeer(activeRoomCode,true);
+ },450);
+}
 function createRoom(){
  let name=$('onlineName').value.trim()||'Host';try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
- let c=roomCodeNew();$('roomCode').value=c;isHost=true;conns=[];roomPlayers=[name];
- peer=new Peer('math-detective-'+c);
- peer.on('open',()=>{$('roomInfo').textContent=`Room ${c} — waiting for players…`; $('startBtn').classList.remove('hidden');$('startBtn').textContent='Start Online Game';$('startBtn').onclick=startOnlineHost});
- peer.on('connection',conn=>{conns.push(conn);conn.on('data',d=>hostData(conn,d));conn.on('close',()=>{});});
- peer.on('error',e=>$('roomInfo').textContent='Connection error: '+e.type)
+ let c=roomCodeNew();$('roomCode').value=c;isHost=true;conns=[];roomPlayers=[name];activeRoomCode=c;
+ setupHostPeer(c,false);
 }
 function joinRoom(){
  let name=$('onlineName').value.trim(),c=$('roomCode').value.trim().toUpperCase();if(!name||!c)return alert('Enter your name and room code.');
  try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
- isHost=false;peer=new Peer();
- peer.on('open',()=>{hostConn=peer.connect('math-detective-'+c,{reliable:true});hostConn.on('open',()=>{hostConn.send({type:'join',name});$('roomInfo').textContent=`Joined room ${c}. Waiting for host…`});hostConn.on('data',guestData);hostConn.on('close',()=>{$('roomInfo').textContent='Host disconnected.'})});
- peer.on('error',e=>$('roomInfo').textContent='Connection error: '+e.type)
+ isHost=false;activeRoomCode=c;peer=new Peer();
+ const connectToHost=()=>{
+   if(hostConn&&hostConn.open)return;
+   hostConn=peer.connect('math-detective-'+c,{reliable:true});
+   hostConn.on('open',()=>{hostConn.send({type:'join',name});$('roomInfo').textContent=`Joined room ${c}. Waiting for host…`});
+   hostConn.on('data',guestData);
+   hostConn.on('close',()=>{$('roomInfo').textContent=`Room ${c} temporarily disconnected — reconnecting…`;setTimeout(connectToHost,700)});
+   hostConn.on('error',()=>{});
+ };
+ peer.on('open',connectToHost);
+ peer.on('disconnected',()=>{try{peer.reconnect()}catch(e){}});
+ peer.on('error',e=>{
+   if(['peer-unavailable','network','server-error','socket-error','socket-closed','disconnected'].includes(e.type)){
+     $('roomInfo').textContent=`Room ${c} temporarily unavailable — reconnecting…`;
+     setTimeout(connectToHost,900);
+   }else $('roomInfo').textContent='Connection error: '+e.type;
+ });
 }
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState==='visible'){
+   if(isHost&&activeRoomCode){
+     if(!peer||peer.destroyed)setupHostPeer(activeRoomCode,true);
+     else if(peer.disconnected){try{peer.reconnect()}catch(e){setupHostPeer(activeRoomCode,true)}}
+   }else if(!isHost&&activeRoomCode&&peer&&peer.disconnected){
+     try{peer.reconnect()}catch(e){}
+   }
+ }
+});
+window.addEventListener('pageshow',()=>{
+ if(isHost&&activeRoomCode&&(!peer||peer.destroyed))setupHostPeer(activeRoomCode,true);
+});
 function broadcast(d){conns.forEach(c=>{if(c.open)c.send(d)})}
 function hostData(conn,d){
- if(d.type==='join'){if(roomPlayers.includes(d.name)){conn.send({type:'reject',msg:'That name is already used.'});return}conn.playerName=d.name;roomPlayers.push(d.name);broadcast({type:'lobby',players:roomPlayers});$('roomInfo').textContent=`Players: ${roomPlayers.join(', ')}`}
+ if(d.type==='join'){let oldConn=conns.find(x=>x!==conn&&x.playerName===d.name);if(oldConn){try{oldConn.close()}catch(e){}conns=conns.filter(x=>x!==oldConn)}conn.playerName=d.name;if(!roomPlayers.includes(d.name))roomPlayers.push(d.name);broadcast({type:'lobby',players:roomPlayers});$('roomInfo').textContent=`Players: ${roomPlayers.join(', ')}`}
  if(d.type==='finish'){onlineFinished[d.result.name]=d.result;checkOnlineDone()}
 }
 function guestData(d){
  if(d.type==='lobby')$('roomInfo').textContent='Players: '+d.players.join(', ');
  if(d.type==='reject')alert(d.msg);
  if(d.type==='start'){mode='online';settings=d.settings;settings.baseSeed=d.seed;seed=d.seed;players=[{name:$('onlineName').value.trim()}];pi=0;onlineTotal=d.players;showTransition();$('turnTitle').textContent=`${players[0].name}, get ready!`}
- if(d.type==='results')showResults(d.results)
+ if(d.type==='results'){players=d.results;showResults(d.results)}
 }
 function startOnlineHost(){
+ if(roomPlayers.length<2){
+   $('roomInfo').textContent='At least 2 players are required. Wait for another player to join.';
+   return;
+ }
  mode='online';settings=readOnlineSettings();seed=(Date.now()>>>0);settings.baseSeed=seed;onlineFinished={};onlineTotal=roomPlayers.length;
  broadcast({type:'start',settings,seed,players:onlineTotal});
  let name=$('onlineName').value.trim()||'Host';players=[{name}];pi=0;showTransition();$('turnTitle').textContent=`${name}, get ready!`
@@ -256,8 +330,15 @@ function sendFinish(res){
  show('game')
 }
 function checkOnlineDone(){
- if(Object.keys(onlineFinished).length>=onlineTotal){let results=Object.values(onlineFinished);broadcast({type:'results',results});showResults(results)}
- else {$('feedback').className='feedback';$('feedback').textContent='Finished! Waiting for other players…'}
+ if(Object.keys(onlineFinished).length>=onlineTotal){
+   let results=Object.values(onlineFinished).sort((a,b)=>b.score-a.score||b.correct-a.correct||a.wrong-b.wrong);
+   // Send the complete final scoreboard to every connected online player.
+   broadcast({type:'results',results});
+   showResults(results);
+ }else{
+   $('feedback').className='feedback';
+   $('feedback').textContent='Finished! Waiting for other players…';
+ }
 }
 try{$('onlineName').value=localStorage.getItem('mathDetectiveOnlineName')||''}catch(e){}
 renderNames();
