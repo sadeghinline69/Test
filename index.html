@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Math Detective</title>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
 <style>
 :root{--ink:#17324d;--blue:#2878ff;--green:#24b47e;--red:#ef476f;--shadow:0 10px 28px #16324a20}
 *{box-sizing:border-box} html,body{min-height:100%;overscroll-behavior-y:auto}
@@ -220,7 +220,7 @@ function readOnlineSettings(){return {gameMode:$('gameMode').value,difficulty:$(
 function createRoom(){
  let name=$('onlineName').value.trim()||'Host';try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
  let c=roomCodeNew();$('roomCode').value=c;isHost=true;conns=[];roomPlayers=[name];
- peer=new Peer('math-detective-'+c,{host:'0.peerjs.com',port:443,path:'/',secure:true,pingInterval:5000});
+ peer=new Peer('math-detective-'+c);
  peer.on('open',()=>{$('roomInfo').textContent=`Room ${c} — waiting for players…`; $('startBtn').classList.remove('hidden');$('startBtn').textContent='Start Online Game';$('startBtn').onclick=startOnlineHost});
  peer.on('connection',conn=>{conns.push(conn);conn.on('data',d=>hostData(conn,d));conn.on('close',()=>{});});
  peer.on('error',e=>{$('roomInfo').textContent='Connection error: '+(e.type||'unknown')+(e.message?' — '+e.message:'')})
@@ -228,7 +228,7 @@ function createRoom(){
 function joinRoom(){
  let name=$('onlineName').value.trim(),c=$('roomCode').value.trim().toUpperCase();if(!name||!c)return alert('Enter your name and room code.');
  try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
- isHost=false;peer=new Peer(undefined,{host:'0.peerjs.com',port:443,path:'/',secure:true,pingInterval:5000});
+ isHost=false;peer=new Peer();
  peer.on('open',()=>{hostConn=peer.connect('math-detective-'+c,{reliable:true});hostConn.on('open',()=>{hostConn.send({type:'join',name});$('roomInfo').textContent=`Joined room ${c}. Waiting for host…`});hostConn.on('data',guestData);hostConn.on('close',()=>{$('roomInfo').textContent='Host disconnected.'})});
  peer.on('error',e=>{$('roomInfo').textContent='Connection error: '+(e.type||'unknown')+(e.message?' — '+e.message:'')})
 }
@@ -283,5 +283,5 @@ function checkOnlineDone(){
 try{$('onlineName').value=localStorage.getItem('mathDetectiveOnlineName')||''}catch(e){}
 renderNames();
 </script>
-<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 24</div>
+<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 25</div>
 </body></html>
