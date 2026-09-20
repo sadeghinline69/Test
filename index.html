@@ -48,7 +48,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <button class="btn secondary wide" onclick="joinRoom()">Join Room</button>
 <div id="roomInfo" class="sub"></div>
 </div>
-<div class="field"><label>Game Mode</label><select id="gameMode"><option value="race" selected>🏁 Race Mode</option><option value="practice">🎓 Practice Mode</option><option value="equation">🎙️ Full Equation Mode</option></select></div><div class="field"><label>Difficulty Level</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
+<div class="field"><label>Game Mode</label><select id="gameMode"><option value="race" selected>🏁 Race Mode</option><option value="practice">🎓 Practice Mode</option></select></div><div class="field"><label>Difficulty Level</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
 <div class="field"><label>Game Time</label><select id="duration"><option value="30" selected>30 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option></select></div>
 <button id="startBtn" class="btn primary wide" onclick="startConfiguredGame()">Start Game</button><button class="btn secondary wide" onclick="show('home')">Back</button>
 </div></section>
@@ -79,7 +79,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <p class="sub">Find the missing mathematical operation.</p>
 <div class="tutEq">−8 □ −6 = −2</div>
 <div class="tutOps"><div>+</div><div id="tutorialMinus" style="outline:4px solid #24b47e">− ✓</div><div>×</div><div>÷</div></div>
-<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. Here the correct operator is <b>minus</b>.<br><br>If you do not know the answer, tap <b>Skip</b> to move to the next question with <b>no points lost</b>.<br><br><b>🏁 Race Mode:</b> fast gameplay with short feedback.<br><b>🎓 Practice Mode:</b> the game asks a varied spoken question before each equation. After the answer, it gives varied spoken feedback and reads the complete correct equation aloud.<br><b>🎙️ Full Equation Mode:</b> find the missing operator mentally, press the red Voice button, and say the complete equation, for example <b>“2 plus 2 equals 4.”</b> Press the button again to stop. Only the complete spoken equation is judged.</div>
+<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. Here the correct operator is <b>minus</b>.<br><br>If you do not know the answer, tap <b>Skip</b> to move to the next question with <b>no points lost</b>.<br><br><b>🏁 Race Mode:</b> fast gameplay with short feedback.<br><b>🎓 Practice Mode:</b> the game asks a varied spoken question before each equation. After the player answers, the game simply says <b>Correct</b> or <b>Wrong</b>.</div>
 <div class="tutNav"><button class="btn secondary" onclick="closeTutorial()">← Back to Game</button><button class="btn primary" onclick="tutorialPage(2)">Next →</button></div>
 </div>
 <div id="tut2" class="hidden">
@@ -107,7 +107,7 @@ function renderNames(){let n=+$('playerCount').value,saved=[];try{saved=JSON.par
 $('playerCount').onchange=renderNames;
 function startConfiguredGame(){settings={gameMode:$('gameMode').value,difficulty:$('difficulty').value,duration:+$('duration').value};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;seed=(Date.now()>>>0);settings.baseSeed=seed;showTransition()}
 function showTransition(){$('turnTitle').textContent=`${players[pi].name}, get ready!`;show('transition')}
-function beginPlayer(){score=questions=correct=wrong=0;seed=mode==='local'?(((settings.baseSeed??seed)+(pi*2654435761))>>>0):(settings.baseSeed??seed);$('who').textContent=players[pi].name;$('score').textContent=0;show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);configureGameModeUI();newQuestion();if(settings.gameMode!=='equation')startListening()}
+function beginPlayer(){score=questions=correct=wrong=0;seed=mode==='local'?(((settings.baseSeed??seed)+(pi*2654435761))>>>0):(settings.baseSeed??seed);$('who').textContent=players[pi].name;$('score').textContent=0;show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);configureGameModeUI();newQuestion();startListening()}
 function tick(){let left=Math.max(0,Math.ceil((endAt-performance.now())/1000));$('time').textContent=left;if(performance.now()>=endAt)finishPlayer()}
 function rng(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 function ri(a,b){return Math.floor(rng()*(b-a+1))+a}
@@ -138,12 +138,10 @@ function spokenNumber(n){return n<0?`negative ${Math.abs(n)}`:String(n)}
 function equationSpeech(q){return `${spokenNumber(q.a)} ${spokenOp(q.op)} ${spokenNumber(q.b)} equals ${spokenNumber(q.r)}.`}
 
 function configureGameModeUI(){
- const full=settings.gameMode==='equation';
  document.querySelector('.ops').style.display='grid';
- document.querySelector('.ops').classList.toggle('guideOnly',full);
- $('equationVoiceBtn').style.display=full?'inline-block':'none';
- $('gameHint').textContent=full?'Find the operator, then press Voice and say the whole equation.':'Tap an operator or say its name.';
- if(full){stopListening();setEquationVoice(false)}
+ document.querySelector('.ops').classList.remove('guideOnly');
+ $('equationVoiceBtn').style.display='none';
+ $('gameHint').textContent='Tap an operator or say its name.';
 }
 function setEquationVoice(on){
  equationVoiceActive=on;
@@ -278,21 +276,10 @@ function practiceSpeak(text,done,rate=.96){stopListening();speechSynthesis.cance
 function speakPracticeAnswer(ok,q,done){
  stopListening();speechSynthesis.cancel();
  if(!('speechSynthesis' in window)){done&&done();return}
- const verdict=new SpeechSynthesisUtterance(ok?'Right':'Wrong');
- verdict.lang='en-US';verdict.rate=.92;verdict.volume=1;
- const parts=[spokenNumber(q.a),spokenOp(q.op),spokenNumber(q.b),'equals',spokenNumber(q.r)];
- let i=0,finished=false;
- function finish(){if(finished)return;finished=true;done&&done()}
- function speakNext(){
-   if(i>=parts.length){setTimeout(finish,300);return}
-   const u=new SpeechSynthesisUtterance(parts[i++]);
-   u.lang='en-US';u.rate=.48;u.volume=1;
-   u.onend=()=>setTimeout(speakNext,650);
-   u.onerror=()=>setTimeout(speakNext,650);
-   speechSynthesis.speak(u);
- }
- verdict.onend=()=>setTimeout(speakNext,1200);
- verdict.onerror=()=>setTimeout(speakNext,1200);
+ const verdict=new SpeechSynthesisUtterance(ok?'Correct':'Wrong');
+ verdict.lang='en-US';verdict.rate=.82;verdict.volume=1;
+ verdict.onend=()=>setTimeout(()=>done&&done(),500);
+ verdict.onerror=()=>setTimeout(()=>done&&done(),500);
  speechSynthesis.speak(verdict);
 }
 function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;equationVoiceTranscript='';equationVoiceCandidates=[];setEquationVoice(false);$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
@@ -300,7 +287,7 @@ function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=
 function skipQuestion(){
  if(locked||!current||performance.now()>=endAt)return;
  locked=true;$('feedback').className='feedback';$('feedback').textContent='Skipped — no points lost';
- if(settings.gameMode==='practice')practiceSpeak(`Skipped. The correct equation is ${equationSpeech(current)}`,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()});
+ if(settings.gameMode==='practice')practiceSpeak('Skipped.',()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()});
  else setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},350)
 }
 function symbol(op){return op==='*'?'×':op==='/'?'÷':op}
@@ -315,7 +302,7 @@ function tutorialSay(text,done){speechSynthesis.cancel();let u=new SpeechSynthes
 function playTutorialOperator(){tutorialSay('Minus')}
 function speakOperationSet(which){let texts={plus:'Plus. Add. Addition. Added.',minus:'Minus. Subtract. Subtraction. Take away.',multiply:'Times. Multiply. Multiplied. Multiplication.',divide:'Divide. Divided by. Division. Over.'};tutorialSay(texts[which])}
 function playAllOperations(){tutorialSay('Plus. Add. Addition. Added. Minus. Subtract. Subtraction. Take away. Times. Multiply. Multiplied. Multiplication. Divide. Divided by. Division. Over.')}
-function closeTutorial(){let paused=performance.now()-tutorialPausedAt;endAt+=paused;show('game');timer=setInterval(tick,100);configureGameModeUI();if(settings.gameMode!=='equation')startListening()}
+function closeTutorial(){let paused=performance.now()-tutorialPausedAt;endAt+=paused;show('game');timer=setInterval(tick,100);configureGameModeUI();startListening()}
 function restartSame(){
  clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();
  // A restart is a fresh game: use a new seed so the mathematics sequence changes.
@@ -423,5 +410,5 @@ function checkOnlineDone(){
 try{$('onlineName').value=localStorage.getItem('mathDetectiveOnlineName')||''}catch(e){}
 renderNames();
 </script>
-<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 29</div>
+<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 30</div>
 </body></html>
