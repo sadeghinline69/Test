@@ -217,14 +217,14 @@ function returnHome(){clearInterval(timer);timer=null;stopListening();speechSynt
 
 function roomCodeNew(){return Math.random().toString(36).slice(2,8).toUpperCase()}
 function readOnlineSettings(){return {gameMode:$('gameMode').value,difficulty:$('difficulty').value,duration:+$('duration').value}}
-let activeRoomCode='',recoverTimer=null,recoveringRoom=false;
+let activeRoomCode='',recoverTimer=null,recoveringRoom=false,hostRoomOpened=false;
 function setupHostPeer(c,recovery=false){
- activeRoomCode=c;recoveringRoom=recovery;
+ activeRoomCode=c;recoveringRoom=recovery;if(!recovery)hostRoomOpened=false;
  if(recoverTimer){clearTimeout(recoverTimer);recoverTimer=null}
  try{if(peer&&!peer.destroyed)peer.destroy()}catch(e){}
  peer=new Peer('math-detective-'+c);
  peer.on('open',()=>{
-   recoveringRoom=false;
+   recoveringRoom=false;hostRoomOpened=true;
    $('roomInfo').textContent=recovery?`Room ${c} reconnected — waiting for players…`:`Room ${c} — waiting for players…`;
    $('startBtn').classList.remove('hidden');$('startBtn').textContent='Start Online Game';$('startBtn').onclick=startOnlineHost;
  });
@@ -234,13 +234,15 @@ function setupHostPeer(c,recovery=false){
    conn.on('data',d=>hostData(conn,d));
    conn.on('close',()=>{conns=conns.filter(x=>x!==conn)});
  });
- peer.on('disconnected',()=>scheduleRoomRecovery());
- peer.on('close',()=>{if(isHost&&activeRoomCode)scheduleRoomRecovery()});
+ peer.on('disconnected',()=>{if(hostRoomOpened)scheduleRoomRecovery()});
+ peer.on('close',()=>{if(isHost&&activeRoomCode&&hostRoomOpened)scheduleRoomRecovery()});
  peer.on('error',e=>{
    const temporary=['network','server-error','socket-error','socket-closed','disconnected','browser-incompatible'];
-   if(isHost&&activeRoomCode&&(temporary.includes(e.type)||document.hidden)){
+   if(isHost&&activeRoomCode&&hostRoomOpened&&(temporary.includes(e.type)||document.hidden)){
      $('roomInfo').textContent=`Room ${c} temporarily disconnected — reconnecting…`;
      scheduleRoomRecovery();
+   }else if(isHost&&!hostRoomOpened&&temporary.includes(e.type)){
+     $('roomInfo').textContent=`Creating room ${c}…`;
    }else if(e.type==='unavailable-id'&&recoveringRoom){
      $('roomInfo').textContent=`Room ${c} is reconnecting…`;
      recoverTimer=setTimeout(()=>setupHostPeer(c,true),900);
@@ -250,7 +252,7 @@ function setupHostPeer(c,recovery=false){
  });
 }
 function scheduleRoomRecovery(){
- if(!isHost||!activeRoomCode||recoverTimer)return;
+ if(!isHost||!activeRoomCode||!hostRoomOpened||recoverTimer)return;
  $('roomInfo').textContent=`Room ${activeRoomCode} temporarily disconnected — reconnecting…`;
  recoverTimer=setTimeout(()=>{
    recoverTimer=null;
@@ -267,7 +269,8 @@ function scheduleRoomRecovery(){
 }
 function createRoom(){
  let name=$('onlineName').value.trim()||'Host';try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
- let c=roomCodeNew();$('roomCode').value=c;isHost=true;conns=[];roomPlayers=[name];activeRoomCode=c;
+ let c=roomCodeNew();$('roomCode').value=c;isHost=true;conns=[];roomPlayers=[name];activeRoomCode=c;hostRoomOpened=false;
+ $('roomInfo').textContent=`Creating room ${c}…`;
  setupHostPeer(c,false);
 }
 function joinRoom(){
