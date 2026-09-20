@@ -1,414 +1,76 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Math Detective</title>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Sequence Switch</title><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
-:root{--ink:#17324d;--blue:#2878ff;--green:#24b47e;--red:#ef476f;--shadow:0 10px 28px #16324a20}
-*{box-sizing:border-box} html,body{min-height:100%;overscroll-behavior-y:auto}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(160deg,#dff3ff,#fff4df);color:var(--ink)}
-.version{position:fixed;right:10px;top:10px;z-index:50;background:#17324d;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900}
-.screen{display:none;min-height:100vh;padding:48px 14px 22px}.screen.active{display:flex;flex-direction:column;align-items:center}
-.panel{width:min(720px,100%);background:#fff;border-radius:24px;padding:22px;box-shadow:var(--shadow)}
-h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h2{text-align:center}.sub{text-align:center;opacity:.75}
-.btn,button,select,input{font:inherit}.btn,button{border:0;border-radius:16px;padding:14px 18px;font-weight:900;cursor:pointer}.primary{background:var(--blue);color:#fff}.secondary{background:#e9f1ff;color:#19436d}.wide{width:100%;margin-top:10px}
-.field{margin:13px 0}.field label{display:block;font-weight:900;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:2px solid #d9e6f2;border-radius:12px;background:#fff;font-size:16px}
-.topbar{width:min(760px,100%);display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px}.pill{background:#fff;padding:10px 13px;border-radius:16px;box-shadow:var(--shadow);font-weight:900}.timer{text-align:center;font-size:22px}.score{text-align:right}
-.gamebox{width:min(760px,100%);background:#dfe7f3;border-radius:30px;padding:24px 16px;min-height:510px;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.equation{font-size:clamp(38px,11vw,70px);font-weight:800;color:#111;text-align:center;margin:12px 0 52px;white-space:nowrap}
-.ops{display:grid;grid-template-columns:repeat(2,minmax(100px,145px));gap:22px 34px}.op{height:128px;background:#fff;border-radius:18px;box-shadow:0 6px 12px #0002;font-size:64px;color:#000;display:flex;align-items:center;justify-content:center}.op:active{transform:scale(.95)}.ops.guideOnly .op{pointer-events:none;cursor:default}.ops.guideOnly .op:active{transform:none}
-.feedback{min-height:38px;margin:12px 0 4px;font-size:24px;font-weight:1000;text-align:center}.listeningBox{display:inline-block;background:#dff7e8;color:#08783f;border:2px solid #35b76f;border-radius:12px;padding:7px 18px;box-shadow:0 2px 6px #0001}.hint{text-align:center;font-weight:800;margin-bottom:10px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}.actions .btn{padding:10px 12px}
-.good{color:#168b56}.bad{color:#d82445}.hidden{display:none!important}
-.scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:10px;border-bottom:1px solid #dce7ef;text-align:center}.rankCell{font-size:20px;font-weight:1000;color:#2878ff}.winner{text-align:center;font-size:27px;font-weight:1000;margin:14px}
-.tutEq{font-size:36px;text-align:center;font-weight:900;margin:18px}.tutOps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:330px;margin:auto}.tutOps div{background:#f2f6fb;border-radius:14px;padding:14px;text-align:center;font-size:30px;font-weight:900}.callout{background:#eef7ff;border-radius:16px;padding:12px;margin:12px 0;font-weight:750}.synGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.synCard{background:#f2f6fb;border-radius:14px;padding:12px;text-align:center}.synOp{font-size:34px;font-weight:1000}.synWords{font-size:14px;font-weight:800;line-height:1.45}.tutNav{display:flex;gap:10px}.tutNav .btn{flex:1}
-@media(max-height:700px){.screen{padding-top:40px}.gamebox{min-height:430px;padding:12px}.equation{margin-bottom:28px}.op{height:100px}.ops{gap:14px 26px}}
-</style>
-</head>
-<body>
-<section id="home" class="screen active"><div class="panel">
-<h1>🧮 Math Detective</h1><p class="sub">Think. Choose. Speak.</p>
-<button class="btn primary wide" onclick="chooseMode('local')">📱 Local Game</button>
-<button class="btn primary wide" onclick="chooseMode('online')">🌐 Online Game</button>
-<p class="sub" style="margin-top:20px">Designed &amp; Created by Sadegh Mosleh · © 2026</p>
-</div></section>
-
-<section id="setup" class="screen"><div class="panel">
-<h2 id="setupTitle">Game Setup</h2>
-<div id="localFields">
-<div class="field"><label>Number of Players</label><select id="playerCount"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
-<div id="names"></div>
-</div>
-<div id="onlineFields" class="hidden">
-<div class="field"><label>Your name</label><input id="onlineName" placeholder="Player name"></div>
-<button class="btn secondary wide" onclick="createRoom()">Create Room</button>
-<div class="field"><label>Room code</label><input id="roomCode" maxlength="6" placeholder="ABC123"></div>
-<button class="btn secondary wide" onclick="joinRoom()">Join Room</button>
-<div id="roomInfo" class="sub"></div>
-</div>
-<div class="field"><label>Difficulty Level</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
-<div class="field"><label>Game Time</label><select id="duration"><option value="30" selected>30 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option></select></div>
-<button id="startBtn" class="btn primary wide" onclick="startConfiguredGame()">Start Game</button><button class="btn secondary wide" onclick="show('home')">Back</button>
-</div></section>
-
-<section id="transition" class="screen"><div class="panel"><h1 id="turnTitle">Ready?</h1><p class="sub">Your timer begins when you press Start.</p><button class="btn primary wide" onclick="beginPlayer()">▶ Start</button></div></section>
-
-<section id="game" class="screen">
-<div class="topbar"><div class="pill" id="who">Player</div><div class="pill timer">⏱ <span id="time">30</span></div><div class="pill score">⭐ <span id="score">0</span></div></div>
-<div class="gamebox">
-<div class="hint" id="gameHint">Tap an operator or say its name.</div><div id="feedback" class="feedback"></div>
-<div id="equation" class="equation"></div>
-<div class="ops">
-<button class="op" onclick="answer('+')">+</button><button class="op" onclick="answer('-')">−</button>
-<button class="op" onclick="answer('*')">×</button><button class="op" onclick="answer('/')">÷</button>
-</div>
-<button id="equationVoiceBtn" class="btn" style="display:none;margin-top:24px;min-width:210px;background:#d9363e;color:white" onclick="toggleEquationVoice()">🎤 Voice: OFF</button>
-<button id="skipBtn" class="btn secondary" style="margin-top:24px;min-width:150px" onclick="skipQuestion()">⏭ Skip</button>
-</div>
-<div class="actions"><button class="btn secondary" onclick="returnHome()">⌂ Main Menu</button><button class="btn secondary" onclick="openTutorial()">📘 Tutorial</button><button class="btn secondary" onclick="restartSame()">↻ Restart</button></div>
-</section>
-
-<section id="results" class="screen"><div class="panel"><h1>🏆 Results</h1><div id="winner" class="winner"></div><table class="scoreboard"><thead><tr><th>Rank</th><th>Player</th><th>Correct</th><th>Wrong</th><th>Score</th><th>Questions</th></tr></thead><tbody id="resultRows"></tbody></table><button class="btn primary wide" onclick="playAgain()">↻ Play Again</button><button class="btn secondary wide" onclick="returnHome()">⌂ Main Menu</button></div></section>
-
-<section id="tutorial" class="screen"><div class="panel">
-<h1>📘 Tutorial</h1>
-<div id="tut1">
-<h2>1. How to Play</h2>
-<p class="sub">Find the missing mathematical operation.</p>
-<div class="tutEq">−8 □ −6 = −2</div>
-<div class="tutOps"><div>+</div><div id="tutorialMinus" style="outline:4px solid #24b47e">− ✓</div><div>×</div><div>÷</div></div>
-<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. Here the correct operator is <b>minus</b>.<br><br>If you do not know the answer, tap <b>Skip</b> to move to the next question with <b>no points lost</b>.</div>
-<div class="tutNav"><button class="btn secondary" onclick="closeTutorial()">← Back to Game</button><button class="btn primary" onclick="tutorialPage(2)">Next →</button></div>
-</div>
-<div id="tut2" class="hidden">
-<h2>2. Operation Names</h2>
-<p class="sub">The first operation is pronounced automatically. Tap any operation to hear its accepted names.</p>
-<div class="synGrid">
-<button class="synCard" onclick="speakOperationSet('plus')"><div class="synOp">+</div><div class="synWords">Plus · Add · Addition · Added</div></button>
-<button class="synCard" onclick="speakOperationSet('minus')"><div class="synOp">−</div><div class="synWords">Minus · Subtract · Subtraction · Take away</div></button>
-<button class="synCard" onclick="speakOperationSet('multiply')"><div class="synOp">×</div><div class="synWords">Times · Multiply · Multiplied · Multiplication</div></button>
-<button class="synCard" onclick="speakOperationSet('divide')"><div class="synOp">÷</div><div class="synWords">Divide · Divided by · Division · Over</div></button>
-</div>
-<div class="tutNav"><button class="btn secondary" onclick="tutorialPage(1)">← Previous</button><button class="btn secondary" onclick="closeTutorial()">Back to Game</button></div>
-</div>
-</div></section>
-
+:root{--ink:#17324d;--blue:#2878ff;--green:#22b573;--red:#ef476f;--shadow:0 10px 28px #16324a20}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(155deg,#dff3ff,#fff3dd);color:var(--ink);min-height:100vh}.version{position:fixed;right:10px;top:10px;z-index:60;background:#17324d;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900}.screen{display:none;min-height:100vh;padding:48px 14px 24px}.screen.active{display:flex;flex-direction:column;align-items:center}.panel{width:min(720px,100%);background:#fff;border-radius:25px;padding:22px;box-shadow:var(--shadow)}h1{text-align:center;font-size:clamp(35px,9vw,57px);margin:8px 0;color:#2449bb}h2{text-align:center;margin:8px}.sub{text-align:center;opacity:.75}.btn,button,select,input{font:inherit}.btn,button{border:0;border-radius:16px;padding:14px 18px;font-weight:900;cursor:pointer}.primary{background:var(--blue);color:#fff}.secondary{background:#e9f1ff;color:#19436d}.danger{background:#ffe4e9;color:#b92040}.wide{width:100%;margin-top:10px}.field{margin:13px 0}.field label{display:block;font-weight:900;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:2px solid #d9e6f2;border-radius:12px;background:#fff;font-size:16px}.row{display:flex;gap:10px}.row>*{flex:1}.homeBtns{display:grid;gap:13px;margin-top:22px}.homeBtns button{font-size:20px;padding:19px}.names{display:grid;gap:8px}.topbar{width:min(760px,100%);display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px}.pill{background:#fff;padding:10px 13px;border-radius:16px;box-shadow:var(--shadow);font-weight:900}.timer{text-align:center;font-size:21px}.score{text-align:right}.gamebox{width:min(760px,100%);background:#f6f9fc;border-radius:30px;padding:18px 12px;min-height:500px;box-shadow:inset 0 0 0 2px #e5edf5;display:flex;flex-direction:column;align-items:center}.roundRule{font-size:25px;font-weight:1000;margin:4px 0 5px}.roundRule.green{color:#15945b}.roundRule.red{color:#d62f51}.status{min-height:30px;text-align:center;font-weight:900;font-size:18px;margin:3px}.board{width:100%;flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-content:center;justify-items:center;max-width:580px;padding:12px}.orb{width:min(25vw,128px);aspect-ratio:1;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:clamp(40px,11vw,70px);box-shadow:0 7px 16px #17324d22;transition:.22s transform,.22s opacity,.22s filter;border:7px solid var(--green);position:relative}.orb.red{border-color:var(--red)}.orb.hiddenOrb{opacity:.08;filter:grayscale(1);transform:scale(.82)}.orb.flash{transform:scale(1.12);box-shadow:0 0 0 8px #fff,0 0 28px currentColor}.orb.done{opacity:0;transform:scale(.35);pointer-events:none}.orb.clickable{cursor:pointer}.listen{background:#dff7e8;color:#08783f;border:2px solid #35b76f;border-radius:13px;padding:8px 18px;font-weight:900;min-height:42px}.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}.actions .btn{padding:10px 13px}.feedback{min-height:30px;font-size:21px;font-weight:1000}.good{color:#168b56}.bad{color:#d82445}.scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:10px;border-bottom:1px solid #dce7ef;text-align:center}.rank{font-weight:1000;color:#2878ff}.winner{text-align:center;font-size:27px;font-weight:1000;margin:14px}.hidden{display:none!important}.modal{position:fixed;inset:0;background:#17324dcc;z-index:100;display:flex;align-items:center;justify-content:center;padding:15px}.modalCard{width:min(680px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:25px;padding:20px}.demoWrap{display:grid;grid-template-columns:1fr 1fr;gap:12px}.demo{background:#f5f8fc;border-radius:18px;padding:12px;text-align:center}.miniSeq{display:flex;justify-content:center;gap:7px;margin:12px 0}.mini{width:54px;height:54px;border:4px solid var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:27px;transition:.2s}.mini.red{border-color:var(--red)}.mini.active{transform:scale(1.18);background:#fff4bd}.vocab{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:9px;margin:12px 0}.vocabItem{background:#f3f7fb;border:3px solid transparent;border-radius:16px;padding:10px 5px;text-align:center;cursor:pointer}.vocabItem.active{border-color:#2878ff;background:#e8f1ff}.vocabEmoji{font-size:37px}.vocabName{font-weight:900;font-size:13px}.tutNav{display:flex;gap:9px}.tutNav>*{flex:1}.onlineCode{font-size:27px;letter-spacing:2px;text-align:center;font-weight:1000;background:#eef5ff;padding:12px;border-radius:14px}.credit{text-align:center;font-size:12px;opacity:.65;margin-top:18px}@media(max-width:520px){.demoWrap{grid-template-columns:1fr}.board{gap:10px}.orb{border-width:6px}.panel{padding:17px}.gamebox{min-height:470px}}@media(max-height:700px){.screen{padding-top:40px}.gamebox{min-height:410px}.orb{width:min(20vw,105px)}}
+</style></head><body><div class="version">Version 1</div>
+<section id="home" class="screen active"><div class="panel"><h1>Sequence Switch</h1><p class="sub">Remember the emojis. Green = forward. Red = reverse.</p><div class="homeBtns"><button class="primary" onclick="openLocal()">👥 Local Game</button><button class="primary" onclick="openOnline()">🌐 Online Game</button></div><div class="credit">Designed & Created by Sadegh Mosleh · © 2026</div></div></section>
+<section id="localSetup" class="screen"><div class="panel"><h2>Local Game</h2><div class="field"><label>Number of Players</label><select id="playerCount" onchange="renderNames()"></select></div><div id="nameFields" class="names"></div><div class="field"><label>Category</label><select id="category"></select></div><div class="row"><div class="field"><label>Difficulty</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div><div class="field"><label>Time</label><select id="duration"><option>30</option><option selected>60</option><option>90</option><option>120</option></select></div></div><button class="primary wide" onclick="startLocal()">Start Game</button><button class="secondary wide" onclick="showScreen('home')">Back</button></div></section>
+<section id="onlineSetup" class="screen"><div class="panel"><h2>Online Game</h2><div class="field"><label>Your Name</label><input id="onlineName" placeholder="Player name"></div><div class="row"><button class="primary" onclick="hostOnline()">Create Room</button><button class="secondary" onclick="showJoin()">Join Room</button></div><div id="hostBox" class="hidden"><p class="sub">Share this room code:</p><div id="roomCode" class="onlineCode">...</div><div class="field"><label>Category</label><select id="onlineCategory"></select></div><div class="row"><div class="field"><label>Difficulty</label><select id="onlineDifficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div><div class="field"><label>Time</label><select id="onlineDuration"><option>30</option><option selected>60</option><option>90</option><option>120</option></select></div></div><p id="onlinePlayers" class="sub"></p><button class="primary wide" onclick="hostStart()">Start for Everyone</button></div><div id="joinBox" class="hidden"><div class="field"><label>Room Code</label><input id="joinCode" autocomplete="off" placeholder="Enter code"></div><button class="primary wide" onclick="joinOnline()">Join</button><p id="joinStatus" class="sub"></p></div><button class="secondary wide" onclick="leaveOnline();showScreen('home')">Back</button></div></section>
+<section id="game" class="screen"><div class="topbar"><div id="who" class="pill">Player</div><div id="timer" class="pill timer">60</div><div class="pill score">Score: <span id="score">0</span></div></div><div class="gamebox"><div id="roundRule" class="roundRule green">🟢 GREEN · SAME ORDER</div><div id="status" class="status">Watch carefully…</div><div id="board" class="board"></div><div id="feedback" class="feedback"></div><div id="listen" class="listen hidden">🎤 Listening — say the emoji</div></div><div class="actions"><button class="secondary btn" onclick="openTutorial()">📘 Tutorial</button><button class="secondary btn" onclick="skipRound()">⏭ Skip</button><button class="danger btn" onclick="quitGame()">⌂ Main Menu</button></div></section>
+<section id="results" class="screen"><div class="panel"><h2>Results</h2><div id="winner" class="winner"></div><table class="scoreboard"><thead><tr><th>Rank</th><th>Player</th><th>Score</th><th>Correct</th><th>Wrong</th></tr></thead><tbody id="resultRows"></tbody></table><button class="primary wide" onclick="playAgain()">Play Again</button><button class="secondary wide" onclick="showScreen('home')">Main Menu</button></div></section>
+<div id="tutorial" class="modal hidden"><div class="modalCard"><h2>How to Play</h2><div id="tut1"><div class="demoWrap"><div class="demo"><b style="color:#15945b">🟢 GREEN — Same Order</b><div id="greenDemo" class="miniSeq"></div><div>Say: <b>dog → cat → lion</b></div><button class="secondary btn" onclick="playDemo('green')">▶ Play</button></div><div class="demo"><b style="color:#d62f51">🔴 RED — Reverse Order</b><div id="redDemo" class="miniSeq"></div><div>Say: <b>lion → cat → dog</b></div><button class="secondary btn" onclick="playDemo('red')">▶ Play</button></div></div><p class="sub">After the sequence disappears, the microphone turns on. Say each emoji name one at a time. You can also tap the circles.</p></div><div id="tut2" class="hidden"><p class="sub">Tap an item to hear its English name. These words match your selected category and difficulty.</p><div id="vocab" class="vocab"></div></div><div class="tutNav"><button id="tutPrev" class="secondary btn hidden" onclick="tutorialPage(1)">← How to Play</button><button id="tutNext" class="primary btn" onclick="tutorialPage(2)">Vocabulary →</button><button class="secondary btn" onclick="closeTutorial()">Close</button></div></div></div>
 <script>
-let mode='local',players=[],pi=0,score=0,questions=0,correct=0,wrong=0,settings={},current=null,endAt=0,timer=null,locked=false;
-let seed=1,peer=null,conns=[],hostConn=null,isHost=false,roomPlayers=[],onlineFinished={},onlineTotal=1;
-let tutorialPausedAt=0,recognition=null,wantListening=false,equationVoiceActive=false,equationVoiceTranscript='',equationVoiceCandidates=[];
-function $(id){return document.getElementById(id)}
-function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
-function chooseMode(m){mode=m;show('setup');$('setupTitle').textContent=m==='local'?'📱 Local Game':'🌐 Online Game';$('localFields').classList.toggle('hidden',m!=='local');$('onlineFields').classList.toggle('hidden',m!=='online');$('startBtn').classList.toggle('hidden',m==='online');renderNames()}
+const $=id=>document.getElementById(id);const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+const DATA={
+Animals:[['dog','🐶'],['cat','🐱'],['lion','🦁'],['cow','🐮'],['pig','🐷'],['frog','🐸'],['monkey','🐵'],['rabbit','🐰'],['bear','🐻'],['panda','🐼'],['tiger','🐯'],['horse','🐴'],['sheep','🐑'],['chicken','🐔'],['penguin','🐧'],['elephant','🐘'],['giraffe','🦒'],['zebra','🦓'],['gorilla','🦍'],['rhinoceros','🦏'],['hippopotamus','🦛'],['kangaroo','🦘'],['flamingo','🦩'],['peacock','🦚']],
+Food:[['pizza','🍕'],['burger','🍔'],['bread','🍞'],['egg','🥚'],['cheese','🧀'],['rice','🍚'],['cake','🍰'],['cookie','🍪'],['popcorn','🍿'],['sandwich','🥪'],['pancakes','🥞'],['taco','🌮'],['burrito','🌯'],['dumpling','🥟'],['spaghetti','🍝'],['sushi','🍣'],['pretzel','🥨'],['waffle','🧇'],['falafel','🧆'],['fondue','🫕']],
+Sports:[['soccer','⚽'],['basketball','🏀'],['football','🏈'],['baseball','⚾'],['tennis','🎾'],['volleyball','🏐'],['rugby','🏉'],['bowling','🎳'],['boxing','🥊'],['golf','⛳'],['skiing','⛷️'],['swimming','🏊'],['cycling','🚴'],['fencing','🤺'],['wrestling','🤼'],['surfing','🏄'],['rowing','🚣'],['climbing','🧗']],
+Fruit:[['apple','🍎'],['banana','🍌'],['orange','🍊'],['lemon','🍋'],['grapes','🍇'],['strawberry','🍓'],['watermelon','🍉'],['peach','🍑'],['cherry','🍒'],['pear','🍐'],['pineapple','🍍'],['kiwi','🥝'],['mango','🥭'],['blueberries','🫐'],['melon','🍈'],['coconut','🥥']],
+Transportation:[['car','🚗'],['bus','🚌'],['taxi','🚕'],['train','🚆'],['bicycle','🚲'],['motorcycle','🏍️'],['airplane','✈️'],['boat','⛵'],['ship','🚢'],['truck','🚚'],['tractor','🚜'],['helicopter','🚁'],['rocket','🚀'],['scooter','🛴'],['ambulance','🚑'],['fire engine','🚒']],
+'Clothes & Accessories':[['shirt','👕'],['pants','👖'],['dress','👗'],['shoe','👟'],['hat','🧢'],['glasses','👓'],['bag','👜'],['sock','🧦'],['scarf','🧣'],['gloves','🧤'],['coat','🧥'],['tie','👔'],['sandal','🩴'],['goggles','🥽'],['handbag','👛']],
+'Home & Objects':[['chair','🪑'],['bed','🛏️'],['door','🚪'],['key','🔑'],['clock','⏰'],['phone','📱'],['computer','💻'],['television','📺'],['lamp','💡'],['book','📕'],['pencil','✏️'],['scissors','✂️'],['umbrella','☂️'],['camera','📷'],['magnet','🧲'],['telescope','🔭']],
+'Vegetables & Plants':[['carrot','🥕'],['corn','🌽'],['tomato','🍅'],['potato','🥔'],['cucumber','🥒'],['broccoli','🥦'],['onion','🧅'],['garlic','🧄'],['pepper','🫑'],['mushroom','🍄'],['flower','🌷'],['tree','🌳'],['cactus','🌵'],['sunflower','🌻'],['eggplant','🍆'],['avocado','🥑']],
+'Weather & Nature':[['sun','☀️'],['cloud','☁️'],['rain','🌧️'],['snow','❄️'],['rainbow','🌈'],['moon','🌙'],['star','⭐'],['fire','🔥'],['wave','🌊'],['mountain','⛰️'],['tornado','🌪️'],['lightning','⚡'],['volcano','🌋'],['snowman','☃️'],['comet','☄️']],
+Music:[['guitar','🎸'],['piano','🎹'],['drum','🥁'],['violin','🎻'],['trumpet','🎺'],['saxophone','🎷'],['microphone','🎤'],['headphones','🎧'],['radio','📻'],['music','🎵'],['banjo','🪕'],['accordion','🪗'],['maracas','🪇'],['flute','🪈']]
+};
+let settings={},players=[],playerIndex=0,score=0,correct=0,wrong=0,results=[],round=null,answerIndex=0,gameActive=false,presentation=false,endAt=0,timerInt=null,recognition=null,listenWanted=false,tutorialOpen=false,pausedRemaining=0,roundTimerIds=[],online=false,isHost=false,peer=null,conns=[],hostConn=null,onlineScores={},seed=1,rng=Math.random;
+function showScreen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
+function init(){for(let i=1;i<=10;i++)$('playerCount').add(new Option(i,i));$('playerCount').value=2;Object.keys(DATA).forEach(c=>{$('category').add(new Option(c,c));$('onlineCategory').add(new Option(c,c))});renderNames();$('onlineName').value=localStorage.getItem('sequenceSwitchOnlineName')||'';buildDemo()}
+function openLocal(){showScreen('localSetup');renderNames()}function openOnline(){showScreen('onlineSetup')}
+function renderNames(){let n=+$('playerCount').value,saved=JSON.parse(localStorage.getItem('sequenceSwitchPlayerNames')||'[]');$('nameFields').innerHTML='';for(let i=0;i<n;i++){$('nameFields').insertAdjacentHTML('beforeend',`<div class="field"><label>Player ${i+1}</label><input class="pname" value="${esc(saved[i]||'')}" placeholder="Player ${i+1}"></div>`)}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function renderNames(){let n=+$('playerCount').value,saved=[];try{saved=JSON.parse(localStorage.getItem('mathDetectivePlayerNames')||'[]')}catch(e){}let old=[...document.querySelectorAll('.pname')].map(x=>x.value);$('names').innerHTML=Array.from({length:n},(_,i)=>`<div class="field"><label>Player ${i+1}</label><input class="pname" value="${esc(old[i]||saved[i]||`Player ${i+1}`)}"></div>`).join('')}
-$('playerCount').onchange=renderNames;
-function startConfiguredGame(){settings={gameMode:'race',difficulty:$('difficulty').value,duration:+$('duration').value};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;seed=(Date.now()>>>0);settings.baseSeed=seed;showTransition()}
-function showTransition(){$('turnTitle').textContent=`${players[pi].name}, get ready!`;show('transition')}
-function beginPlayer(){score=questions=correct=wrong=0;seed=mode==='local'?(((settings.baseSeed??seed)+(pi*2654435761))>>>0):(settings.baseSeed??seed);$('who').textContent=players[pi].name;$('score').textContent=0;show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);configureGameModeUI();newQuestion();startListening()}
-function tick(){let left=Math.max(0,Math.ceil((endAt-performance.now())/1000));$('time').textContent=left;if(performance.now()>=endAt)finishPlayer()}
-function rng(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
-function ri(a,b){return Math.floor(rng()*(b-a+1))+a}
-function calc(a,op,b){return op==='+'?a+b:op==='-'?a-b:op==='*'?a*b:a/b}
-function unique(a,b,result,correctOp){return ['+','-','*','/'].filter(op=>b!==0&&Math.abs(calc(a,op,b)-result)<1e-9).length===1}
-function generate(){
- const ops=['+','-','*','/']; let level=settings.difficulty;
- for(let tries=0;tries<500;tries++){
-   let op=ops[ri(0,3)],a,b,r;
-   if(level==='easy'){
-     if(op==='/'){b=ri(1,10);r=ri(1,10);a=b*r}else{a=ri(0,20);b=ri(0,20);if(op==='-'&&b>a)[a,b]=[b,a];r=calc(a,op,b)}
-   }else if(level==='medium'){
-     if(op==='/'){b=ri(1,12)*(rng()<.25?-1:1);r=ri(-10,15);if(r===0)r=ri(1,10);a=b*r}else{a=ri(-30,50);b=ri(-20,30);r=calc(a,op,b)}
-   }else{
-     if(op==='/'){b=ri(2,15)*(rng()<.5?-1:1);r=ri(-15,20);if(r===0)r=ri(2,12);a=b*r}else if(op==='*'){a=ri(-15,20);b=ri(-12,15);r=a*b}else{a=ri(-100,120);b=ri(-80,100);r=calc(a,op,b)}
-   }
-   if(b!==0&&Number.isInteger(r)&&unique(a,b,r,op))return {a,b,r,op}
- }
- return {a:8,b:3,r:11,op:'+'}
-}
-function fmt(n){return n<0?`(${n})`:String(n)}
-const practicePrompts=['Which operation is correct?','Which operator do you select?','Choose the correct operation.','What operation makes this equation correct?','Can you find the missing operator?','Select the operation that completes the equation.','Which mathematical operation belongs here?'];
-const practiceCorrect=['Correct! Well done.','That is correct!','Great job! You got it right.','Excellent! That is the right operation.','Nice work! Correct answer.'];
-const practiceWrong=['Not quite. Listen to the correct equation.','That is not correct. Here is the correct equation.','Good try. Listen to the right operation.','Almost. Here is the complete correct equation.','That answer is incorrect. Listen to the correct equation.'];
-function pickPhrase(a){return a[Math.floor(Math.random()*a.length)]}
-function spokenOp(op){return op==='+'?'plus':op==='-'?'minus':op==='*'?'times':'divided by'}
-function spokenNumber(n){return n<0?`negative ${Math.abs(n)}`:String(n)}
-function equationSpeech(q){return `${spokenNumber(q.a)} ${spokenOp(q.op)} ${spokenNumber(q.b)} equals ${spokenNumber(q.r)}.`}
-
-function configureGameModeUI(){
- document.querySelector('.ops').style.display='grid';
- document.querySelector('.ops').classList.remove('guideOnly');
- $('equationVoiceBtn').style.display='none';
- $('gameHint').textContent='Tap an operator or say its name.';
-}
-function setEquationVoice(on){
- equationVoiceActive=on;
- const b=$('equationVoiceBtn'); if(!b)return;
- b.textContent=on?'🎤 Voice: ON':'🎤 Voice: OFF';
- b.style.background=on?'#159957':'#d9363e';
-}
-function numberWords(n){
- n=Number(n); if(!Number.isInteger(n))return String(n); if(n<0)return 'negative '+numberWords(-n);
- const a=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
- const t=['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
- if(n<20)return a[n]; if(n<100)return t[Math.floor(n/10)]+(n%10?' '+a[n%10]:'');
- if(n<1000)return a[Math.floor(n/100)]+' hundred'+(n%100?' '+numberWords(n%100):'');
- return String(n)
-}
-function normEqText(x){
- return String(x).toLowerCase()
-  .replace(/−/g,' minus ').replace(/×|\*/g,' times ').replace(/÷|\//g,' divided by ')
-  .replace(/\+/g,' plus ').replace(/=/g,' equals ')
-  .replace(/[^a-z0-9\- ]/g,' ')
-  .replace(/\b(is equal to|is equals to|equals to|equal to|equal|is)\b/g,' equals ')
-  .replace(/\b(add|added|addition)\b/g,' plus ')
-  .replace(/\b(subtract|subtraction|take away)\b/g,' minus ')
-  .replace(/\b(multiply|multiplied|multiplication|cross)\b/g,' times ')
-  .replace(/\b(divide|division|over)\b/g,' divided by ')
-  .replace(/\s+/g,' ').trim()
-}
-function expectedNumberVariants(n){
- const base=[String(n),numberWords(n)];
- // Common speech-recognition homophones, useful especially for children's voices.
- const w=numberWords(n);
- const hom=w.replace(/\btwo\b/g,'to').replace(/\bfour\b/g,'for').replace(/\beight\b/g,'ate');
- if(hom!==w)base.push(hom);
- return [...new Set(base.map(normEqText))]
-}
-function fullEquationAccepted(text,q){
- const got=normEqText(text), op=normEqText(spokenOp(q.op));
- const A=expectedNumberVariants(q.a),B=expectedNumberVariants(q.b),R=expectedNumberVariants(q.r);
- // Accept natural recognizer renderings such as "2 + 2 = 4", "two plus two is four",
- // and word/digit mixtures, but still require the complete equation in the right order.
- for(const a of A)for(const b of B)for(const r of R){
-   const expected=`${a} ${op} ${b} equals ${r}`;
-   // Some browsers add harmless filler or split/rejoin recognition chunks.
-   // Accept the complete expected equation when it appears in the transcript.
-   if(got===expected || (` ${got} `).includes(` ${expected} `))return true;
- }
- return false
-}
-function judgeFullEquation(text){
- if(locked||!current||performance.now()>=endAt)return;
- locked=true; const ok=fullEquationAccepted(text,current);
- if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}
- else{wrong++;$('feedback').className='feedback bad';$('feedback').textContent='✕ Wrong! 0'}
- $('score').textContent=score; setEquationVoice(false); equationVoiceTranscript='';
- speak(ok?'Correct':'Wrong'); setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},650)
-}
-function toggleEquationVoice(){
- if(settings.gameMode!=='equation'||locked||!current)return;
- if(equationVoiceActive){
-   // Only the player turns listening off. Judge the best complete transcript collected so far.
-   setEquationVoice(false); stopEquationListening();
-   const heard=(equationVoiceCandidates.find(c=>fullEquationAccepted(c,current))||equationVoiceTranscript).trim();
-   if(heard)judgeFullEquation(heard);
-   else {$('feedback').className='feedback bad';$('feedback').textContent='✕ Wrong! 0';wrong++;questions=Math.max(questions,1);setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},650)}
-   return;
- }
- equationVoiceTranscript=''; equationVoiceCandidates=[]; setEquationVoice(true); $('feedback').textContent=''; startEquationListening()
-}
-function stopEquationListening(){
- equationVoiceActive=false;
- if(recognition){try{recognition.abort()}catch(e){}recognition=null}
-}
-function startEquationListening(){
- if(!equationVoiceActive||locked)return;
- let SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!SR){setEquationVoice(false);$('feedback').className='feedback bad';$('feedback').textContent='Voice recognition is not available.';return}
- if(recognition){try{recognition.abort()}catch(e){}recognition=null}
- let r=new SR(); recognition=r; r.lang='en-US'; r.continuous=true; r.interimResults=true; r.maxAlternatives=10;
- r.onresult=e=>{
-   // Web Speech frequently returns one equation as several result chunks, e.g.
-   // ["two plus two"] ["equals four"]. Keep the chunks and join them instead
-   // of judging only the last fragment. Also keep alternatives because children's
-   // speech is often correct in a non-top recognition alternative.
-   const groups=[];
-   for(let i=0;i<e.results.length;i++){
-     const alts=[];
-     for(let j=0;j<Math.min(e.results[i].length,10);j++){
-       const t=e.results[i][j].transcript.trim();
-       if(t&&!alts.includes(t))alts.push(t);
-     }
-     if(alts.length)groups.push(alts);
-   }
-   let candidates=[''];
-   for(const g of groups){
-     const next=[];
-     for(const prefix of candidates)for(const part of g.slice(0,5)){
-       next.push((prefix+' '+part).trim());
-       if(next.length>=125)break;
-     }
-     candidates=next.slice(0,125);
-   }
-   // Also test every individual alternative and preserve candidates across browser restarts.
-   for(const g of groups)for(const t of g)candidates.push(t);
-   for(const c of candidates)if(c&&!equationVoiceCandidates.includes(c))equationVoiceCandidates.push(c);
-   equationVoiceCandidates=equationVoiceCandidates.slice(-300);
-   const correct=equationVoiceCandidates.find(c=>fullEquationAccepted(c,current));
-   if(correct)equationVoiceTranscript=correct;
-   else if(candidates[0]) equationVoiceTranscript=candidates[0];
-   $('feedback').textContent='';
- };
- r.onerror=e=>{
-   if(recognition===r)recognition=null;
-   // no-speech/network-style interruptions must not switch the button off or judge the answer
-   if(equationVoiceActive && e.error!=='not-allowed' && e.error!=='service-not-allowed')setTimeout(startEquationListening,180);
-   if(equationVoiceActive && (e.error==='not-allowed'||e.error==='service-not-allowed')){setEquationVoice(false);$('feedback').className='feedback bad';$('feedback').textContent='Microphone permission is required.'}
- };
- r.onend=()=>{
-   if(recognition===r)recognition=null;
-   // Browsers often stop recognition by themselves. Keep Full Equation mode ON and restart
-   // until the player explicitly presses the green button.
-   if(equationVoiceActive&&!locked)setTimeout(startEquationListening,160)
- };
- try{r.start()}catch(e){recognition=null;if(equationVoiceActive)setTimeout(startEquationListening,220)}
-}
-function showListening(){
- if(settings&&settings.gameMode==='practice'&&!locked&&$('game').classList.contains('active')){
-   $('feedback').className='feedback';
-   $('feedback').innerHTML='<span class="listeningBox">🎤 Listening — Speak now</span>';
- }
-}
-function practiceSpeak(text,done,rate=.96){stopListening();speechSynthesis.cancel();if(!('speechSynthesis' in window)){done&&done();return}let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=rate;u.volume=1;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
-function speakPracticeAnswer(ok,q,done){
- stopListening();speechSynthesis.cancel();
- if(!('speechSynthesis' in window)){done&&done();return}
- const verdict=new SpeechSynthesisUtterance(ok?'Correct':'Wrong');
- verdict.lang='en-US';verdict.rate=.82;verdict.volume=1;
- verdict.onend=()=>setTimeout(()=>done&&done(),500);
- verdict.onerror=()=>setTimeout(()=>done&&done(),500);
- speechSynthesis.speak(verdict);
-}
-function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;equationVoiceTranscript='';equationVoiceCandidates=[];setEquationVoice(false);$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
-function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;const ok=op===current.op,q=current;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;if(settings.gameMode==='practice'){speakPracticeAnswer(ok,q,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
-function skipQuestion(){
- if(locked||!current||performance.now()>=endAt)return;
- locked=true;$('feedback').className='feedback';$('feedback').textContent='Skipped — no points lost';
- if(settings.gameMode==='practice')practiceSpeak('Skipped.',()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()});
- else setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},350)
-}
-function symbol(op){return op==='*'?'×':op==='/'?'÷':op}
-function speak(t){if(!('speechSynthesis'in window))return;let was=wantListening;stopListening();let u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.9;u.onend=()=>{if(was&&$('game').classList.contains('active'))startListening()};speechSynthesis.cancel();speechSynthesis.speak(u)}
-const voiceMap={'+':['plus','add','addition','added'],'-':['minus','subtract','subtraction','take away'],'*':['times','multiply','multiplied','multiplication','cross'],'/':['divide','divided','division','over']};
-function detectVoice(t){t=t.toLowerCase().replace(/[^a-z ]/g,' ');for(const [op,words] of Object.entries(voiceMap))if(words.some(w=>t.includes(w)))return op;return null}
-function startListening(){wantListening=true;if(recognition)return;let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;let r=new SR();recognition=r;r.lang='en-US';r.continuous=false;r.interimResults=false;r.maxAlternatives=5;r.onresult=e=>{let heard=[...e.results[0]].map(x=>x.transcript);recognition=null;let op=heard.map(detectVoice).find(Boolean);if(op){$('feedback').textContent='';answer(op)}else if(!locked&&$('game').classList.contains('active')){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.';if(wantListening)setTimeout(()=>{showListening();startListening()},220)}else if(wantListening&&!locked)setTimeout(()=>{showListening();startListening()},180)};r.onerror=e=>{if(!locked&&$('game').classList.contains('active')&&e.error!=='aborted'){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.'}};r.onend=()=>{if(recognition===r)recognition=null;if(wantListening&&!locked&&$('game').classList.contains('active'))setTimeout(startListening,220)};try{r.start()}catch(e){recognition=null}}
-function stopListening(){wantListening=false;if(recognition){try{recognition.abort()}catch(e){}recognition=null}}
-function openTutorial(){tutorialPausedAt=performance.now();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();tutorialPage(1);show('tutorial');setTimeout(playTutorialOperator,350)}
-function tutorialPage(n){speechSynthesis.cancel();$('tut1').classList.toggle('hidden',n!==1);$('tut2').classList.toggle('hidden',n!==2);if(n===1)setTimeout(playTutorialOperator,250);if(n===2)setTimeout(()=>speakOperationSet('plus'),300)}
-function tutorialSay(text,done){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.82;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
-function playTutorialOperator(){tutorialSay('Minus')}
-function speakOperationSet(which){let texts={plus:'Plus. Add. Addition. Added.',minus:'Minus. Subtract. Subtraction. Take away.',multiply:'Times. Multiply. Multiplied. Multiplication.',divide:'Divide. Divided by. Division. Over.'};tutorialSay(texts[which])}
-function playAllOperations(){tutorialSay('Plus. Add. Addition. Added. Minus. Subtract. Subtraction. Take away. Times. Multiply. Multiplied. Multiplication. Divide. Divided by. Division. Over.')}
-function closeTutorial(){let paused=performance.now()-tutorialPausedAt;endAt+=paused;show('game');timer=setInterval(tick,100);configureGameModeUI();startListening()}
-function restartSame(){
- clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();
- // A restart is a fresh game: use a new seed so the mathematics sequence changes.
- seed=(Date.now()>>>0);
- settings.baseSeed=seed;
- if(mode==='online'&&isHost){
-   onlineFinished={};
-   broadcast({type:'start',settings,seed,players:onlineTotal});
- }
- beginPlayer()
-}
-function finishPlayer(){if(!timer)return;clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();let res={name:players[pi].name,score,questions,correct,wrong};players[pi]={...players[pi],...res};if(mode==='online'){sendFinish(res);return}pi++;if(pi<players.length)showTransition();else showResults()}
-function ordinal(n){
- const words=['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth','Tenth'];
- return words[n-1]||`${n}th`
-}
-function announceWinner(winners){
- if(!('speechSynthesis' in window)||!winners.length)return;
- speechSynthesis.cancel();
- let text=winners.length===1
-   ? `${winners[0].name} wins! Congratulations!`
-   : `${winners.map(x=>x.name).join(' and ')} win! Congratulations!`;
- let u=new SpeechSynthesisUtterance(text);
- u.lang='en-US';u.rate=.88;u.pitch=1.08;u.volume=1;
- speechSynthesis.speak(u)
-}
-function showResults(results){
- if(Array.isArray(results)) players=results;
- let sorted=[...players].sort((a,b)=>b.score-a.score||b.correct-a.correct||a.wrong-b.wrong);
- let best=sorted[0]?.score;
- let w=sorted.filter(x=>x.score===best);
- $('winner').textContent=w.length===1?`🎉 ${w[0].name} wins!`:`🤝 ${w.map(x=>x.name).join(' & ')} win!`;
- $('resultRows').innerHTML=sorted.map((x,i)=>`<tr><td class="rankCell">${i+1}</td><td>${esc(x.name)}</td><td>${x.correct}</td><td>${x.wrong}</td><td><b>${x.score}</b></td><td>${x.questions}</td></tr>`).join('');
- show('results');
- setTimeout(()=>announceWinner(w),450)
-}
-function playAgain(){pi=0;showTransition()}
-function returnHome(){clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();show('home')}
-
-function roomCodeNew(){return Math.random().toString(36).slice(2,8).toUpperCase()}
-function readOnlineSettings(){return {gameMode:'race',difficulty:$('difficulty').value,duration:+$('duration').value}}
-function createRoom(){
- let name=$('onlineName').value.trim()||'Host';try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
- let c=roomCodeNew();$('roomCode').value=c;isHost=true;conns=[];roomPlayers=[name];
- peer=new Peer('math-detective-'+c,{host:'0.peerjs.com',port:443,path:'/',secure:true,pingInterval:5000});
- peer.on('open',()=>{$('roomInfo').textContent=`Room ${c} — waiting for players…`; $('startBtn').classList.remove('hidden');$('startBtn').textContent='Start Online Game';$('startBtn').onclick=startOnlineHost});
- peer.on('connection',conn=>{conns.push(conn);conn.on('data',d=>hostData(conn,d));conn.on('close',()=>{});});
- peer.on('error',e=>{$('roomInfo').textContent='Connection error: '+(e.type||'unknown')+(e.message?' — '+e.message:'')})
-}
-function joinRoom(){
- let name=$('onlineName').value.trim(),c=$('roomCode').value.trim().toUpperCase();if(!name||!c)return alert('Enter your name and room code.');
- try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
- isHost=false;peer=new Peer(undefined,{host:'0.peerjs.com',port:443,path:'/',secure:true,pingInterval:5000});
- peer.on('open',()=>{hostConn=peer.connect('math-detective-'+c,{reliable:true});hostConn.on('open',()=>{hostConn.send({type:'join',name});$('roomInfo').textContent=`Joined room ${c}. Waiting for host…`});hostConn.on('data',guestData);hostConn.on('close',()=>{$('roomInfo').textContent='Host disconnected.'})});
- peer.on('error',e=>{$('roomInfo').textContent='Connection error: '+(e.type||'unknown')+(e.message?' — '+e.message:'')})
-}
-document.addEventListener('visibilitychange',()=>{
- if(document.visibilityState==='visible'&&peer&&!peer.destroyed&&peer.disconnected&&peer.reconnect){
-   try{
-     peer.reconnect();
-     if(isHost&&$('roomCode').value.trim())$('roomInfo').textContent=`Reconnecting room ${$('roomCode').value.trim().toUpperCase()}…`;
-   }catch(e){}
- }
-});
-window.addEventListener('pageshow',()=>{
- if(peer&&!peer.destroyed&&peer.disconnected&&peer.reconnect){
-   try{peer.reconnect()}catch(e){}
- }
-});
-function broadcast(d){conns.forEach(c=>{if(c.open)c.send(d)})}
-function hostData(conn,d){
- if(d.type==='join'){if(roomPlayers.includes(d.name)){conn.send({type:'reject',msg:'That name is already used.'});return}conn.playerName=d.name;roomPlayers.push(d.name);broadcast({type:'lobby',players:roomPlayers});$('roomInfo').textContent=`Players: ${roomPlayers.join(', ')}`}
- if(d.type==='finish'){onlineFinished[d.result.name]=d.result;checkOnlineDone()}
-}
-function guestData(d){
- if(d.type==='lobby')$('roomInfo').textContent='Players: '+d.players.join(', ');
- if(d.type==='reject')alert(d.msg);
- if(d.type==='start'){mode='online';settings=d.settings;settings.baseSeed=d.seed;seed=d.seed;players=[{name:$('onlineName').value.trim()}];pi=0;onlineTotal=d.players;showTransition();$('turnTitle').textContent=`${players[0].name}, get ready!`}
- if(d.type==='results')showResults(d.results)
-}
-function startOnlineHost(){
- if(roomPlayers.length<2){
-   $('roomInfo').textContent='At least 2 players are required. Wait for another player to join.';
-   return;
- }
- mode='online';settings=readOnlineSettings();seed=(Date.now()>>>0);settings.baseSeed=seed;onlineFinished={};onlineTotal=roomPlayers.length;
- broadcast({type:'start',settings,seed,players:onlineTotal});
- let name=$('onlineName').value.trim()||'Host';players=[{name}];pi=0;showTransition();$('turnTitle').textContent=`${name}, get ready!`
-}
-function sendFinish(res){
- if(isHost){onlineFinished[res.name]=res;checkOnlineDone()}
- else if(hostConn&&hostConn.open){hostConn.send({type:'finish',result:res});$('feedback').textContent='Finished! Waiting for other players…'}
- show('game')
-}
-function checkOnlineDone(){
- if(Object.keys(onlineFinished).length>=onlineTotal){
-   let results=Object.values(onlineFinished).sort((a,b)=>b.score-a.score||b.correct-a.correct||a.wrong-b.wrong);
-   broadcast({type:'results',results});
-   showResults(results);
- } else {
-   $('feedback').className='feedback';
-   $('feedback').textContent='Finished! Waiting for other players…';
- }
-}
-try{$('onlineName').value=localStorage.getItem('mathDetectiveOnlineName')||''}catch(e){}
-renderNames();
-</script>
-<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 31</div>
-</body></html>
+function startLocal(){players=[...document.querySelectorAll('.pname')].map((x,i)=>x.value.trim()||`Player ${i+1}`);localStorage.setItem('sequenceSwitchPlayerNames',JSON.stringify(players));settings={category:$('category').value,difficulty:$('difficulty').value,duration:+$('duration').value};online=false;playerIndex=0;results=[];startPlayer()}
+function startPlayer(){score=correct=wrong=0;$('score').textContent=0;$('who').textContent=players[playerIndex];seed=(Date.now()+playerIndex*99991)>>>0;rng=mulberry32(seed);beginTimedGame()}
+function beginTimedGame(){showScreen('game');gameActive=true;endAt=performance.now()+settings.duration*1000;startTimer();newRound()}
+function startTimer(){clearInterval(timerInt);timerInt=setInterval(()=>{if(!gameActive||tutorialOpen)return;let t=Math.max(0,Math.ceil((endAt-performance.now())/1000));$('timer').textContent=t;if(t<=0)finishPlayer()},150);$('timer').textContent=settings.duration}
+function pool(){let a=DATA[settings.category];let frac=settings.difficulty==='easy'?.55:settings.difficulty==='medium'?.78:1;return a.slice(0,Math.max(8,Math.ceil(a.length*frac)))}
+function countForDifficulty(){let v=settings.difficulty==='easy'?[3,4]:settings.difficulty==='medium'?[4,5]:[5,6];return v[Math.floor(rng()*v.length)]}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function newRound(forced){if(!gameActive||tutorialOpen)return;stopListening();clearRoundTimers();$('feedback').textContent='';let p=pool(),n=countForDifficulty();let items=shuffle(p).slice(0,n);let color=rng()<.5?'green':'red';round=forced||{items,color};answerIndex=0;renderRound();presentRound()}
+function renderRound(){$('roundRule').className='roundRule '+round.color;$('roundRule').textContent=round.color==='green'?'🟢 GREEN · SAME ORDER':'🔴 RED · REVERSE ORDER';$('board').innerHTML='';round.items.forEach((it,i)=>{let b=document.createElement('button');b.className='orb '+(round.color==='red'?'red ':'')+'hiddenOrb';b.innerHTML=it[1];b.dataset.i=i;b.onclick=()=>tapItem(i);$('board').appendChild(b)});$('status').textContent='Watch carefully…';$('listen').classList.add('hidden')}
+function presentRound(){presentation=true;let orbs=[...document.querySelectorAll('.orb')],step=760;round.items.forEach((_,i)=>{roundTimerIds.push(setTimeout(()=>{if(!gameActive||tutorialOpen)return;orbs[i].classList.remove('hiddenOrb');orbs[i].classList.add('flash');setTimeout(()=>orbs[i]?.classList.remove('flash'),350)},i*step));roundTimerIds.push(setTimeout(()=>orbs[i]?.classList.add('hiddenOrb'),i*step+610))});roundTimerIds.push(setTimeout(()=>{if(!gameActive||tutorialOpen)return;orbs.forEach(o=>{o.classList.remove('hiddenOrb');o.classList.add('clickable')});presentation=false;$('status').textContent=round.color==='green'?'Say the FIRST emoji…':'Say the LAST emoji…';$('listen').classList.remove('hidden');startListening()},round.items.length*step+250))}
+function expectedIndices(){let a=round.items.map((_,i)=>i);return round.color==='green'?a:a.reverse()}
+function tapItem(i){if(!gameActive||presentation||tutorialOpen)return;judgeIndex(i)}
+function judgeIndex(i){let exp=expectedIndices()[answerIndex];if(i!==exp){wrong++;score--;$('score').textContent=score;$('feedback').className='feedback bad';$('feedback').textContent='✕ Wrong order! −1';stopListening();setTimeout(newRound,700);return}document.querySelector(`.orb[data-i="${i}"]`)?.classList.add('done');answerIndex++;if(answerIndex>=round.items.length){correct++;score++;$('score').textContent=score;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1';stopListening();setTimeout(newRound,650)}else{$('status').textContent='Good — next one…'}}
+function norm(s){return s.toLowerCase().replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim()}
+function startListening(){if(!SpeechRecognition||!gameActive||presentation||tutorialOpen)return;listenWanted=true;try{recognition&&recognition.abort()}catch(e){}let r=new SpeechRecognition();recognition=r;r.lang='en-US';r.continuous=false;r.interimResults=false;r.maxAlternatives=5;r.onresult=e=>{let heard=[];for(let i=0;i<e.results.length;i++)for(let j=0;j<e.results[i].length;j++)heard.push(norm(e.results[i][j].transcript));handleSpeech(heard)};r.onerror=()=>{};r.onend=()=>{if(listenWanted&&gameActive&&!presentation&&!tutorialOpen)setTimeout(startListening,120)};try{r.start()}catch(e){}}
+function stopListening(){listenWanted=false;try{recognition&&recognition.abort()}catch(e){}recognition=null}
+function handleSpeech(arr){if(!round)return;if(arr.some(x=>/\b(skip|next)\b/.test(x))){skipRound();return}let visible=round.items;let match=-1;outer:for(let phrase of arr){for(let i=0;i<visible.length;i++){let name=norm(visible[i][0]);if(phrase===name||phrase.includes(name)||name.includes(phrase)&&phrase.length>2){match=i;break outer}}}if(match<0){$('feedback').className='feedback';$('feedback').textContent='Say it again.';return}judgeIndex(match)}
+function skipRound(){if(!gameActive||tutorialOpen)return;stopListening();$('feedback').className='feedback';$('feedback').textContent='Skipped.';setTimeout(newRound,350)}
+function clearRoundTimers(){roundTimerIds.forEach(clearTimeout);roundTimerIds=[]}
+function finishPlayer(){if(!gameActive)return;gameActive=false;stopListening();clearRoundTimers();clearInterval(timerInt);if(online){sendOnlineResult();return}results.push({name:players[playerIndex],score,correct,wrong});playerIndex++;if(playerIndex<players.length){setTimeout(()=>{alert(`${players[playerIndex]}'s turn`);startPlayer()},200)}else showResults(results)}
+function showResults(list){showScreen('results');let sorted=list.slice().sort((a,b)=>b.score-a.score||b.correct-a.correct||a.wrong-b.wrong);$('winner').textContent=sorted.length?`🏆 ${sorted[0].name}`:'';$('resultRows').innerHTML=sorted.map((r,i)=>`<tr><td class="rank">${i+1}</td><td>${esc(r.name)}</td><td>${r.score}</td><td>${r.correct}</td><td>${r.wrong}</td></tr>`).join('')}
+function quitGame(){gameActive=false;stopListening();clearRoundTimers();clearInterval(timerInt);leaveOnline();showScreen('home')}
+function playAgain(){if(online){showScreen('onlineSetup')}else{playerIndex=0;results=[];startPlayer()}}
+function openTutorial(){if(tutorialOpen)return;tutorialOpen=true;stopListening();clearRoundTimers();if(gameActive){pausedRemaining=Math.max(0,endAt-performance.now())}$('tutorial').classList.remove('hidden');tutorialPage(1)}
+function closeTutorial(){$('tutorial').classList.add('hidden');speechSynthesis.cancel();tutorialOpen=false;if(gameActive){endAt=performance.now()+pausedRemaining;newRound()}}
+function tutorialPage(n){$('tut1').classList.toggle('hidden',n!==1);$('tut2').classList.toggle('hidden',n!==2);$('tutPrev').classList.toggle('hidden',n===1);$('tutNext').classList.toggle('hidden',n===2);speechSynthesis.cancel();if(n===2)buildVocab()}
+function buildDemo(){let a=[['dog','🐶'],['cat','🐱'],['lion','🦁']];$('greenDemo').innerHTML=a.map(x=>`<div class="mini">${x[1]}</div>`).join('');$('redDemo').innerHTML=a.map(x=>`<div class="mini red">${x[1]}</div>`).join('')}
+async function playDemo(color){speechSynthesis.cancel();let els=[...$(color==='green'?'greenDemo':'redDemo').children],names=['dog','cat','lion'],order=color==='green'?[0,1,2]:[2,1,0];for(let i of order){els.forEach(e=>e.classList.remove('active'));els[i].classList.add('active');speak(names[i]);await wait(850)}els.forEach(e=>e.classList.remove('active'))}
+function buildVocab(){let p=pool();$('vocab').innerHTML=p.map((x,i)=>`<div class="vocabItem" onclick="sayVocab(this,'${x[0].replace(/'/g,"\\'")}')"><div class="vocabEmoji">${x[1]}</div><div class="vocabName">${x[0]}</div></div>`).join('');let first=$('vocab').firstElementChild;if(first)setTimeout(()=>sayVocab(first,p[0][0]),200)}
+function sayVocab(el,name){document.querySelectorAll('.vocabItem').forEach(x=>x.classList.remove('active'));el.classList.add('active');speak(name)}function speak(t){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.78;speechSynthesis.speak(u)}function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+// Online: host generates one shared seed/settings; every device independently derives identical rounds.
+function showJoin(){$('joinBox').classList.remove('hidden');$('hostBox').classList.add('hidden')}
+function cleanCode(s){return s.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8)}function makeCode(){return Math.random().toString(36).slice(2,8).toUpperCase()}
+function hostOnline(){let name=$('onlineName').value.trim()||'Host';$('onlineName').value=name;localStorage.setItem('sequenceSwitchOnlineName',name);leaveOnline();online=true;isHost=true;let code=makeCode();$('roomCode').textContent=code;$('hostBox').classList.remove('hidden');$('joinBox').classList.add('hidden');peer=new Peer('seqswitch-'+code);peer.on('connection',c=>{conns.push(c);c.on('data',d=>onHostData(c,d));c.on('open',()=>updateOnlinePlayers())});peer.on('error',e=>$('onlinePlayers').textContent='Connection error: '+e.type);onlineScores={[name]:null};updateOnlinePlayers()}
+function updateOnlinePlayers(){let names=[...Object.keys(onlineScores)];$('onlinePlayers').textContent='Players: '+names.join(', ')}
+function onHostData(c,d){if(d.type==='hello'){c.playerName=d.name;onlineScores[d.name]=null;updateOnlinePlayers();broadcast({type:'lobby',names:Object.keys(onlineScores)})}if(d.type==='result'){onlineScores[d.name]=d.result;checkOnlineDone()}}
+function broadcast(d){conns.forEach(c=>{try{c.send(d)}catch(e){}})}
+function hostStart(){if(!isHost)return;let name=$('onlineName').value.trim()||'Host';settings={category:$('onlineCategory').value,difficulty:$('onlineDifficulty').value,duration:+$('onlineDuration').value};seed=(Date.now()>>>0);let packet={type:'start',settings,seed};broadcast(packet);startOnlineGame(name,settings,seed)}
+function joinOnline(){let name=$('onlineName').value.trim()||'Player';localStorage.setItem('sequenceSwitchOnlineName',name);let code=cleanCode($('joinCode').value);if(!code){$('joinStatus').textContent='Enter a room code.';return}leaveOnline();online=true;isHost=false;peer=new Peer();peer.on('open',()=>{hostConn=peer.connect('seqswitch-'+code);hostConn.on('open',()=>{hostConn.send({type:'hello',name});$('joinStatus').textContent='Connected. Waiting for host…'});hostConn.on('data',d=>{if(d.type==='start')startOnlineGame(name,d.settings,d.seed);if(d.type==='results')showResults(d.results)})});peer.on('error',e=>$('joinStatus').textContent='Could not connect: '+e.type)}
+function startOnlineGame(name,s,sd){settings=s;seed=sd>>>0;rng=mulberry32(seed);players=[name];playerIndex=0;score=correct=wrong=0;$('score').textContent=0;$('who').textContent=name;beginTimedGame()}
+function sendOnlineResult(){let r={name:players[0],score,correct,wrong};if(isHost){onlineScores[r.name]=r;checkOnlineDone()}else{try{hostConn.send({type:'result',name:r.name,result:r})}catch(e){}$('status').textContent='Finished — waiting for other players…'}}
+function checkOnlineDone(){let vals=Object.values(onlineScores);if(vals.length&&vals.every(Boolean)){let rs=vals;broadcast({type:'results',results:rs});showResults(rs)}}
+function leaveOnline(){try{hostConn&&hostConn.close()}catch(e){}conns.forEach(c=>{try{c.close()}catch(e){}});try{peer&&peer.destroy()}catch(e){}peer=null;hostConn=null;conns=[];onlineScores={};online=false;isHost=false}
+init();
+</script></body></html>
