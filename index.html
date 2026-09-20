@@ -19,7 +19,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 .gamebox{width:min(760px,100%);background:#dfe7f3;border-radius:30px;padding:24px 16px;min-height:510px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .equation{font-size:clamp(38px,11vw,70px);font-weight:800;color:#111;text-align:center;margin:12px 0 52px;white-space:nowrap}
 .ops{display:grid;grid-template-columns:repeat(2,minmax(100px,145px));gap:22px 34px}.op{height:128px;background:#fff;border-radius:18px;box-shadow:0 6px 12px #0002;font-size:64px;color:#000;display:flex;align-items:center;justify-content:center}.op:active{transform:scale(.95)}
-.feedback{height:38px;margin:12px 0 4px;font-size:24px;font-weight:1000;text-align:center}.hint{text-align:center;font-weight:800;margin-bottom:10px}
+.feedback{min-height:38px;margin:12px 0 4px;font-size:24px;font-weight:1000;text-align:center}.listeningBox{display:inline-block;background:#dff7e8;color:#08783f;border:2px solid #35b76f;border-radius:12px;padding:7px 18px;box-shadow:0 2px 6px #0001}.hint{text-align:center;font-weight:800;margin-bottom:10px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}.actions .btn{padding:10px 12px}
 .good{color:#168b56}.bad{color:#d82445}.hidden{display:none!important}
 .scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:10px;border-bottom:1px solid #dce7ef;text-align:center}.rankCell{font-size:20px;font-weight:1000;color:#2878ff}.winner{text-align:center;font-size:27px;font-weight:1000;margin:14px}
@@ -28,7 +28,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 </style>
 </head>
 <body>
-<div class="version">Version 13</div>
+<div class="version">Version 14</div>
 
 <section id="home" class="screen active"><div class="panel">
 <h1>🧮 Math Detective</h1><p class="sub">Think. Choose. Speak.</p>
@@ -137,7 +137,13 @@ function pickPhrase(a){return a[Math.floor(Math.random()*a.length)]}
 function spokenOp(op){return op==='+'?'plus':op==='-'?'minus':op==='*'?'times':'divided by'}
 function spokenNumber(n){return n<0?`negative ${Math.abs(n)}`:String(n)}
 function equationSpeech(q){return `${spokenNumber(q.a)} ${spokenOp(q.op)} ${spokenNumber(q.b)} equals ${spokenNumber(q.r)}.`}
-function practiceSpeak(text,done,rate=.86){stopListening();speechSynthesis.cancel();if(!('speechSynthesis' in window)){done&&done();return}let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=rate;u.volume=1;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
+function showListening(){
+ if(settings&&settings.gameMode==='practice'&&!locked&&$('game').classList.contains('active')){
+   $('feedback').className='feedback';
+   $('feedback').innerHTML='<span class="listeningBox">🎤 Listening — Speak now</span>';
+ }
+}
+function practiceSpeak(text,done,rate=.96){stopListening();speechSynthesis.cancel();if(!('speechSynthesis' in window)){done&&done();return}let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=rate;u.volume=1;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
 function speakPracticeAnswer(ok,q,done){
  stopListening();speechSynthesis.cancel();
  if(!('speechSynthesis' in window)){done&&done();return}
@@ -146,19 +152,19 @@ function speakPracticeAnswer(ok,q,done){
  const pieces=[String(q.a),opWords[q.op]||q.op,String(q.b),'equals',String(answer)];
  const queue=[];
  const verdict=new SpeechSynthesisUtterance(ok?'Right':'Wrong');
- verdict.lang='en-US';verdict.rate=.92;verdict.volume=1;queue.push(verdict);
- queue.push({pause:330});
+ verdict.lang='en-US';verdict.rate=1.02;verdict.volume=1;queue.push(verdict);
+ queue.push({pause:180});
  pieces.forEach((part,i)=>{
    const u=new SpeechSynthesisUtterance(part);
-   u.lang='en-US';u.rate=.68;u.volume=1;queue.push(u);
-   if(i<pieces.length-1)queue.push({pause:330});
+   u.lang='en-US';u.rate=.82;u.volume=1;queue.push(u);
+   if(i<pieces.length-1)queue.push({pause:190});
  });
  let k=0,finished=false;
  const finish=()=>{if(finished)return;finished=true;done&&done()};
  const next=()=>{if(k>=queue.length){finish();return}const x=queue[k++];if(x.pause){setTimeout(next,x.pause);return}x.onend=next;x.onerror=next;speechSynthesis.speak(x)};
  next();
 }
-function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active'))startListening()}),120)}
+function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
 function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;const ok=op===current.op,q=current;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;if(settings.gameMode==='practice'){speakPracticeAnswer(ok,q,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
 function skipQuestion(){
  if(locked||!current||performance.now()>=endAt)return;
@@ -170,7 +176,7 @@ function symbol(op){return op==='*'?'×':op==='/'?'÷':op}
 function speak(t){if(!('speechSynthesis'in window))return;let was=wantListening;stopListening();let u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.9;u.onend=()=>{if(was&&$('game').classList.contains('active'))startListening()};speechSynthesis.cancel();speechSynthesis.speak(u)}
 const voiceMap={'+':['plus','add','addition','added'],'-':['minus','subtract','subtraction','take away'],'*':['times','multiply','multiplied','multiplication','cross'],'/':['divide','divided','division','over']};
 function detectVoice(t){t=t.toLowerCase().replace(/[^a-z ]/g,' ');for(const [op,words] of Object.entries(voiceMap))if(words.some(w=>t.includes(w)))return op;return null}
-function startListening(){wantListening=true;if(recognition)return;let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;let r=new SR();recognition=r;r.lang='en-US';r.continuous=false;r.interimResults=false;r.maxAlternatives=5;r.onresult=e=>{let heard=[...e.results[0]].map(x=>x.transcript);recognition=null;let op=heard.map(detectVoice).find(Boolean);if(op){$('feedback').textContent='';answer(op)}else if(!locked&&$('game').classList.contains('active')){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.';if(wantListening)setTimeout(startListening,220)}else if(wantListening&&!locked)setTimeout(startListening,180)};r.onerror=e=>{if(!locked&&$('game').classList.contains('active')&&e.error!=='aborted'){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.'}};r.onend=()=>{if(recognition===r)recognition=null;if(wantListening&&!locked&&$('game').classList.contains('active'))setTimeout(startListening,220)};try{r.start()}catch(e){recognition=null}}
+function startListening(){wantListening=true;if(recognition)return;let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;let r=new SR();recognition=r;r.lang='en-US';r.continuous=false;r.interimResults=false;r.maxAlternatives=5;r.onresult=e=>{let heard=[...e.results[0]].map(x=>x.transcript);recognition=null;let op=heard.map(detectVoice).find(Boolean);if(op){$('feedback').textContent='';answer(op)}else if(!locked&&$('game').classList.contains('active')){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.';if(wantListening)setTimeout(()=>{showListening();startListening()},220)}else if(wantListening&&!locked)setTimeout(()=>{showListening();startListening()},180)};r.onerror=e=>{if(!locked&&$('game').classList.contains('active')&&e.error!=='aborted'){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.'}};r.onend=()=>{if(recognition===r)recognition=null;if(wantListening&&!locked&&$('game').classList.contains('active'))setTimeout(startListening,220)};try{r.start()}catch(e){recognition=null}}
 function stopListening(){wantListening=false;if(recognition){try{recognition.abort()}catch(e){}recognition=null}}
 function openTutorial(){tutorialPausedAt=performance.now();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();tutorialPage(1);show('tutorial');setTimeout(playTutorialOperator,350)}
 function tutorialPage(n){speechSynthesis.cancel();$('tut1').classList.toggle('hidden',n!==1);$('tut2').classList.toggle('hidden',n!==2);if(n===1)setTimeout(playTutorialOperator,250);if(n===2)setTimeout(()=>speakOperationSet('plus'),300)}
