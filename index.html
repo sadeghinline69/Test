@@ -98,7 +98,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <script>
 let mode='local',players=[],pi=0,score=0,questions=0,correct=0,wrong=0,settings={},current=null,endAt=0,timer=null,locked=false;
 let seed=1,peer=null,conns=[],hostConn=null,isHost=false,roomPlayers=[],onlineFinished={},onlineTotal=1;
-let tutorialPausedAt=0,recognition=null,wantListening=false,equationVoiceActive=false,equationVoiceTranscript='';
+let tutorialPausedAt=0,recognition=null,wantListening=false,equationVoiceActive=false,equationVoiceTranscript='',equationVoiceCandidates=[];
 function $(id){return document.getElementById(id)}
 function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
 function chooseMode(m){mode=m;show('setup');$('setupTitle').textContent=m==='local'?'📱 Local Game':'🌐 Online Game';$('localFields').classList.toggle('hidden',m!=='local');$('onlineFields').classList.toggle('hidden',m!=='online');$('startBtn').classList.toggle('hidden',m==='online');renderNames()}
@@ -185,7 +185,10 @@ function fullEquationAccepted(text,q){
  // Accept natural recognizer renderings such as "2 + 2 = 4", "two plus two is four",
  // and word/digit mixtures, but still require the complete equation in the right order.
  for(const a of A)for(const b of B)for(const r of R){
-   if(got===`${a} ${op} ${b} equals ${r}`)return true;
+   const expected=`${a} ${op} ${b} equals ${r}`;
+   // Some browsers add harmless filler or split/rejoin recognition chunks.
+   // Accept the complete expected equation when it appears in the transcript.
+   if(got===expected || (` ${got} `).includes(` ${expected} `))return true;
  }
  return false
 }
@@ -202,12 +205,12 @@ function toggleEquationVoice(){
  if(equationVoiceActive){
    // Only the player turns listening off. Judge the best complete transcript collected so far.
    setEquationVoice(false); stopEquationListening();
-   const heard=equationVoiceTranscript.trim();
+   const heard=(equationVoiceCandidates.find(c=>fullEquationAccepted(c,current))||equationVoiceTranscript).trim();
    if(heard)judgeFullEquation(heard);
    else {$('feedback').className='feedback bad';$('feedback').textContent='✕ Wrong! 0';wrong++;questions=Math.max(questions,1);setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},650)}
    return;
  }
- equationVoiceTranscript=''; setEquationVoice(true); $('feedback').textContent=''; startEquationListening()
+ equationVoiceTranscript=''; equationVoiceCandidates=[]; setEquationVoice(true); $('feedback').textContent=''; startEquationListening()
 }
 function stopEquationListening(){
  equationVoiceActive=false;
@@ -220,22 +223,35 @@ function startEquationListening(){
  if(recognition){try{recognition.abort()}catch(e){}recognition=null}
  let r=new SR(); recognition=r; r.lang='en-US'; r.continuous=true; r.interimResults=true; r.maxAlternatives=10;
  r.onresult=e=>{
-   let best='';
-   // Prefer any alternative that already forms the correct complete equation.
+   // Web Speech frequently returns one equation as several result chunks, e.g.
+   // ["two plus two"] ["equals four"]. Keep the chunks and join them instead
+   // of judging only the last fragment. Also keep alternatives because children's
+   // speech is often correct in a non-top recognition alternative.
+   const groups=[];
    for(let i=0;i<e.results.length;i++){
-     const result=e.results[i];
-     for(let j=0;j<result.length;j++){
-       const candidate=result[j].transcript.trim();
-       if(fullEquationAccepted(candidate,current)){best=candidate;break}
-       if(!best && candidate)best=candidate;
+     const alts=[];
+     for(let j=0;j<Math.min(e.results[i].length,10);j++){
+       const t=e.results[i][j].transcript.trim();
+       if(t&&!alts.includes(t))alts.push(t);
      }
-     if(best && fullEquationAccepted(best,current))break;
+     if(alts.length)groups.push(alts);
    }
-   if(best){
-     if(fullEquationAccepted(best,current)) equationVoiceTranscript=best;
-     else if(!fullEquationAccepted(equationVoiceTranscript,current)) equationVoiceTranscript=best;
+   let candidates=[''];
+   for(const g of groups){
+     const next=[];
+     for(const prefix of candidates)for(const part of g.slice(0,5)){
+       next.push((prefix+' '+part).trim());
+       if(next.length>=125)break;
+     }
+     candidates=next.slice(0,125);
    }
-   // No transcript/listening text is shown. The green button is the listening indicator.
+   // Also test every individual alternative and preserve candidates across browser restarts.
+   for(const g of groups)for(const t of g)candidates.push(t);
+   for(const c of candidates)if(c&&!equationVoiceCandidates.includes(c))equationVoiceCandidates.push(c);
+   equationVoiceCandidates=equationVoiceCandidates.slice(-300);
+   const correct=equationVoiceCandidates.find(c=>fullEquationAccepted(c,current));
+   if(correct)equationVoiceTranscript=correct;
+   else if(candidates[0]) equationVoiceTranscript=candidates[0];
    $('feedback').textContent='';
  };
  r.onerror=e=>{
@@ -270,16 +286,16 @@ function speakPracticeAnswer(ok,q,done){
  function speakNext(){
    if(i>=parts.length){setTimeout(finish,300);return}
    const u=new SpeechSynthesisUtterance(parts[i++]);
-   u.lang='en-US';u.rate=.68;u.volume=1;
-   u.onend=()=>setTimeout(speakNext,360);
-   u.onerror=()=>setTimeout(speakNext,360);
+   u.lang='en-US';u.rate=.48;u.volume=1;
+   u.onend=()=>setTimeout(speakNext,650);
+   u.onerror=()=>setTimeout(speakNext,650);
    speechSynthesis.speak(u);
  }
- verdict.onend=()=>setTimeout(speakNext,700);
- verdict.onerror=()=>setTimeout(speakNext,700);
+ verdict.onend=()=>setTimeout(speakNext,1200);
+ verdict.onerror=()=>setTimeout(speakNext,1200);
  speechSynthesis.speak(verdict);
 }
-function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;equationVoiceTranscript='';setEquationVoice(false);$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
+function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;equationVoiceTranscript='';equationVoiceCandidates=[];setEquationVoice(false);$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
 function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;const ok=op===current.op,q=current;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;if(settings.gameMode==='practice'){speakPracticeAnswer(ok,q,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
 function skipQuestion(){
  if(locked||!current||performance.now()>=endAt)return;
@@ -407,5 +423,5 @@ function checkOnlineDone(){
 try{$('onlineName').value=localStorage.getItem('mathDetectiveOnlineName')||''}catch(e){}
 renderNames();
 </script>
-<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 28</div>
+<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 29</div>
 </body></html>
