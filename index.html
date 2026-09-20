@@ -28,7 +28,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 </style>
 </head>
 <body>
-<div class="version">Version 14</div>
+<div class="version">Version 15</div>
 
 <section id="home" class="screen active"><div class="panel">
 <h1>🧮 Math Detective</h1><p class="sub">Think. Choose. Speak.</p>
@@ -147,22 +147,15 @@ function practiceSpeak(text,done,rate=.96){stopListening();speechSynthesis.cance
 function speakPracticeAnswer(ok,q,done){
  stopListening();speechSynthesis.cancel();
  if(!('speechSynthesis' in window)){done&&done();return}
- const opWords={'+':'plus','−':'minus','-':'minus','×':'times','*':'times','÷':'divided by','/':'divided by'};
- const answer=q.r;
- const pieces=[String(q.a),opWords[q.op]||q.op,String(q.b),'equals',String(answer)];
- const queue=[];
  const verdict=new SpeechSynthesisUtterance(ok?'Right':'Wrong');
- verdict.lang='en-US';verdict.rate=1.02;verdict.volume=1;queue.push(verdict);
- queue.push({pause:180});
- pieces.forEach((part,i)=>{
-   const u=new SpeechSynthesisUtterance(part);
-   u.lang='en-US';u.rate=.82;u.volume=1;queue.push(u);
-   if(i<pieces.length-1)queue.push({pause:190});
- });
- let k=0,finished=false;
- const finish=()=>{if(finished)return;finished=true;done&&done()};
- const next=()=>{if(k>=queue.length){finish();return}const x=queue[k++];if(x.pause){setTimeout(next,x.pause);return}x.onend=next;x.onerror=next;speechSynthesis.speak(x)};
- next();
+ verdict.lang='en-US';verdict.rate=1.02;verdict.volume=1;
+ const equation=new SpeechSynthesisUtterance(equationSpeech(q));
+ equation.lang='en-US';equation.rate=.88;equation.volume=1;
+ verdict.onend=()=>setTimeout(()=>speechSynthesis.speak(equation),170);
+ verdict.onerror=()=>speechSynthesis.speak(equation);
+ equation.onend=()=>done&&done();
+ equation.onerror=()=>done&&done();
+ speechSynthesis.speak(verdict);
 }
 function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
 function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;const ok=op===current.op,q=current;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;if(settings.gameMode==='practice'){speakPracticeAnswer(ok,q,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
