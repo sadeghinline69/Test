@@ -28,7 +28,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 </style>
 </head>
 <body>
-<div class="version">Version 10</div>
+<div class="version">Version 11</div>
 
 <section id="home" class="screen active"><div class="panel">
 <h1>🧮 Math Detective</h1><p class="sub">Think. Choose. Speak.</p>
@@ -137,9 +137,22 @@ function pickPhrase(a){return a[Math.floor(Math.random()*a.length)]}
 function spokenOp(op){return op==='+'?'plus':op==='-'?'minus':op==='*'?'times':'divided by'}
 function spokenNumber(n){return n<0?`negative ${Math.abs(n)}`:String(n)}
 function equationSpeech(q){return `${spokenNumber(q.a)} ${spokenOp(q.op)} ${spokenNumber(q.b)} equals ${spokenNumber(q.r)}.`}
-function practiceSpeak(text,done){stopListening();speechSynthesis.cancel();if(!('speechSynthesis' in window)){done&&done();return}let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.86;u.volume=1;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
+function practiceSpeak(text,done,rate=.86){stopListening();speechSynthesis.cancel();if(!('speechSynthesis' in window)){done&&done();return}let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=rate;u.volume=1;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
+function speakPracticeAnswer(ok,q,done){
+ stopListening();speechSynthesis.cancel();
+ if(!('speechSynthesis' in window)){done&&done();return}
+ const verdict=new SpeechSynthesisUtterance(ok?'Right':'Wrong');
+ verdict.lang='en-US';verdict.rate=.86;verdict.volume=1;
+ const equation=new SpeechSynthesisUtterance(equationSpeech(q));
+ equation.lang='en-US';equation.rate=.60;equation.volume=1;
+ verdict.onend=()=>speechSynthesis.speak(equation);
+ verdict.onerror=()=>speechSynthesis.speak(equation);
+ equation.onend=()=>done&&done();
+ equation.onerror=()=>done&&done();
+ speechSynthesis.speak(verdict);
+}
 function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active'))startListening()}),120)}
-function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;const ok=op===current.op,q=current;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;if(settings.gameMode==='practice'){practiceSpeak(`${ok?pickPhrase(practiceCorrect):pickPhrase(practiceWrong)} ${equationSpeech(q)}`,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
+function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;const ok=op===current.op,q=current;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;if(settings.gameMode==='practice'){speakPracticeAnswer(ok,q,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
 function skipQuestion(){
  if(locked||!current||performance.now()>=endAt)return;
  locked=true;$('feedback').className='feedback';$('feedback').textContent='Skipped — no points lost';
