@@ -22,13 +22,13 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 .feedback{height:38px;margin:12px 0 4px;font-size:24px;font-weight:1000;text-align:center}.hint{text-align:center;font-weight:800;margin-bottom:10px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}.actions .btn{padding:10px 12px}
 .good{color:#168b56}.bad{color:#d82445}.hidden{display:none!important}
-.scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:10px;border-bottom:1px solid #dce7ef;text-align:center}.winner{text-align:center;font-size:27px;font-weight:1000;margin:14px}
+.scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:10px;border-bottom:1px solid #dce7ef;text-align:center}.rankCell{font-size:20px;font-weight:1000;color:#2878ff}.winner{text-align:center;font-size:27px;font-weight:1000;margin:14px}
 .tutEq{font-size:36px;text-align:center;font-weight:900;margin:18px}.tutOps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:330px;margin:auto}.tutOps div{background:#f2f6fb;border-radius:14px;padding:14px;text-align:center;font-size:30px;font-weight:900}.callout{background:#eef7ff;border-radius:16px;padding:12px;margin:12px 0;font-weight:750}.synGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.synCard{background:#f2f6fb;border-radius:14px;padding:12px;text-align:center}.synOp{font-size:34px;font-weight:1000}.synWords{font-size:14px;font-weight:800;line-height:1.45}.tutNav{display:flex;gap:10px}.tutNav .btn{flex:1}
 @media(max-height:700px){.screen{padding-top:40px}.gamebox{min-height:430px;padding:12px}.equation{margin-bottom:28px}.op{height:100px}.ops{gap:14px 26px}}
 </style>
 </head>
 <body>
-<div class="version">Version 8</div>
+<div class="version">Version 10</div>
 
 <section id="home" class="screen active"><div class="panel">
 <h1>🧮 Math Detective</h1><p class="sub">Think. Choose. Speak.</p>
@@ -50,7 +50,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <button class="btn secondary wide" onclick="joinRoom()">Join Room</button>
 <div id="roomInfo" class="sub"></div>
 </div>
-<div class="field"><label>Difficulty Level</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
+<div class="field"><label>Game Mode</label><select id="gameMode"><option value="race" selected>🏁 Race Mode</option><option value="practice">🎓 Practice Mode</option></select></div><div class="field"><label>Difficulty Level</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
 <div class="field"><label>Game Time</label><select id="duration"><option value="30" selected>30 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option></select></div>
 <button id="startBtn" class="btn primary wide" onclick="startConfiguredGame()">Start Game</button><button class="btn secondary wide" onclick="show('home')">Back</button>
 </div></section>
@@ -71,7 +71,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <div class="actions"><button class="btn secondary" onclick="returnHome()">⌂ Main Menu</button><button class="btn secondary" onclick="openTutorial()">📘 Tutorial</button><button class="btn secondary" onclick="restartSame()">↻ Restart</button></div>
 </section>
 
-<section id="results" class="screen"><div class="panel"><h1>🏆 Results</h1><div id="winner" class="winner"></div><table class="scoreboard"><thead><tr><th>Player</th><th>Correct</th><th>Wrong</th><th>Score</th><th>Questions</th></tr></thead><tbody id="resultRows"></tbody></table><button class="btn primary wide" onclick="playAgain()">↻ Play Again</button><button class="btn secondary wide" onclick="returnHome()">⌂ Main Menu</button></div></section>
+<section id="results" class="screen"><div class="panel"><h1>🏆 Results</h1><div id="winner" class="winner"></div><table class="scoreboard"><thead><tr><th>Rank</th><th>Player</th><th>Correct</th><th>Wrong</th><th>Score</th><th>Questions</th></tr></thead><tbody id="resultRows"></tbody></table><button class="btn primary wide" onclick="playAgain()">↻ Play Again</button><button class="btn secondary wide" onclick="returnHome()">⌂ Main Menu</button></div></section>
 
 <section id="tutorial" class="screen"><div class="panel">
 <h1>📘 Tutorial</h1>
@@ -80,7 +80,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <p class="sub">Find the missing mathematical operation.</p>
 <div class="tutEq">−8 □ −6 = −2</div>
 <div class="tutOps"><div>+</div><div id="tutorialMinus" style="outline:4px solid #24b47e">− ✓</div><div>×</div><div>÷</div></div>
-<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. Here the correct operator is <b>minus</b>.<br><br>If you do not know the answer, tap <b>Skip</b> to move to the next question with <b>no points lost</b>.</div>
+<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. Here the correct operator is <b>minus</b>.<br><br>If you do not know the answer, tap <b>Skip</b> to move to the next question with <b>no points lost</b>.<br><br><b>🏁 Race Mode:</b> fast gameplay with short feedback.<br><b>🎓 Practice Mode:</b> the game asks a varied spoken question before each equation. After the answer, it gives varied spoken feedback and reads the complete correct equation aloud.</div>
 <div class="tutNav"><button class="btn secondary" onclick="closeTutorial()">← Back to Game</button><button class="btn primary" onclick="tutorialPage(2)">Next →</button></div>
 </div>
 <div id="tut2" class="hidden">
@@ -106,7 +106,7 @@ function chooseMode(m){mode=m;show('setup');$('setupTitle').textContent=m==='loc
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function renderNames(){let n=+$('playerCount').value,saved=[];try{saved=JSON.parse(localStorage.getItem('mathDetectivePlayerNames')||'[]')}catch(e){}let old=[...document.querySelectorAll('.pname')].map(x=>x.value);$('names').innerHTML=Array.from({length:n},(_,i)=>`<div class="field"><label>Player ${i+1}</label><input class="pname" value="${esc(old[i]||saved[i]||`Player ${i+1}`)}"></div>`).join('')}
 $('playerCount').onchange=renderNames;
-function startConfiguredGame(){settings={difficulty:$('difficulty').value,duration:+$('duration').value};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;seed=(Date.now()>>>0);settings.baseSeed=seed;showTransition()}
+function startConfiguredGame(){settings={gameMode:$('gameMode').value,difficulty:$('difficulty').value,duration:+$('duration').value};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;seed=(Date.now()>>>0);settings.baseSeed=seed;showTransition()}
 function showTransition(){$('turnTitle').textContent=`${players[pi].name}, get ready!`;show('transition')}
 function beginPlayer(){score=questions=correct=wrong=0;seed=(settings.baseSeed??seed);$('who').textContent=players[pi].name;$('score').textContent=0;show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);newQuestion();startListening()}
 function tick(){let left=Math.max(0,Math.ceil((endAt-performance.now())/1000));$('time').textContent=left;if(performance.now()>=endAt)finishPlayer()}
@@ -130,14 +130,21 @@ function generate(){
  return {a:8,b:3,r:11,op:'+'}
 }
 function fmt(n){return n<0?`(${n})`:String(n)}
-function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`}
-function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;if(op===current.op){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1';speak('Correct')}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`;speak('Wrong')}$('score').textContent=score;setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}
+const practicePrompts=['Which operation is correct?','Which operator do you select?','Choose the correct operation.','What operation makes this equation correct?','Can you find the missing operator?','Select the operation that completes the equation.','Which mathematical operation belongs here?'];
+const practiceCorrect=['Correct! Well done.','That is correct!','Great job! You got it right.','Excellent! That is the right operation.','Nice work! Correct answer.'];
+const practiceWrong=['Not quite. Listen to the correct equation.','That is not correct. Here is the correct equation.','Good try. Listen to the right operation.','Almost. Here is the complete correct equation.','That answer is incorrect. Listen to the correct equation.'];
+function pickPhrase(a){return a[Math.floor(Math.random()*a.length)]}
+function spokenOp(op){return op==='+'?'plus':op==='-'?'minus':op==='*'?'times':'divided by'}
+function spokenNumber(n){return n<0?`negative ${Math.abs(n)}`:String(n)}
+function equationSpeech(q){return `${spokenNumber(q.a)} ${spokenOp(q.op)} ${spokenNumber(q.b)} equals ${spokenNumber(q.r)}.`}
+function practiceSpeak(text,done){stopListening();speechSynthesis.cancel();if(!('speechSynthesis' in window)){done&&done();return}let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.86;u.volume=1;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
+function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active'))startListening()}),120)}
+function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;const ok=op===current.op,q=current;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;if(settings.gameMode==='practice'){practiceSpeak(`${ok?pickPhrase(practiceCorrect):pickPhrase(practiceWrong)} ${equationSpeech(q)}`,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
 function skipQuestion(){
  if(locked||!current||performance.now()>=endAt)return;
- locked=true;
- $('feedback').className='feedback';
- $('feedback').textContent='Skipped — no points lost';
- setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},350)
+ locked=true;$('feedback').className='feedback';$('feedback').textContent='Skipped — no points lost';
+ if(settings.gameMode==='practice')practiceSpeak(`Skipped. The correct equation is ${equationSpeech(current)}`,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()});
+ else setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},350)
 }
 function symbol(op){return op==='*'?'×':op==='/'?'÷':op}
 function speak(t){if(!('speechSynthesis'in window))return;let was=wantListening;stopListening();let u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.9;u.onend=()=>{if(was&&$('game').classList.contains('active'))startListening()};speechSynthesis.cancel();speechSynthesis.speak(u)}
@@ -184,7 +191,7 @@ function showResults(results){
  let best=sorted[0]?.score;
  let w=sorted.filter(x=>x.score===best);
  $('winner').textContent=w.length===1?`🎉 ${w[0].name} wins!`:`🤝 ${w.map(x=>x.name).join(' & ')} win!`;
- $('resultRows').innerHTML=sorted.map((x,i)=>`<tr><td>${esc(x.name)} — <b>${ordinal(i+1)}</b></td><td>${x.correct}</td><td>${x.wrong}</td><td><b>${x.score}</b></td><td>${x.questions}</td></tr>`).join('');
+ $('resultRows').innerHTML=sorted.map((x,i)=>`<tr><td class="rankCell">${i+1}</td><td>${esc(x.name)}</td><td>${x.correct}</td><td>${x.wrong}</td><td><b>${x.score}</b></td><td>${x.questions}</td></tr>`).join('');
  show('results');
  setTimeout(()=>announceWinner(w),450)
 }
@@ -192,7 +199,7 @@ function playAgain(){pi=0;showTransition()}
 function returnHome(){clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();show('home')}
 
 function roomCodeNew(){return Math.random().toString(36).slice(2,8).toUpperCase()}
-function readOnlineSettings(){return {difficulty:$('difficulty').value,duration:+$('duration').value}}
+function readOnlineSettings(){return {gameMode:$('gameMode').value,difficulty:$('difficulty').value,duration:+$('duration').value}}
 function createRoom(){
  let name=$('onlineName').value.trim()||'Host';try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
  let c=roomCodeNew();$('roomCode').value=c;isHost=true;conns=[];roomPlayers=[name];
