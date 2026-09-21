@@ -502,6 +502,28 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 #leftDestBtn.botTicketChoice{outline:4px solid #ffe26d!important;box-shadow:0 0 20px 8px #ffd84eaa!important;transform:scale(1.05);animation:botRoutePreviewPulse .55s ease-in-out infinite alternate}
 @keyframes botRoutePreviewPulse{to{opacity:.58}}
 
+/* Version 45 — persistent final-round warning. */
+#finalRoundAlert{display:none;position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:320000;min-width:min(560px,86vw);padding:9px 18px;border:3px solid #fff4a8;border-radius:13px;background:linear-gradient(90deg,#7b0909,#d51616,#7b0909);color:#fff;text-align:center;font:1000 17px/1.15 system-ui;letter-spacing:.8px;text-shadow:0 2px 2px #500;box-shadow:0 0 0 3px #a40000,0 0 24px 8px #ff2d2daa;pointer-events:none}
+#finalRoundAlert.show{display:block;animation:finalRoundPulse 1.1s ease-in-out infinite alternate}
+body:has(#finalRoundAlert.show) #toast{top:62px!important}
+@keyframes finalRoundPulse{from{filter:brightness(.9);transform:translateX(-50%) scale(.98)}to{filter:brightness(1.28);transform:translateX(-50%) scale(1.025);box-shadow:0 0 0 3px #fff4a8,0 0 34px 12px #ff3030dd}}
+@media(max-width:850px){#finalRoundAlert{top:3px;min-width:70vw;padding:6px 10px;font-size:11px;border-width:2px}body:has(#finalRoundAlert.show) #toast{top:43px!important}}
+
+/* Version 46 — map-first, video-style animated final scoring. */
+body.finalScoringMode #game::after{content:"";position:fixed;inset:0;z-index:190000;background:#05080d99;pointer-events:none;animation:scoreShadeIn .5s ease both}
+body.finalScoringMode .routeSeg{opacity:.18;transition:opacity .28s,filter .28s}body.finalScoringMode .city{opacity:.34;transition:.3s}
+#finalScoreShow{background:transparent!important;align-items:flex-end!important;justify-content:flex-start!important;pointer-events:none!important;padding:8px!important}
+.scoreStage{pointer-events:auto!important;width:min(620px,48vw)!important;max-height:38vh!important;padding:10px 12px!important;border-radius:12px!important;background:linear-gradient(145deg,#202b36f5,#0a1017f5)!important}
+.scoreStage h2{font-size:18px!important;margin:0 0 6px!important}.scoreRows{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px!important}.scorePlayer{padding:6px 8px!important}.scoreHead{font-size:12px!important}.scoreBreakdown{margin:3px 0!important;padding:3px 6px!important}.scoreEvent{min-height:17px!important;font-size:10px!important}.scoreTickets{gap:2px!important;margin-top:3px!important}.scoreTicket{padding:3px 5px!important;font-size:9px!important}.longestReadout{font-size:9px!important;padding:3px 5px!important}.scoreWinner{font-size:18px!important;margin-top:6px!important}.scoreNewGame{margin-top:5px!important;padding:6px!important}
+.routeSeg.finalRailScore,.routeSeg.finalTicketComplete,.routeSeg.finalTicketMissing,.routeSeg.finalLongest{opacity:1!important}
+.routeSeg.finalRailScore .routePiece{filter:brightness(1.45) saturate(1.5) drop-shadow(0 0 1.8px #fff)!important;animation:scoreRailPulse .7s ease-in-out infinite alternate}
+.routeSeg.finalTicketComplete .routePiece{stroke:#fff06b!important;stroke-width:1.05!important;filter:brightness(1.55) saturate(1.7) drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #55f58a)!important;animation:ticketTrace .55s ease-in-out infinite alternate}
+.routeSeg.finalTicketMissing .routePiece{stroke:#ffebe8!important;stroke-width:1.05!important;filter:brightness(1.25) saturate(1.8) drop-shadow(0 0 2px #ff3333) drop-shadow(0 0 4px #ff2222)!important;animation:ticketTrace .38s ease-in-out infinite alternate}
+.city.scoringEndpoint{opacity:1!important;z-index:20!important}.city.scoringEndpoint .dot{transform:scale(2.1);box-shadow:0 0 0 3px #fff,0 0 16px 7px #ffd836!important;background:#ffd836!important;animation:endpointPulse .55s ease-in-out infinite alternate}
+#scoreMapBadge{display:none;position:fixed;left:63%;top:13%;transform:translateX(-50%);z-index:210000;min-width:210px;padding:10px 18px;border:2px solid #ffe38a;border-radius:13px;background:#111b26ed;color:#fff;text-align:center;font:900 16px/1.25 system-ui;box-shadow:0 8px 30px #000,0 0 22px #ffd84c66;pointer-events:none}
+#scoreMapBadge.on{display:block;animation:badgeIn .35s ease both}#scoreMapBadge .delta{display:block;font-size:28px;color:#ffe36b;margin-top:3px}#scoreMapBadge.bad .delta{color:#ff7777}
+@keyframes scoreShadeIn{from{opacity:0}to{opacity:1}}@keyframes scoreRailPulse{to{filter:brightness(1.8) saturate(1.7) drop-shadow(0 0 3px #fff)!important}}@keyframes ticketTrace{to{opacity:.55;filter:brightness(1.85) drop-shadow(0 0 5px #ffe85b)!important}}@keyframes endpointPulse{to{transform:scale(2.8)}}@keyframes badgeIn{from{opacity:0;transform:translate(-50%,-18px) scale(.8)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+@media(max-width:850px){.scoreStage{width:54vw!important;max-height:45vh!important;padding:5px!important}.scoreRows{grid-template-columns:1fr 1fr}.scoreStage h2{font-size:12px!important}#scoreMapBadge{left:64%;top:8%;min-width:130px;font-size:10px;padding:6px 9px}#scoreMapBadge .delta{font-size:19px}}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -513,10 +535,11 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 44</div>
+<div class="version">Version 46</div>
 </div></section>
 
 <section id="game" class="screen hidden">
+<div id="finalRoundAlert" role="alert" aria-live="assertive">⚠ FINAL ROUND — ONE LAST TURN FOR EVERY PLAYER ⚠</div>
 <aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button><div class="leftTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div>
 <main class="mapWrap"><div id="map"></div><div id="mapSavedTickets" class="mapSavedTickets"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
@@ -769,6 +792,11 @@ function beginTurn(){
  drawCount=0;turnAction=null;selectedClaimColor=null;renderAll();
  if(players[turn]?.isBot){clearTimeout(botTimer);botTimer=setTimeout(runBotTurn,1050)}else setBotTicketGlow(false)
 }
+function announceFinalRound(){
+ let warning=$("finalRoundAlert");if(warning)warning.classList.add("show");
+ if(window.gameSFX&&window.gameSFX.finalWarning)window.gameSFX.finalWarning();
+ try{if(navigator.vibrate)navigator.vibrate([280,110,280,110,500])}catch(e){}
+}
 function endTurn(){
  if(gameFinished)return;
  if(finalRound){
@@ -777,12 +805,13 @@ function endTurn(){
  }else if(players[turn].trains<=2){
    finalRound=true;
    finalTurnsRemaining=players.length;
-   
+   announceFinalRound();
  }
  turn=(turn+1)%players.length;beginTurn();
 }
 function finishGame(){
  gameFinished=true;stopPendingGlowCycle();clearGlow();
+ let warning=$("finalRoundAlert");if(warning)warning.classList.remove("show");
  renderAll();
  setTimeout(()=>window.animateFinalScoring&&window.animateFinalScoring(),250);
 }
@@ -935,6 +964,7 @@ function showHelp(){$("help").classList.remove("hidden")}
   <button id="scoreNewGame" class="btn primary scoreNewGame" onclick="location.reload()">New Game</button>
  </div>
 </div>
+<div id="scoreMapBadge"></div>
 
 
 <script>
@@ -954,7 +984,13 @@ function showHelp(){$("help").classList.remove("hidden")}
    complete(){tone(523,.12,'triangle');tone(659,.12,'triangle',.055,.12);tone(784,.22,'triangle',.06,.24)},
    plus(){tone(660,.07,'sine',.035);tone(880,.08,'sine',.03,.06)},
    minus(){tone(260,.10,'sawtooth',.025);tone(190,.12,'sawtooth',.02,.08)},
-   longest(){tone(392,.1,'triangle');tone(523,.1,'triangle',.05,.1);tone(659,.1,'triangle',.05,.2);tone(784,.25,'triangle',.06,.3)}
+   longest(){tone(392,.1,'triangle');tone(523,.1,'triangle',.05,.1);tone(659,.1,'triangle',.05,.2);tone(784,.25,'triangle',.06,.3)},
+   finalWarning(){
+     tone(175,.55,'square',.065,0);tone(880,.18,'sawtooth',.075,0);tone(620,.18,'sawtooth',.07,.22);
+     tone(880,.18,'sawtooth',.075,.44);tone(620,.18,'sawtooth',.07,.66);
+     tone(175,.55,'square',.065,.90);tone(940,.20,'sawtooth',.08,.90);tone(660,.20,'sawtooth',.075,1.14);
+     tone(940,.20,'sawtooth',.08,1.38);tone(660,.28,'sawtooth',.075,1.62);
+   }
  };
  window.gameSFX=SFX;
 
@@ -1011,44 +1047,70 @@ function showHelp(){$("help").classList.remove("hidden")}
    document.querySelectorAll('.routeSeg.finalLongest').forEach(x=>x.classList.remove('finalLongest'));
    routeIds.forEach(id=>document.querySelectorAll(`.routeSeg[data-i="${id}"]`).forEach(x=>x.classList.add('finalLongest')));
  }
+ function clearScoreMap(){
+   document.querySelectorAll('.routeSeg.finalRailScore,.routeSeg.finalTicketComplete,.routeSeg.finalTicketMissing').forEach(x=>x.classList.remove('finalRailScore','finalTicketComplete','finalTicketMissing'));
+   document.querySelectorAll('.city.scoringEndpoint').forEach(x=>x.classList.remove('scoringEndpoint'));
+ }
+ function markEndpoints(t){
+   document.querySelectorAll('.city').forEach(x=>x.classList.toggle('scoringEndpoint',x.dataset.name===t.a||x.dataset.name===t.b));
+ }
+ function routePath(from,to,pi,ownedOnly){
+   let dist={},prev={},todo=new Set(Object.keys(CITIES));Object.keys(CITIES).forEach(c=>dist[c]=Infinity);dist[from]=0;
+   while(todo.size){let u=[...todo].sort((a,b)=>dist[a]-dist[b])[0];todo.delete(u);if(!u||dist[u]===Infinity||u===to)break;
+     ROUTES.forEach((r,id)=>{if(ownedOnly&&claimed[id]!==pi)return;if(r[0]!==u&&r[1]!==u)return;let v=r[0]===u?r[1]:r[0],cost=(+r[3]||1)+(claimed[id]===pi?-.15:0);if(todo.has(v)&&dist[u]+cost<dist[v]){dist[v]=dist[u]+cost;prev[v]={u,id}}});
+   }
+   let ids=[],v=to;while(v!==from&&prev[v]){ids.push(prev[v].id);v=prev[v].u}return v===from?ids.reverse():[];
+ }
+ function showTicketOnMap(t,pi,ok){
+   clearScoreMap();markEndpoints(t);let ids=routePath(t.a,t.b,pi,ok);if(!ids.length)ids=routePath(t.a,t.b,pi,false);
+   ids.forEach(id=>document.querySelectorAll(`.routeSeg[data-i="${id}"]`).forEach(x=>x.classList.add(claimed[id]===pi?'finalTicketComplete':'finalTicketMissing')));
+ }
+ function showBadge(label,delta,bad=false){let b=document.getElementById('scoreMapBadge');b.className='on'+(bad?' bad':'');b.innerHTML=`${label}<span class="delta">${delta>=0?'+':''}${delta}</span>`}
+ function hideBadge(){let b=document.getElementById('scoreMapBadge');b.className='';b.innerHTML=''}
+ async function countScore(el,from,to,duration=520){let start=performance.now();return new Promise(resolve=>{function tick(now){let p=Math.min(1,(now-start)/duration),e=1-Math.pow(1-p,3);el.textContent=Math.round(from+(to-from)*e);if(p<1)requestAnimationFrame(tick);else resolve()}requestAnimationFrame(tick)})}
  const wait=ms=>new Promise(r=>setTimeout(r,ms));
  async function animateFinalScoring(){
    if(!window.players||!players.length)return;
    const box=document.getElementById('finalScoreShow'),rows=document.getElementById('scoreRows'),win=document.getElementById('scoreWinner'),newGame=document.getElementById('scoreNewGame');
-   rows.innerHTML='';win.textContent='';newGame.style.display='none';box.classList.add('on');
+   rows.innerHTML='';win.textContent='';newGame.style.display='none';box.classList.add('on');document.body.classList.add('finalScoringMode');
    let railTotals=players.map((p,i)=>baseScore(i)),destinationTotals=players.map(()=>0),longestBonuses=players.map(()=>0),totals=[...railTotals],rowEls=[];
    players.forEach((p,i)=>{
      let cards=ticketsOf(i).map((t,j)=>`<div class="scoreTicket" data-ticket="${j}"><span>🎫 ${tName(t)}</span><strong>${tVal(t)}</strong></div>`).join('');
      let d=document.createElement('div');d.className='scorePlayer';d.innerHTML=`<div class="scoreHead"><span>${p.name||'Player '+(i+1)}</span><span>Final score</span></div><div class="scoreTrack"><div class="scoreFill"></div></div><div class="scoreBreakdown"><div class="scoreLine"><span>🚂 Railway points</span><strong class="railSubtotal">${railTotals[i]>=0?'+':''}${railTotals[i]}</strong></div><div class="scoreLine"><span>🎫 Destination tickets</span><strong class="ticketSubtotal">0</strong></div><div class="scoreLine"><span>🏆 Longest-path bonus</span><strong class="longestSubtotal">0</strong></div><div class="scoreLine totalLine"><span>Final total</span><strong class="scoreTotal">${totals[i]}</strong></div></div><div class="scoreEvent">Starting with railway points <span class="scoreDelta">${railTotals[i]>=0?'+':''}${railTotals[i]}</span></div><div class="scoreTickets">${cards||'<span style="font-size:10px;opacity:.7">No destination tickets</span>'}</div><div class="longestReadout">Longest continuous path: waiting…</div>`;
      rows.appendChild(d);rowEls.push(d)
    });
-   await wait(800);
+   await wait(500);
+   for(let i=0;i<players.length;i++){
+     clearScoreMap();document.querySelectorAll('.routeSeg').forEach(x=>{if(claimed[+x.dataset.i]===i)x.classList.add('finalRailScore')});rowEls.forEach((r,j)=>r.classList.toggle('leader',j===i));
+     showBadge(`${players[i].name} · railway points`,railTotals[i]);SFX.rail();await countScore(rowEls[i].querySelector('.scoreTotal'),0,railTotals[i],700);await wait(650);
+   }
    for(let i=0;i<players.length;i++){
      for(let j=0;j<ticketsOf(i).length;j++){
        const t=ticketsOf(i)[j];
        let ok=ticketDone(i,t),v=tVal(t),delta=ok?v:-v;destinationTotals[i]+=delta;totals[i]=railTotals[i]+destinationTotals[i]+longestBonuses[i];
+       showTicketOnMap(t,i,ok);rowEls.forEach((r,k)=>r.classList.toggle('leader',k===i));showBadge(`${players[i].name}<br>${tName(t)}`,delta,!ok);
        let card=rowEls[i].querySelector(`[data-ticket="${j}"]`);card.classList.add('active',ok?'complete':'incomplete');card.querySelector('strong').textContent=(delta>=0?'+':'')+delta;
        let ev=rowEls[i].querySelector('.scoreEvent');ev.innerHTML=`${tName(t)}: ${ok?'completed':'incomplete'} <span class="scoreDelta">${delta>=0?'+':''}${delta}</span>`;
        rowEls[i].querySelector('.ticketSubtotal').textContent=(destinationTotals[i]>=0?'+':'')+destinationTotals[i];
-       rowEls[i].querySelector('.scoreTotal').textContent=totals[i];
+       await countScore(rowEls[i].querySelector('.scoreTotal'),totals[i]-delta,totals[i],600);
        rowEls[i].querySelector('.scoreFill').style.width=Math.min(100,Math.max(4,totals[i]))+'%';
-       ok?SFX.plus():SFX.minus(); await wait(800);card.classList.remove('active');
+       ok?SFX.plus():SFX.minus(); await wait(1150);card.classList.remove('active');
      }
    }
    let paths=players.map((p,i)=>longestPathForPlayer(i)),mx=Math.max(...paths.map(x=>x.length));
    for(let i=0;i<players.length;i++){
-     showLongestOnMap(paths[i].routes);rowEls.forEach((r,j)=>r.classList.toggle('leader',j===i));
+     clearScoreMap();showLongestOnMap(paths[i].routes);rowEls.forEach((r,j)=>r.classList.toggle('leader',j===i));
      let wins=paths[i].length>0&&paths[i].length===mx,bonus=wins?10:0;longestBonuses[i]=bonus;totals[i]=railTotals[i]+destinationTotals[i]+longestBonuses[i];
      rowEls[i].querySelector('.longestReadout').innerHTML=`Longest continuous path: <b>${paths[i].length} trains</b>${wins?' — longest-path bonus <span class="scoreDelta">+10</span>':''}`;
      rowEls[i].querySelector('.scoreEvent').innerHTML=`Map: ${players[i].name}'s longest continuous path${wins?' <span class="scoreDelta">+10</span>':''}`;
      rowEls[i].querySelector('.longestSubtotal').textContent=bonus?'+10':'0';
-     rowEls[i].querySelector('.scoreTotal').textContent=totals[i];if(wins)SFX.longest();await wait(1200);
+     showBadge(`${players[i].name}<br>Longest continuous path: ${paths[i].length} trains`,bonus);await countScore(rowEls[i].querySelector('.scoreTotal'),totals[i]-bonus,totals[i],650);if(wins)SFX.longest();await wait(1450);
    }
    showLongestOnMap(paths.flatMap((x,i)=>x.length===mx?x.routes:[]));rowEls.forEach(r=>r.classList.remove('leader'));
    let high=Math.max(...totals), winners=players.map((p,i)=>totals[i]===high?i:-1).filter(i=>i>=0);
    winners.forEach(i=>rowEls[i].classList.add('leader'));
    win.textContent=(winners.length>1?'Winners: ':'Winner: ')+winners.map(i=>players[i].name||'Player '+(i+1)).join(' & ')+' — '+high+' points';
-   newGame.style.display='block';
+   hideBadge();newGame.style.display='block';
    SFX.complete();
  }
  window.animateFinalScoring=animateFinalScoring;
