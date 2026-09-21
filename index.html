@@ -549,7 +549,7 @@ body.finalScoringMode #game::after{display:none!important}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 49</div>
+<div class="version">Version 50</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -673,7 +673,7 @@ function finishTicketChoice(sel){stopPendingGlowCycle();
 }
 function confirmTickets(){let sel=[...document.querySelectorAll(".ticketChoice.selected")].map(x=>+x.dataset.i);if(sel.length<pendingMin){toast(`Keep at least ${pendingMin} ticket${pendingMin>1?"s":""}.`);return}finishTicketChoice(sel)}
 function botConfirmTickets(){
- let ranked=pendingTickets.map((t,i)=>({i,score:t.v-(cityDistance(t.a,t.b)*.08)+Math.random()*.6})).sort((a,b)=>b.score-a.score);
+ let ranked=pendingTickets.map((t,i)=>{let path=botTargetPath(t,turn),needed=path.reduce((sum,id)=>sum+(claimed[id]===turn?0:+ROUTES[id][3]),0),shared=path.filter(id=>claimed[id]===turn).reduce((sum,id)=>sum+(+ROUTES[id][3]),0);return {i,score:path.length?t.v-needed*.8+shared*.7:-999}}).sort((a,b)=>b.score-a.score);
  let keepCount=initialSetup?(botDifficulty==="easy"?(Math.random()<.35?3:2):2):1;
  let selection=ranked.slice(0,Math.min(keepCount,pendingTickets.length)).map(x=>x.i);
  botTimer=setTimeout(()=>{setBotTicketGlow(false);finishTicketChoice(selection)},1300);
@@ -748,17 +748,30 @@ function botPaymentForRoute(i){
  return legal.sort((x,y)=>(counts[y]||0)-(counts[x]||0))[0]||null;
 }
 function botTargetPath(ticket,pi){
+ let p=players[pi],counts={};(p.hand||[]).forEach(c=>counts[c]=(counts[c]||0)+1);
  let dist={},prev={},unseen=new Set(Object.keys(CITIES));Object.keys(CITIES).forEach(c=>dist[c]=Infinity);dist[ticket.a]=0;
  while(unseen.size){let u=[...unseen].sort((a,b)=>dist[a]-dist[b])[0];unseen.delete(u);if(!u||dist[u]===Infinity||u===ticket.b)break;
-  ROUTES.forEach((r,i)=>{if(r[0]!==u&&r[1]!==u)return;if(claimed[i]!=null&&claimed[i]!==pi)return;let v=r[0]===u?r[1]:r[0],cost=claimed[i]===pi?.05:r[3];if(unseen.has(v)&&dist[u]+cost<dist[v]){dist[v]=dist[u]+cost;prev[v]={u,i}}});
+  ROUTES.forEach((r,i)=>{if(r[0]!==u&&r[1]!==u)return;if(claimed[i]!=null&&claimed[i]!==pi)return;let v=r[0]===u?r[1]:r[0],l=+r[3]||1,c=r[2],ready=c==="gray"?Math.max(0,...["blue","red","green","yellow","orange","white","black","purple"].map(x=>counts[x]||0)):(counts[c]||0),need=Math.max(0,l-ready-(counts.wild||0));
+   // Long tracks earn far more points per card. Hard AI deliberately prefers them
+   // when two paths need a similar number of wagons, while still valuing cards held.
+   let cost=claimed[i]===pi?.02:(l/(1+(SCORE[l]||0)*.13)+need*.18);
+   if(unseen.has(v)&&dist[u]+cost<dist[v]){dist[v]=dist[u]+cost;prev[v]={u,i}}});
  }
- let path=[],v=ticket.b;while(prev[v]){path.push(prev[v].i);v=prev[v].u}return path;
+ let path=[],v=ticket.b;while(prev[v]){path.push(prev[v].i);v=prev[v].u}return v===ticket.a?path:[];
+}
+function botPlan(){
+ let p=players[turn],active=p.tickets.filter(t=>!ticketCompleted(t,turn)),uses={},value={};
+ active.forEach(t=>botTargetPath(t,turn).forEach(i=>{if(claimed[i]==null){uses[i]=(uses[i]||0)+1;value[i]=(value[i]||0)+t.v}}));
+ return {active,uses,value};
 }
 function botRouteScore(i){
- let r=ROUTES[i],p=players[turn],score=(SCORE[r[3]]||0)*2+r[3]*.4+Math.random()*.35;
- let active=p.tickets.filter(t=>!ticketCompleted(t,turn));
- active.forEach(t=>{if(botDifficulty==="hard"&&botTargetPath(t,turn).includes(i))score+=9+t.v*.18;if(botDifficulty==="medium"&&[r[0],r[1]].some(c=>c===t.a||c===t.b))score+=4+t.v*.08});
- if(botDifficulty==="hard"){let rivals=players.map((x,j)=>j).filter(j=>j!==turn);rivals.forEach(j=>{if(players[j].tickets?.some(t=>[r[0],r[1]].includes(t.a)||[r[0],r[1]].includes(t.b)))score+=.35})}
+ let r=ROUTES[i],l=+r[3],plan=botPlan(),use=plan.uses[i]||0;
+ let score=(SCORE[l]||0)*2.4+l*l*.65+use*18+(plan.value[i]||0)*.32+Math.random()*.08;
+ if(plan.active.length&&!use)score-=30;
+ // Only public information is considered: a route becomes urgent if its other
+ // parallel lane is already occupied. No opponent destination cards are read.
+ let key=[r[0],r[1]].sort().join('|'),openSiblings=ROUTES.filter((x,j)=>[x[0],x[1]].sort().join('|')===key&&claimed[j]==null).length;
+ if(use&&openSiblings===1)score+=7;
  return score;
 }
 function botClaim(i,color){
@@ -774,14 +787,18 @@ function botClaim(i,color){
  },1500);
 }
 function desiredBotColors(){
- let p=players[turn],wanted=[];p.tickets.filter(t=>!ticketCompleted(t,turn)).forEach(t=>botTargetPath(t,turn).forEach(i=>{if(claimed[i]==null&&ROUTES[i][2]!=="gray")wanted.push(ROUTES[i][2])}));
- return wanted;
+ let p=players[turn],plan=botPlan(),counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);let weights={};
+ Object.keys(plan.uses).forEach(k=>{let i=+k,r=ROUTES[i],l=+r[3],c=r[2],use=plan.uses[i];if(claimed[i]!=null)return;
+  if(c==="gray")c=["blue","red","green","yellow","orange","white","black","purple"].sort((a,b)=>(counts[b]||0)-(counts[a]||0))[0];
+  let deficit=Math.max(0,l-(counts[c]||0)-(counts.wild||0));if(deficit)weights[c]=(weights[c]||0)+deficit*(1+l*.45)*use+l*l*.18;
+ });
+ return weights;
 }
 function botTakeOne(drawNo){
  if(!deck.length&&!market.length){endTurn();return}
  let desired=desiredBotColors(),idx=-1;
- if(botDifficulty!=="easy")idx=market.findIndex(c=>c!=="wild"&&desired.includes(c));
- if(botDifficulty==="hard"&&idx<0&&drawNo===0)idx=market.findIndex(c=>c==="wild");
+ if(botDifficulty!=="easy"){let ranked=market.map((c,i)=>({i,c,score:desired[c]||0})).filter(x=>x.c!=="wild"&&x.score>0).sort((a,b)=>b.score-a.score);if(ranked.length)idx=ranked[0].i}
+ if(botDifficulty==="hard"&&drawNo===0){let wi=market.findIndex(c=>c==="wild");if(wi>=0&&Object.keys(desired).length)idx=wi}
  if(botDifficulty==="easy"&&Math.random()<.55)idx=Math.floor(Math.random()*market.length);
  if(drawNo===1&&idx>=0&&market[idx]==="wild")idx=-1;
  let faceUp=idx>=0&&market[idx]!=null,c=faceUp?market[idx]:deck[deck.length-1];if(c==null){endTurn();return}
@@ -797,11 +814,12 @@ function runBotTurn(){
  if(gameFinished||initialSetup||!players[turn]?.isBot)return;
  let legal=ROUTES.map((r,i)=>({i,color:botPaymentForRoute(i)})).filter(x=>x.color);
  if(legal.length){
-  let choice;if(botDifficulty==="easy")choice=legal[Math.floor(Math.random()*legal.length)];else choice=legal.sort((a,b)=>botRouteScore(b.i)-botRouteScore(a.i))[0];
-  let threshold=botDifficulty==="easy"?.48:botDifficulty==="medium"?.22:.08;if(Math.random()>threshold){botClaim(choice.i,choice.color);return}
+  let plan=botPlan(),strategic=legal.filter(x=>!plan.active.length||plan.uses[x.i]);
+  let pool=botDifficulty==="hard"?strategic:legal,choice;if(botDifficulty==="easy")choice=legal[Math.floor(Math.random()*legal.length)];else choice=pool.sort((a,b)=>botRouteScore(b.i)-botRouteScore(a.i))[0];
+  let claimNow=botDifficulty==="hard"?!!choice:(Math.random()>(botDifficulty==="easy"?.48:.22));if(claimNow){botClaim(choice.i,choice.color);return}
  }
  let unfinished=players[turn].tickets.filter(t=>!ticketCompleted(t,turn));
- if(!initialSetup&&destDeck.length>=3&&unfinished.length===0&&Math.random()<(botDifficulty==="hard"?.55:.22)){turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=1;setBotTicketGlow(true);botTimer=setTimeout(botConfirmTickets,1100);return}
+ if(!initialSetup&&destDeck.length>=3&&unfinished.length===0&&players[turn].trains>14&&Math.random()<(botDifficulty==="hard"?.28:.18)){turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=1;setBotTicketGlow(true);botTimer=setTimeout(botConfirmTickets,1100);return}
  botTakeOne(0);
 }
 function beginTurn(){
