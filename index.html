@@ -31,7 +31,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 .dot{width:9px;height:9px;border-radius:50%;background:#372d24;border:2px solid #e9d8a9;margin:auto;box-shadow:0 1px 2px #000}
 .city span{display:block;font:bold 10px Arial;color:#1c1a17;text-shadow:0 1px #eee;white-space:nowrap;margin-top:1px}
 .city.glow .dot{width:20px;height:20px;background:#ffe11a;box-shadow:0 0 8px 4px #fff,0 0 25px 10px #5eff44}
-.turnBanner{display:none!important;position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:20;background:#20170edb;color:#fff3ca;padding:7px 18px;border:1px solid #c99b4d;border-radius:20px;font-weight:bold}
+.turnBanner{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:20;background:#20170edb;color:#fff3ca;padding:7px 18px;border:1px solid #c99b4d;border-radius:20px;font-weight:bold}
 .toast{position:absolute;left:50%;top:18%;transform:translate(-50%,-50%);z-index:30;color:white;background:#19120ddd;border:2px solid #d8ad58;border-radius:16px;padding:12px 20px;font-size:20px;animation:pop .25s}
 @keyframes pop{from{transform:translate(-50%,-50%) scale(.7);opacity:0}}
 .market{background:linear-gradient(#33261c,#17120e);border-left:3px solid #8d622e;padding:8px;color:#f6e8c9;overflow:auto}
@@ -369,21 +369,6 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 .scoreWinner{text-align:center;font-size:24px;font-weight:1000;margin-top:15px;animation:winnerPulse 1s ease infinite alternate}
 @keyframes winnerPulse{to{transform:scale(1.06);text-shadow:0 0 18px #ffd45d}}
 
-
-/* Version 31 — no persistent text above the board. Only invalid-railway warning is shown. */
-#turnBanner{display:none!important}
-#toast{
-  position:fixed!important;
-  top:10px!important;
-  left:50%!important;
-  transform:translateX(-50%)!important;
-  z-index:300000!important;
-  max-width:min(560px,88vw);
-  text-align:center;
-  font-size:15px!important;
-  padding:8px 15px!important;
-}
-
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -394,7 +379,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 31</div>
+<div class="version">Version 30</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -530,7 +515,7 @@ function renderAll(){
 function beginTurn(){
  if(gameFinished)return;
  drawCount=0;turnAction=null;selectedClaimColor=null;renderAll();
- 
+ if(finalRound)toast(`Final round — ${players[turn].name}'s last turn`);
 }
 function endTurn(){
  if(gameFinished)return;
@@ -540,7 +525,7 @@ function endTurn(){
  }else if(players[turn].trains<=2){
    finalRound=true;
    finalTurnsRemaining=players.length;
-   
+   toast(`${players[turn].name} has ${players[turn].trains} trains — final round!`);
  }
  turn=(turn+1)%players.length;beginTurn();
 }
@@ -564,7 +549,7 @@ function selectClaimColor(c){
  if(gameFinished||initialSetup||turnAction)return;
  selectedClaimColor=(selectedClaimColor===c?null:c);
  renderAll();
- 
+ if(selectedClaimColor)toast(`${selectedClaimColor==="wild"?"Locomotive":selectedClaimColor} selected — choose a railway.`);
 }
 function parallelRouteIndices(i){
  let [a,b]=ROUTES[i];
@@ -592,11 +577,11 @@ function updateClaimableRouteVisuals(){
 }
 function claimRoute(i){
  if(gameFinished||initialSetup||turnAction||claimed[i]!=null)return;
- if(!selectedClaimColor)return
+ if(!selectedClaimColor){toast("Choose a Train Card color from your hand first.");return}
  let [a,b,c,l]=ROUTES[i],p=players[turn];
- if(p.trains<l){railWarning();return}
- if(!parallelRouteAllowed(i)){railWarning();return}
- if(!routeCanUseSelected(i)){railWarning();return}
+ if(p.trains<l){toast("Not enough trains.");return}
+ if(!parallelRouteAllowed(i)){toast(players.length<=3?"Only one of these parallel railways can be occupied in a 2–3 player game.":"You cannot occupy both parallel railways yourself.");return}
+ if(!routeCanUseSelected(i)){toast("You can’t occupy this railway with the selected cards.");return}
  let chosen=selectedClaimColor,need=l,newHand=[];
  if(chosen==="wild"){
    for(let x of p.hand){if(need&&x==="wild"){need--;continue}newHand.push(x)}
@@ -605,13 +590,13 @@ function claimRoute(i){
    p.hand=newHand;newHand=[];
    for(let x of p.hand){if(need&&x==="wild"){need--;continue}newHand.push(x)}
  }
- p.hand=newHand;claimed[i]=turn;p.trains-=l;p.score+=SCORE[l]||0;turnAction="route";selectedClaimColor=null;renderAll();setTimeout(endTurn,700)
+ p.hand=newHand;claimed[i]=turn;p.trains-=l;p.score+=SCORE[l]||0;turnAction="route";selectedClaimColor=null;renderAll();toast(`Route claimed! +${SCORE[l]||0}`);setTimeout(endTurn,700)
 }
 function drawTickets(){if(gameFinished||initialSetup||turnAction)return;turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);if(!pendingTickets.length){turnAction=null;toast("No Destination Tickets left.");return}pendingMin=1;showTicketModal("Draw Destination Tickets","Keep at least 1. Tap a ticket to show its cities on the map.")}
 function highlightTicket(a,b,color="#5dff45"){clearGlow();glowCity(a,color);glowCity(b,color)}
 function glowCity(n,color){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e){e.classList.add("glow");let d=e.querySelector(".dot");if(d){d.style.background=color;d.style.boxShadow=`0 0 7px 4px #fff,0 0 20px 8px ${color}`}}}
 function clearGlow(){document.querySelectorAll(".city").forEach(x=>{x.classList.remove("glow");let d=x.querySelector(".dot");if(d){d.style.background="";d.style.boxShadow=""}})}
-let toastTimer;function toast(s){let e=$("toast");e.textContent=s;e.classList.remove("hidden");clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.add("hidden"),2000)} function railWarning(){toast("This railway cannot be occupied with the selected cards.");}
+let toastTimer;function toast(s){let e=$("toast");e.textContent=s;e.classList.remove("hidden");clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.add("hidden"),1800)}
 function showHelp(){$("help").classList.remove("hidden")}
 </script><div id="rotateNotice"><div><span class="rot">↻ 📱</span><h2>Rotate your device</h2><p>This game is designed for landscape play.</p></div></div>
 <script>
