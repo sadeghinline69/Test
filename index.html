@@ -538,24 +538,37 @@ body.finalScoringMode #game::after{display:none!important}
 .scoreMovingTrain{pointer-events:none;filter:drop-shadow(0 0 1.3px #fff) drop-shadow(0 0 2.7px #ffd83d)}
 .scoreMovingTrain .trainBody{stroke:#fff;stroke-width:.35}.scoreMovingTrain .trainCab{fill:#fff}.scoreMovingTrain .trainWheel{fill:#151515;stroke:#fff;stroke-width:.18}
 @media(max-width:850px){#finalScoreShow{width:92px!important;bottom:130px!important}.scoreStage{padding:4px!important}.scoreStage h2{font-size:10px!important}.scorePlayer{padding:4px!important}.scoreHead{font-size:8px!important}.scoreTotal{font-size:23px!important}.scoreEvent{font-size:7px!important;min-height:22px!important}.scoreWinner{font-size:9px!important}.scoreNewGame{font-size:8px!important;padding:4px!important}}
+
+/* Version 51 — lower destination controls and larger hand cards. */
+.sidebar{padding-bottom:104px!important}
+.leftDestBtn{position:absolute!important;left:5px!important;right:5px!important;bottom:58px!important;width:auto!important;margin:0!important;z-index:46!important}
+.sidebar:has(#ticketModal:not(.hidden)) #leftDestBtn{visibility:hidden!important}
+#ticketModal{position:absolute!important;inset:auto 5px 58px 5px!important;width:auto!important;height:auto!important;max-height:calc(100% - 64px)!important;overflow:visible!important}
+#ticketModal .modalBox{width:100%!important;max-height:100%!important;padding:4px!important}
+.handCard{width:58px!important;height:37px!important;min-height:37px!important;gap:5px!important;padding:3px 5px!important}
+.handCard .swatch{width:24px!important;min-width:24px!important;height:29px!important}.handCard b{font-size:10px!important;min-width:18px!important}
+@media(max-width:850px){.sidebar{padding-bottom:82px!important}.leftDestBtn{left:3px!important;right:3px!important;bottom:43px!important}.sidebar #ticketModal{inset:auto 3px 43px 3px!important}.handCard{width:46px!important;height:32px!important;min-height:32px!important}.handCard .swatch{width:20px!important;min-width:20px!important;height:25px!important}}
+
+/* Version 52 — bot match and configurable mixed multiplayer setup. */
+#names .seatSetup{display:flex;gap:10px;align-items:end}#names .seatSetup>.field{margin:5px 0}#names .seatSetup>.field:first-child{flex:.65}#names .seatSetup>.field:last-child{flex:1.35}
+@media(max-width:620px){#names .seatSetup{gap:6px}#names .seatSetup>.field{min-width:0}}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
 <div class="panel">
 <div class="logo">RAILWAY<br>RIVALS</div><div class="subtitle">A CROSS-COUNTRY RAIL ADVENTURE</div>
-<div class="row"><div class="field"><label>Players</label><select id="numPlayers"><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
-<div class="field"><label>Game</label><select id="gameMode"><option value="local">Local Game</option><option value="ai">Play vs AI Bot</option></select></div>
-<div class="field hidden" id="difficultyField"><label>Bot Difficulty</label><select id="botDifficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div></div>
+<div class="row"><div class="field"><label id="countLabel">Bots</label><select id="numPlayers"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+<div class="field"><label>Game Mode</label><select id="gameMode"><option value="bot">Bot Match</option><option value="mixed">Multiplayer / Mixed</option></select></div>
+<div class="field" id="difficultyField"><label>Bot Difficulty</label><select id="botDifficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard" selected>Hard</option></select></div></div>
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 50</div>
+<div class="version">Version 52</div>
 </div></section>
 
 <section id="game" class="screen hidden">
 <div id="finalRoundAlert" role="alert" aria-live="assertive">⚠ FINAL ROUND — ONE LAST TURN FOR EVERY PLAYER ⚠</div>
-<aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button><div class="leftTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
-<div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div>
+<aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button><div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div><div class="leftTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <main class="mapWrap"><div id="map"></div><div id="mapSavedTickets" class="mapSavedTickets"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
 <aside class="market"><div id="market"></div><div class="card deck" onclick="drawBlind()">BLIND DRAW</div><div class="destSide"><h3>DESTINATIONS</h3><div id="sideTickets"></div></div></aside>
 <footer class="bottom"><div><b>DESTINATIONS</b><div id="myTickets" class="ticketsMini"></div></div><div><b>YOUR HAND</b><div id="hand" class="hand"></div></div>
@@ -563,7 +576,7 @@ body.finalScoringMode #game::after{display:none!important}
 </section>
 
 <div id="finalModal" class="modal hidden"><div id="finalResults" class="modalBox"></div></div>
-<div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a route, first tap a Train Card color in your hand, then tap the railway you want. If that railway cannot be claimed with the selected color, the game will warn you. Gray routes may use any single color. Locomotives are wild. With 2–3 players, only one route of a parallel pair may be claimed; with 4–5 players, both may be claimed, but by different players.</p><p><b>AI Bot:</b> Choose “Play vs AI Bot” on the main menu. Easy makes casual, less predictable choices; Medium considers route value and destinations; Hard plans shortest useful paths and targets the cards it needs. The bot's cards and tickets remain hidden.</p><p>When any player ends a turn with 2 or fewer trains, every player (including that player) gets exactly one final turn. Completed Destination Tickets add their printed value, incomplete tickets subtract it, and the player with the longest continuous railway receives 10 bonus points. The final score sheet keeps railway points, the destination-ticket subtotal, and the longest-path bonus on three separate lines while highlighting each longest path on the map. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
+<div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a route, first tap a Train Card color in your hand, then tap the railway you want. If that railway cannot be claimed with the selected color, the game will warn you. Gray routes may use any single color. Locomotives are wild. With 2–3 players, only one route of a parallel pair may be claimed; with 4–5 players, both may be claimed, but by different players.</p><p><b>Game modes:</b> Bot Match supports one human against 1–4 bots. Multiplayer / Mixed supports 2–4 seats, and every seat can be a human or a bot. Easy makes casual choices; Medium considers route value and destinations; Hard plans useful long paths and targets the cards it needs. Bot cards and tickets remain hidden.</p><p>When any player ends a turn with 2 or fewer trains, every player (including that player) gets exactly one final turn. Completed Destination Tickets add their printed value, incomplete tickets subtract it, and the player with the longest continuous railway receives 10 bonus points. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
 <script>
 const CITIES={"Vancouver":[8,8],"Seattle":[8,18],"Portland":[7,32],"San Francisco":[9,60],"Los Angeles":[14,79],"Calgary":[27,7],"Helena":[32,30],"Salt Lake City":[27,53],"Las Vegas":[23,68],"Phoenix":[31,80],"Winnipeg":[51,8],"Duluth":[58,27],"Denver":[44,50],"Santa Fe":[43,69],"El Paso":[48,84],"Omaha":[58,45],"Kansas City":[62,57],"Oklahoma City":[60,69],"Dallas":[61,81],"Houston":[65,91],"Sault Ste. Marie":[72,15],"Chicago":[70,42],"Saint Louis":[70,58],"Little Rock":[70,72],"New Orleans":[75,88],"Toronto":[81,28],"Pittsburgh":[82,46],"Nashville":[80,64],"Atlanta":[85,74],"Miami":[94,93],"Montreal":[91,14],"Boston":[96,27],"New York":[92,42],"Washington":[91,56],"Raleigh":[91,66],"Charleston":[93,75]}, ROUTES=[["Vancouver","Seattle","gray",1],["Vancouver","Calgary","gray",3],["Seattle","Portland","gray",1],["Seattle","Portland","gray",1],["Seattle","Helena","yellow",6],["Seattle","Helena","blue",6],["Portland","San Francisco","green",5],["Portland","San Francisco","purple",5],["Portland","Salt Lake City","blue",6],["San Francisco","Los Angeles","yellow",3],["San Francisco","Los Angeles","purple",3],["San Francisco","Salt Lake City","orange",5],["Los Angeles","Las Vegas","gray",2],["Los Angeles","Phoenix","gray",3],["Los Angeles","El Paso","black",6],["Calgary","Helena","gray",4],["Calgary","Winnipeg","#00b8d4",6],["Helena","Winnipeg","blue",4],["Helena","Duluth","orange",6],["Helena","Denver","green",4],["Helena","Salt Lake City","purple",3],["Salt Lake City","Denver","red",3],["Salt Lake City","Denver","yellow",3],["Salt Lake City","Las Vegas","orange",3],["Phoenix","Santa Fe","gray",3],["Phoenix","El Paso","gray",3],["Denver","Santa Fe","gray",2],["Denver","Omaha","purple",4],["Denver","Kansas City","black",4],["Denver","Kansas City","orange",4],["Denver","Oklahoma City","red",4],["Winnipeg","Duluth","black",4],["Winnipeg","Sault Ste. Marie","gray",6],["Duluth","Omaha","gray",2],["Duluth","Chicago","red",3],["Duluth","Sault Ste. Marie","gray",3],["Omaha","Chicago","blue",4],["Omaha","Kansas City","gray",1],["Kansas City","Saint Louis","blue",2],["Kansas City","Saint Louis","purple",2],["Kansas City","Oklahoma City","gray",2],["Oklahoma City","Dallas","gray",2],["Oklahoma City","Little Rock","gray",2],["Santa Fe","El Paso","gray",2],["Santa Fe","Oklahoma City","blue",3],["El Paso","Dallas","red",4],["El Paso","Houston","green",6],["Dallas","Houston","gray",1],["Dallas","Little Rock","gray",2],["Houston","New Orleans","gray",2],["Sault Ste. Marie","Toronto","gray",2],["Sault Ste. Marie","Montreal","black",5],["Chicago","Toronto","#00b8d4",4],["Chicago","Pittsburgh","orange",3],["Chicago","Pittsburgh","black",3],["Chicago","Saint Louis","green",2],["Chicago","Saint Louis","#00b8d4",2],["Saint Louis","Pittsburgh","green",5],["Saint Louis","Nashville","gray",2],["Saint Louis","Little Rock","gray",2],["Little Rock","Nashville","#00b8d4",3],["Little Rock","New Orleans","green",3],["New Orleans","Atlanta","yellow",4],["New Orleans","Atlanta","orange",4],["New Orleans","Miami","red",6],["Nashville","Atlanta","gray",1],["Nashville","Raleigh","black",3],["Atlanta","Raleigh","gray",2],["Atlanta","Charleston","gray",2],["Atlanta","Miami","blue",5],["Atlanta","Miami","purple",5],["Toronto","Montreal","gray",3],["Toronto","Pittsburgh","gray",2],["Montreal","Boston","gray",2],["Montreal","New York","blue",3],["Boston","New York","yellow",2],["Boston","New York","red",2],["Pittsburgh","New York","green",2],["Pittsburgh","Washington","gray",2],["Pittsburgh","Raleigh","gray",2],["New York","Washington","orange",2],["New York","Washington","black",2],["Washington","Raleigh","gray",2],["Raleigh","Charleston","gray",2],["Charleston","Miami","purple",4]], TICKETS=[["Los Angeles", "New York", 21], ["Duluth", "Houston", 8], ["Sault Ste. Marie", "Nashville", 8], ["New York", "Atlanta", 6], ["Portland", "Nashville", 17], ["Vancouver", "Montreal", 20], ["Duluth", "El Paso", 10], ["Toronto", "Miami", 10], ["Portland", "Phoenix", 11], ["Dallas", "New York", 11], ["Calgary", "Salt Lake City", 7], ["Calgary", "Phoenix", 13], ["Los Angeles", "Miami", 20], ["Winnipeg", "Little Rock", 11], ["San Francisco", "Atlanta", 17], ["Kansas City", "Houston", 5], ["Los Angeles", "Chicago", 16], ["Denver", "Pittsburgh", 11], ["Helena", "Los Angeles", 8], ["Winnipeg", "Houston", 12], ["Montreal", "Atlanta", 9], ["Seattle", "New York", 22], ["Denver", "El Paso", 4], ["Vancouver", "Santa Fe", 13], ["Boston", "Miami", 12], ["Chicago", "New Orleans", 7], ["Montreal", "New Orleans", 13], ["Seattle", "Los Angeles", 9], ["Dallas", "Chicago", 9], ["San Francisco", "New York", 21]];
 const COLORS=["blue","red","green","goldenrod","black"];
@@ -614,18 +627,29 @@ function ticketColor(t){ if(t.tc) return t.tc; const i=nextTicketColorIndex++; t
 let players=[],turn=0,deck=[],market=[],destDeck=[],claimed={},drawCount=0,turnAction=null,pendingTickets=[],pendingMin=1,initialSetup=false;
 let selectedClaimColor=null;
 let finalRound=false,finalTurnsRemaining=0,gameFinished=false,finalRoundWarningTimer=null;
-let gameMode="local",botDifficulty="medium",botTimer=null,lastTicketSoundAt=0;
+let gameMode="bot",botDifficulty="hard",botTimer=null,lastTicketSoundAt=0;
 const $=id=>document.getElementById(id);
 function shuffle(a){a=[...a];for(let i=a.length-1;i;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function setupNames(){let ai=$("gameMode").value==="ai",n=ai?1:+$("numPlayers").value,s="";$("numPlayers").disabled=ai;$("difficultyField").classList.toggle("hidden",!ai);for(let i=0;i<n;i++)s+=`<div class="field"><label>${ai?"Your Name":"Player "+(i+1)}</label><input class="nm" value="${localStorage.getItem("railName"+i)||"Player "+(i+1)}"></div>`;$("names").innerHTML=s}
+function setupNames(){
+ let mode=$("gameMode").value,count=$("numPlayers"),previousMode=count.dataset.mode;
+ if(previousMode!==mode){count.innerHTML=mode==="bot"?'<option>1</option><option>2</option><option>3</option><option>4</option>':'<option>2</option><option>3</option><option>4</option>';count.dataset.mode=mode}
+ let n=+count.value,s="";$("countLabel").textContent=mode==="bot"?"Bots":"Seats";$("difficultyField").classList.remove("hidden");
+ if(mode==="bot")s=`<div class="field seatSetup" data-seat="0"><label>Your Name</label><input class="nm" value="${localStorage.getItem("railName0")||"Player 1"}"></div>`;
+ else for(let i=0;i<n;i++){let type=localStorage.getItem("railSeatType"+i)||"human",saved=localStorage.getItem("railName"+i)||(type==="bot"?`Conductor Bot ${i+1}`:`Player ${i+1}`);s+=`<div class="seatSetup" data-seat="${i}"><div class="field"><label>Seat ${i+1}</label><select class="seatType"><option value="human" ${type==="human"?"selected":""}>Human</option><option value="bot" ${type==="bot"?"selected":""}>Bot</option></select></div><div class="field"><label>Name</label><input class="nm" value="${saved}"></div></div>`}
+ $("names").innerHTML=s
+}
 $("numPlayers").onchange=setupNames;setupNames();
 $("gameMode").onchange=setupNames;
 function startGame(){
  clearTimeout(finalRoundWarningTimer);finalRoundWarningTimer=null;finalRound=false;finalTurnsRemaining=0;gameFinished=false;claimed={};nextTicketColorIndex=0;market=[];
  gameMode=$("gameMode").value;botDifficulty=$("botDifficulty").value;
- let n=gameMode==="ai"?1:+$("numPlayers").value;players=[...document.querySelectorAll(".nm")].slice(0,n).map((x,i)=>({name:x.value.trim()||`Player ${i+1}`,color:COLORS[i],score:0,trains:45,hand:[],tickets:[],isBot:false}));
- players.forEach((p,i)=>localStorage.setItem("railName"+i,p.name));
- if(gameMode==="ai")players.push({name:`Conductor AI (${botDifficulty[0].toUpperCase()+botDifficulty.slice(1)})`,color:COLORS[1],score:0,trains:45,hand:[],tickets:[],isBot:true});
+ players=[];
+ if(gameMode==="bot"){
+  let humanName=document.querySelector(".nm")?.value.trim()||"Player 1";players.push({name:humanName,color:COLORS[0],score:0,trains:45,hand:[],tickets:[],isBot:false});localStorage.setItem("railName0",humanName);
+  for(let i=1;i<=+$("numPlayers").value;i++)players.push({name:`Conductor AI ${i} (${botDifficulty[0].toUpperCase()+botDifficulty.slice(1)})`,color:COLORS[i],score:0,trains:45,hand:[],tickets:[],isBot:true,difficulty:botDifficulty});
+ }else{
+  [...document.querySelectorAll(".seatSetup")].forEach((row,i)=>{let type=row.querySelector(".seatType").value,isBot=type==="bot",name=row.querySelector(".nm").value.trim()||(isBot?`Conductor Bot ${i+1}`:`Player ${i+1}`);players.push({name,color:COLORS[i],score:0,trains:45,hand:[],tickets:[],isBot,difficulty:isBot?botDifficulty:null});localStorage.setItem("railSeatType"+i,type);localStorage.setItem("railName"+i,name)})
+ }
  let types=["blue","red","green","yellow","orange","white","black","purple"]; deck=[];types.forEach(c=>{for(let i=0;i<12;i++)deck.push(c)});for(let i=0;i<14;i++)deck.push("wild");deck=shuffle(deck);
  destDeck=shuffle(TICKETS.map((t,i)=>({a:t[0],b:t[1],v:t[2],id:i})));
  players.forEach(p=>{for(let i=0;i<4;i++)p.hand.push(deck.pop())});
@@ -859,7 +883,8 @@ function finishGame(){
 function highlightDrawnHandColor(c){
  document.querySelectorAll(".handCard").forEach(el=>{
    const sw=el.querySelector(".swatch");
-   if(sw && sw.getAttribute("style")?.includes(TRAINCOL[c])){el.classList.add("drawHighlight");setTimeout(()=>el.classList.remove("drawHighlight"),700)}
+   const isDrawnCard=c==="wild"?el.classList.contains("wildHand"):(sw&&sw.getAttribute("style")?.includes(TRAINCOL[c]));
+   if(isDrawnCard){el.classList.add("drawHighlight");setTimeout(()=>el.classList.remove("drawHighlight"),700)}
  });
 }
 function drawFace(i){if(gameFinished||initialSetup||players[turn]?.isBot||turnAction==="route"||turnAction==="ticket")return;let c=market[i];if(c==null)return;if(drawCount===1&&c==="wild"){toast("A face-up Locomotive cannot be your second draw.");return}turnAction="cards";players[turn].hand.push(c);market[i]=deck.length?deck.pop():null;if(market[i]===null)market.splice(i,1);let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5&&deck.length)market.push(deck.pop())}drawCount++;renderAll();if(window.gameSFX)window.gameSFX.draw();highlightDrawnHandColor(c);if(c==="wild"||drawCount>=2)setTimeout(endTurn,720)}
@@ -1037,6 +1062,8 @@ function showHelp(){$("help").classList.remove("hidden")}
 
  // Semantic click cues for existing controls/cards.
  document.addEventListener('click',e=>{
+   // Human taps during an AI turn are ignored silently.
+   if(window.players&&players[turn]?.isBot)return;
    let el=e.target.closest('button,.ticketCard,.destCard,.destinationCard,.marketCard,.trainCard,.deck,.trainDeck,.routeHit');
    if(!el)return;
    let t=(el.textContent||'').toLowerCase(), c=el.className||'';
