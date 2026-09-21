@@ -51,7 +51,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 
 #rotateNotice{display:none;position:fixed;inset:0;z-index:9999;background:radial-gradient(circle,#3a2a1c,#100d0a);color:#f6dfaa;text-align:center;place-items:center;padding:30px;font-family:Arial}#rotateNotice .rot{font-size:64px;display:block;margin-bottom:14px}@media(max-width:700px) and (orientation:portrait){#game:not(.hidden)~#rotateNotice{display:grid}}
 
-/* Version 3: map-first landscape layout */
+/* Version 4: map-first landscape layout */
 #game{grid-template-columns:132px 1fr 138px;grid-template-rows:1fr!important}
 .sidebar{padding:5px}.playerCard{padding:5px;margin-bottom:5px}.stats{font-size:11px}
 .market{padding:5px;display:flex;flex-direction:column;min-height:0}.market h3{font-size:12px;margin:1px}
@@ -67,6 +67,31 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 .route:hover{outline:4px solid #ffe57a;filter:brightness(1.2)}
 .mapTools{display:flex;gap:3px;margin-top:auto}.mapTools .btn{font-size:9px;padding:5px 3px;flex:1}
 @media(max-width:850px){#game{grid-template-columns:92px 1fr 98px;grid-template-rows:1fr!important}.bottom{left:98px;right:104px}.market .card{height:38px}.city span{font-size:7px}.route{height:9px}.handCard{width:31px;height:40px}.swatch{height:13px}.playerCard{font-size:9px}.stats{font-size:8px}}
+
+/* Version 4 — curved segmented railway map */
+#game{grid-template-columns:132px 1fr 138px!important;grid-template-rows:1fr!important}
+.sidebar{position:relative;padding-bottom:128px}
+#leftTickets{position:absolute;left:5px;right:5px;bottom:5px;max-height:120px;overflow:auto;border-top:1px solid #8d622e;padding-top:4px}
+#leftTickets h3{font-size:10px;color:#e9c26a;margin:2px;text-align:center}
+#leftTickets .ticket{width:100%;min-width:0;margin:3px 0;font-size:7px;padding:3px;cursor:pointer}
+#leftTickets .ticket b{font-size:8px}#leftTickets .ticket .value{font-size:14px}
+.market .destSide{display:none!important}
+#mapSvg{position:absolute;inset:0;width:100%;height:100%;z-index:2;overflow:visible}
+.routePiece{stroke:#342a21;stroke-width:.32;vector-effect:non-scaling-stroke;cursor:pointer;filter:drop-shadow(0 .45px .35px #0008)}
+.routePieceInner{pointer-events:none;stroke:#ffffff55;stroke-width:.13;vector-effect:non-scaling-stroke}
+.routeHit{fill:none;stroke:transparent;stroke-width:4;vector-effect:non-scaling-stroke;cursor:pointer}
+.city{z-index:8}.city span{font-size:8px;background:#f0e5c9e8;border:1px solid #8e8065;padding:1px 3px;box-shadow:0 1px 1px #fff6}
+.dot{width:10px;height:10px;background:#62594d;border:2px solid #f3e4bd;box-shadow:0 0 0 1px #40372e,0 1px 3px #000}
+.city.glow .dot{width:19px;height:19px;background:#5dff45;border-color:#fff;box-shadow:0 0 7px 4px #fff,0 0 20px 8px #5dff45}
+.ticketModalMap{background:transparent!important;pointer-events:none!important;align-items:end!important;padding:0 150px 72px 140px!important}
+.ticketModalMap .modalBox{pointer-events:auto;width:min(720px,75vw)!important;max-height:145px!important;padding:7px 10px!important;border-width:2px!important;border-radius:12px!important;overflow:hidden!important}
+.ticketModalMap h2{font-size:15px;margin:0 0 2px}.ticketModalMap p{font-size:10px;margin:1px 0 5px}
+.ticketModalMap .ticketChoices{flex-wrap:nowrap;gap:6px}.ticketModalMap .ticketChoice{min-width:0;min-height:68px;padding:5px;border-width:2px}
+.ticketModalMap .ticketChoice h3{font-size:10px;margin:1px}.ticketModalMap .ticketChoice .value{font-size:17px}.ticketModalMap .ticketChoice>div[style*="font-size:24px"]{display:none}
+.ticketModalMap .ticketChoice div[style*="height:3px"]{margin:3px 12px!important}
+.ticketModalMap .primary{position:absolute;right:12px;bottom:8px;width:auto;margin:0;padding:6px 16px;font-size:11px}
+.ticketModalMap .modalBox{position:relative;padding-right:90px!important}
+@media(max-width:850px){#game{grid-template-columns:92px 1fr 98px!important}.sidebar{padding-bottom:95px}#leftTickets{max-height:90px}.ticketModalMap{padding:0 104px 55px 98px!important}.ticketModalMap .modalBox{width:82vw!important;max-height:112px!important}.ticketModalMap .ticketChoice{min-height:52px;padding:3px}.ticketModalMap .ticketChoice h3{font-size:8px}}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -77,23 +102,23 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 3</div>
+<div class="version">Version 4</div>
 </div></section>
 
 <section id="game" class="screen hidden">
-<aside class="sidebar"><div style="text-align:center;font-weight:bold;color:#e9c26a;margin:5px">PLAYERS</div><div id="players"></div></aside>
+<aside class="sidebar"><div style="text-align:center;font-weight:bold;color:#e9c26a;margin:5px">PLAYERS</div><div id="players"></div><div id="leftTickets"><h3>DESTINATIONS</h3><div id="savedTickets"></div></div></aside>
 <main class="mapWrap"><div id="map"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
 <aside class="market"><h3>TRAIN CARDS</h3><div id="market"></div><div class="card deck" onclick="drawBlind()">🎴 BLIND DRAW</div><div class="destSide"><h3>DESTINATIONS</h3><div id="sideTickets"></div></div><div class="mapTools"><button class="btn" onclick="drawTickets()">🎫 +</button><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <footer class="bottom"><div><b>DESTINATIONS</b><div id="myTickets" class="ticketsMini"></div></div><div><b>YOUR HAND</b><div id="hand" class="hand"></div></div>
 <div class="actions"><button class="btn" onclick="drawTickets()">🎫 Destination Tickets</button><button class="btn" onclick="showHelp()">? Rules</button><button class="btn" onclick="location.reload()">Main Menu</button></div></footer>
 </section>
 
-<div id="ticketModal" class="modal hidden"><div class="modalBox"><h2 id="ticketTitle">Choose Destination Tickets</h2><p id="ticketInstruction"></p><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div>
+<div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><h2 id="ticketTitle">Choose Destination Tickets</h2><p id="ticketInstruction"></p><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div>
 <div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a colored route, spend the same number of matching cards as the route length. Gray routes may use any single color. Locomotives are wild.</p><p>Completed Destination Tickets add their printed value at game end; incomplete ones subtract it. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
 <script>
 const CITIES={"Vancouver": [8, 10], "Seattle": [8, 20], "Portland": [7, 31], "San Francisco": [8, 58], "Los Angeles": [14, 78], "Calgary": [27, 8], "Helena": [31, 31], "Salt Lake City": [28, 54], "Las Vegas": [24, 69], "Phoenix": [31, 80], "Winnipeg": [51, 10], "Duluth": [58, 28], "Denver": [44, 51], "Santa Fe": [43, 70], "El Paso": [48, 84], "Omaha": [58, 47], "Kansas City": [62, 58], "Oklahoma City": [60, 70], "Dallas": [61, 82], "Houston": [65, 91], "Sault Ste. Marie": [72, 16], "Chicago": [70, 43], "Saint Louis": [70, 59], "Little Rock": [70, 73], "New Orleans": [75, 88], "Toronto": [81, 29], "Pittsburgh": [82, 47], "Nashville": [80, 65], "Atlanta": [85, 75], "Miami": [94, 93], "Montreal": [91, 15], "Boston": [96, 28], "New York": [92, 43], "Washington": [91, 57], "Raleigh": [91, 67], "Charleston": [93, 76]}, ROUTES=[["Vancouver", "Seattle", "gray", 1], ["Vancouver", "Calgary", "gray", 3], ["Seattle", "Portland", "gray", 1], ["Seattle", "Helena", "yellow", 6], ["Portland", "San Francisco", "green", 5], ["Portland", "Salt Lake City", "blue", 6], ["San Francisco", "Los Angeles", "yellow", 3], ["San Francisco", "Salt Lake City", "orange", 5], ["Los Angeles", "Las Vegas", "gray", 2], ["Los Angeles", "Phoenix", "gray", 3], ["Los Angeles", "El Paso", "black", 6], ["Calgary", "Helena", "gray", 4], ["Calgary", "Winnipeg", "white", 6], ["Helena", "Winnipeg", "blue", 4], ["Helena", "Duluth", "orange", 6], ["Helena", "Denver", "green", 4], ["Helena", "Salt Lake City", "purple", 3], ["Salt Lake City", "Denver", "red", 3], ["Salt Lake City", "Las Vegas", "orange", 3], ["Phoenix", "Santa Fe", "gray", 3], ["Phoenix", "El Paso", "gray", 3], ["Denver", "Santa Fe", "gray", 2], ["Denver", "Omaha", "purple", 4], ["Denver", "Kansas City", "black", 4], ["Denver", "Oklahoma City", "red", 4], ["Winnipeg", "Duluth", "black", 4], ["Winnipeg", "Sault Ste. Marie", "gray", 6], ["Duluth", "Omaha", "gray", 2], ["Duluth", "Chicago", "red", 3], ["Duluth", "Sault Ste. Marie", "gray", 3], ["Omaha", "Chicago", "blue", 4], ["Omaha", "Kansas City", "gray", 1], ["Kansas City", "Saint Louis", "blue", 2], ["Kansas City", "Oklahoma City", "gray", 2], ["Oklahoma City", "Dallas", "gray", 2], ["Oklahoma City", "Little Rock", "gray", 2], ["Santa Fe", "El Paso", "gray", 2], ["Santa Fe", "Oklahoma City", "blue", 3], ["El Paso", "Dallas", "red", 4], ["El Paso", "Houston", "green", 6], ["Dallas", "Houston", "gray", 1], ["Dallas", "Little Rock", "gray", 2], ["Houston", "New Orleans", "gray", 2], ["Sault Ste. Marie", "Toronto", "gray", 2], ["Sault Ste. Marie", "Montreal", "black", 5], ["Chicago", "Toronto", "white", 4], ["Chicago", "Pittsburgh", "orange", 3], ["Chicago", "Saint Louis", "green", 2], ["Saint Louis", "Pittsburgh", "green", 5], ["Saint Louis", "Nashville", "gray", 2], ["Saint Louis", "Little Rock", "gray", 2], ["Little Rock", "Nashville", "white", 3], ["Little Rock", "New Orleans", "green", 3], ["New Orleans", "Atlanta", "yellow", 4], ["New Orleans", "Miami", "red", 6], ["Nashville", "Atlanta", "gray", 1], ["Nashville", "Raleigh", "black", 3], ["Atlanta", "Raleigh", "gray", 2], ["Atlanta", "Charleston", "gray", 2], ["Atlanta", "Miami", "blue", 5], ["Toronto", "Montreal", "gray", 3], ["Toronto", "Pittsburgh", "gray", 2], ["Montreal", "Boston", "gray", 2], ["Montreal", "New York", "blue", 3], ["Boston", "New York", "yellow", 2], ["Pittsburgh", "New York", "green", 2], ["Pittsburgh", "Washington", "gray", 2], ["Pittsburgh", "Raleigh", "gray", 2], ["New York", "Washington", "orange", 2], ["Washington", "Raleigh", "gray", 2], ["Raleigh", "Charleston", "gray", 2], ["Charleston", "Miami", "purple", 4]], TICKETS=[["Los Angeles", "New York", 21], ["Duluth", "Houston", 8], ["Sault Ste. Marie", "Nashville", 8], ["New York", "Atlanta", 6], ["Portland", "Nashville", 17], ["Vancouver", "Montreal", 20], ["Duluth", "El Paso", 10], ["Toronto", "Miami", 10], ["Portland", "Phoenix", 11], ["Dallas", "New York", 11], ["Calgary", "Salt Lake City", 7], ["Calgary", "Phoenix", 13], ["Los Angeles", "Miami", 20], ["Winnipeg", "Little Rock", 11], ["San Francisco", "Atlanta", 17], ["Kansas City", "Houston", 5], ["Los Angeles", "Chicago", 16], ["Denver", "Pittsburgh", 11], ["Helena", "Los Angeles", 8], ["Winnipeg", "Houston", 12], ["Montreal", "Atlanta", 9], ["Seattle", "New York", 22], ["Denver", "El Paso", 4], ["Vancouver", "Santa Fe", 13], ["Boston", "Miami", 12], ["Chicago", "New Orleans", 7], ["Montreal", "New Orleans", 13], ["Seattle", "Los Angeles", 9], ["Dallas", "Chicago", 9], ["San Francisco", "New York", 21]];
 const COLORS=["blue","red","green","goldenrod","black"];
-const TRAINCOL={blue:"#268bc2",red:"#c7433b",green:"#55a34a",yellow:"#e1c62f",orange:"#d78227",white:"#eee8dc",black:"#333",purple:"#a55aa5",gray:"#9d9689",wild:"#d58acb"};
+const TRAINCOL={blue:"#42b9e8",red:"#d54137",green:"#5aa84f",yellow:"#e6cc31",orange:"#e38a2b",white:"#eee9dc",black:"#34383d",purple:"#173d78",gray:"#aaa397",wild:"#d9b85f"};
 const SCORE={1:1,2:2,3:4,4:7,5:10,6:15};
 let players=[],turn=0,deck=[],market=[],destDeck=[],claimed={},drawCount=0,turnAction=null,pendingTickets=[],pendingMin=1,initialSetup=false;
 const $=id=>document.getElementById(id);
@@ -121,20 +146,34 @@ function confirmTickets(){let sel=[...document.querySelectorAll(".ticketChoice.s
  if(initialSetup){if(turn<players.length-1){offerInitialTickets(turn+1)}else{initialSetup=false;turn=0;beginTurn()}}else{endTurn()}
  renderAll()
 }
+function routeControl(A,B,i){
+ let mx=(A[0]+B[0])/2,my=(A[1]+B[1])/2,dx=B[0]-A[0],dy=B[1]-A[1],len=Math.hypot(dx,dy)||1;
+ // deterministic gentle bend; alternating side keeps neighboring corridors readable
+ let bend=Math.min(5.2,Math.max(1.3,len*.11))*((i%4<2)?1:-1);
+ return [mx-dy/len*bend,my+dx/len*bend];
+}
+function qPoint(A,C,B,t){let u=1-t;return [u*u*A[0]+2*u*t*C[0]+t*t*B[0],u*u*A[1]+2*u*t*C[1]+t*t*B[1]]}
+function qAngle(A,C,B,t){let dx=2*(1-t)*(C[0]-A[0])+2*t*(B[0]-C[0]),dy=2*(1-t)*(C[1]-A[1])+2*t*(B[1]-C[1]);return Math.atan2(dy,dx)*180/Math.PI}
 function renderMap(){
- let m=$("map");m.innerHTML="";
- ROUTES.forEach((r,i)=>{let [a,b,c,l]=r,A=CITIES[a],B=CITIES[b],dx=B[0]-A[0],dy=B[1]-A[1],dist=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)*180/Math.PI;let e=document.createElement("div");e.className="route";e.dataset.i=i;e.style.left=A[0]+"%";e.style.top=A[1]+"%";e.style.width=dist+"%";e.style.transform=`rotate(${ang}deg)`;e.style.background=TRAINCOL[c];e.title=`${a} – ${b} • ${l} • ${c}`;e.onclick=()=>claimRoute(i);m.appendChild(e)});
- Object.entries(CITIES).forEach(([n,p])=>{let e=document.createElement("div");e.className="city";e.dataset.name=n;e.style.left=p[0]+"%";e.style.top=p[1]+"%";e.innerHTML=`<div class="dot"></div><span>${n}</span>`;m.appendChild(e)})
+ let m=$("map");m.innerHTML='<svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>';let svg=$("mapSvg");
+ ROUTES.forEach((r,i)=>{let [a,b,c,l]=r,A=CITIES[a],B=CITIES[b],C=routeControl(A,B,i),ns='http://www.w3.org/2000/svg';
+   let hit=document.createElementNS(ns,'path');hit.setAttribute('d',`M${A[0]},${A[1]} Q${C[0]},${C[1]} ${B[0]},${B[1]}`);hit.setAttribute('class','routeHit');hit.dataset.i=i;hit.onclick=()=>claimRoute(i);svg.appendChild(hit);
+   for(let k=0;k<l;k++){let t=(k+.5)/l,p=qPoint(A,C,B,t),ang=qAngle(A,C,B,t),g=document.createElementNS(ns,'g');g.setAttribute('class','routeSeg');g.dataset.i=i;g.setAttribute('transform',`translate(${p[0]} ${p[1]}) rotate(${ang})`);g.onclick=()=>claimRoute(i);
+     let rect=document.createElementNS(ns,'rect');rect.setAttribute('x',-1.55);rect.setAttribute('y',-.72);rect.setAttribute('width',3.1);rect.setAttribute('height',1.44);rect.setAttribute('rx',.32);rect.setAttribute('class','routePiece');rect.setAttribute('fill',TRAINCOL[c]);g.appendChild(rect);
+     let inner=document.createElementNS(ns,'line');inner.setAttribute('x1',-1.05);inner.setAttribute('x2',1.05);inner.setAttribute('y1',-.18);inner.setAttribute('y2',-.18);inner.setAttribute('class','routePieceInner');g.appendChild(inner);svg.appendChild(g)
+   }
+ });
+ Object.entries(CITIES).forEach(([n,p])=>{let e=document.createElement('div');e.className='city';e.dataset.name=n;e.style.left=p[0]+'%';e.style.top=p[1]+'%';e.innerHTML=`<div class="dot"></div><span>${n}</span>`;m.appendChild(e)})
 }
 function renderAll(){
  $("players").innerHTML=players.map((p,i)=>`<div class="playerCard ${i===turn&&!initialSetup?"active":""}" style="border-left:8px solid ${p.color}"><div class="pname">${p.name}</div><div class="stats"><span>★ ${p.score}</span><span>🚂 ${p.trains}</span><span>🎴 ${p.hand.length}</span></div></div>`).join("");
  if(players[turn])$("turnBanner").textContent=`${players[turn].name}'s turn`;
  $("market").innerHTML=market.map((c,i)=>`<div class="card ${c==="wild"?"wild":""}" onclick="drawFace(${i})"><div class="train" style="background:${TRAINCOL[c]}"></div></div>`).join("");
  let p=players[turn]||players[0]; if(!p)return;
- let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=Object.entries(counts).map(([c,n])=>`<div class="handCard"><b>${n}×</b><div class="swatch" style="background:${TRAINCOL[c]}"></div>${c==="wild"?"LOCO":c.toUpperCase()}</div>`).join("");
+ let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=Object.entries(counts).map(([c,n])=>`<div class="handCard"><b>${n}×</b><div class="swatch" style="background:${TRAINCOL[c]}"></div>${c==="wild"?"★":(c==="blue"?"LIGHT BLUE":c==="purple"?"NAVY":c.toUpperCase())}</div>`).join("");
  $("myTickets").innerHTML=p.tickets.map(t=>`<div class="ticket" onmouseenter="highlightTicket('${t.a.replaceAll("'","\\'")}','${t.b.replaceAll("'","\\'")}')" onmouseleave="clearGlow()"><span class="value">${t.v}</span><b>${t.a}</b><br>→ ${t.b}</div>`).join("");
- $("sideTickets").innerHTML=$("myTickets").innerHTML;
- document.querySelectorAll(".route").forEach((e,i)=>{if(claimed[i]!=null){e.classList.add("claimed");e.style.background=players[claimed[i]].color}else{e.classList.remove("claimed");e.style.background=TRAINCOL[ROUTES[i][2]]}})
+ $("sideTickets").innerHTML=$("myTickets").innerHTML; $("savedTickets").innerHTML=$("myTickets").innerHTML;
+ document.querySelectorAll(".routeSeg").forEach(g=>{let i=+g.dataset.i,rect=g.querySelector(".routePiece");rect.setAttribute("fill",claimed[i]!=null?players[claimed[i]].color:TRAINCOL[ROUTES[i][2]])})
 }
 function beginTurn(){drawCount=0;turnAction=null;renderAll()}
 function endTurn(){turn=(turn+1)%players.length;beginTurn()}
