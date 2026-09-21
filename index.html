@@ -50,6 +50,23 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 @media(max-width:620px) and (orientation:portrait){#game{height:100dvh;grid-template-columns:86px 1fr 84px;grid-template-rows:1fr 118px}.logo{font-size:44px}.playerCard{font-size:10px}.bottom{grid-template-columns:100px 1fr 95px}.ticket{min-width:82px;font-size:8px}.ticket b{font-size:9px}.handCard{width:34px;font-size:8px}.city span{font-size:6px}.market h3{font-size:11px}}
 
 #rotateNotice{display:none;position:fixed;inset:0;z-index:9999;background:radial-gradient(circle,#3a2a1c,#100d0a);color:#f6dfaa;text-align:center;place-items:center;padding:30px;font-family:Arial}#rotateNotice .rot{font-size:64px;display:block;margin-bottom:14px}@media(max-width:700px) and (orientation:portrait){#game:not(.hidden)~#rotateNotice{display:grid}}
+
+/* Version 3: map-first landscape layout */
+#game{grid-template-columns:132px 1fr 138px;grid-template-rows:1fr!important}
+.sidebar{padding:5px}.playerCard{padding:5px;margin-bottom:5px}.stats{font-size:11px}
+.market{padding:5px;display:flex;flex-direction:column;min-height:0}.market h3{font-size:12px;margin:1px}
+.market .card{height:48px;margin:3px 0}.market .destSide{margin-top:4px;border-top:1px solid #8d622e;padding-top:4px;min-height:0;overflow:auto}
+.market .destSide .ticket{min-width:0;width:100%;margin:3px 0;font-size:8px;padding:4px}.market .destSide .ticket b{font-size:9px}.market .destSide .ticket .value{font-size:16px}
+.bottom{position:absolute;left:140px;right:146px;bottom:4px;z-index:25;background:transparent;border:0;display:block;padding:0;pointer-events:none}
+.bottom>div:first-child,.bottom>.actions{display:none!important}.bottom>div:nth-child(2){display:flex;justify-content:center}.bottom>div:nth-child(2)>b{display:none}
+.hand{background:#21150dcc;border:1px solid #b68037;border-radius:10px;padding:3px 7px;max-width:70%;pointer-events:auto;gap:2px;overflow:visible}
+.handCard{width:38px;height:47px;padding-top:2px;font-size:8px}.swatch{height:17px;margin:2px}
+.mapWrap{min-width:0}.city span{font-size:9px;background:#eadfbccc;padding:1px 3px;border-radius:4px}.dot{width:11px;height:11px}
+.route{height:12px;border:2px solid #4b4034;box-shadow:0 0 0 1px #eadfbd,0 2px 3px #0008;opacity:.96}
+.route:before{background:repeating-linear-gradient(90deg,#fff7 0 7px,#2b211a 8px 10px,#fff0 11px 13px)}
+.route:hover{outline:4px solid #ffe57a;filter:brightness(1.2)}
+.mapTools{display:flex;gap:3px;margin-top:auto}.mapTools .btn{font-size:9px;padding:5px 3px;flex:1}
+@media(max-width:850px){#game{grid-template-columns:92px 1fr 98px;grid-template-rows:1fr!important}.bottom{left:98px;right:104px}.market .card{height:38px}.city span{font-size:7px}.route{height:9px}.handCard{width:31px;height:40px}.swatch{height:13px}.playerCard{font-size:9px}.stats{font-size:8px}}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -60,13 +77,13 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 2</div>
+<div class="version">Version 3</div>
 </div></section>
 
 <section id="game" class="screen hidden">
 <aside class="sidebar"><div style="text-align:center;font-weight:bold;color:#e9c26a;margin:5px">PLAYERS</div><div id="players"></div></aside>
 <main class="mapWrap"><div id="map"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
-<aside class="market"><h3>TRAIN CARDS</h3><div id="market"></div><div class="card deck" onclick="drawBlind()">🎴 BLIND DRAW</div></aside>
+<aside class="market"><h3>TRAIN CARDS</h3><div id="market"></div><div class="card deck" onclick="drawBlind()">🎴 BLIND DRAW</div><div class="destSide"><h3>DESTINATIONS</h3><div id="sideTickets"></div></div><div class="mapTools"><button class="btn" onclick="drawTickets()">🎫 +</button><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <footer class="bottom"><div><b>DESTINATIONS</b><div id="myTickets" class="ticketsMini"></div></div><div><b>YOUR HAND</b><div id="hand" class="hand"></div></div>
 <div class="actions"><button class="btn" onclick="drawTickets()">🎫 Destination Tickets</button><button class="btn" onclick="showHelp()">? Rules</button><button class="btn" onclick="location.reload()">Main Menu</button></div></footer>
 </section>
@@ -116,6 +133,7 @@ function renderAll(){
  let p=players[turn]||players[0]; if(!p)return;
  let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=Object.entries(counts).map(([c,n])=>`<div class="handCard"><b>${n}×</b><div class="swatch" style="background:${TRAINCOL[c]}"></div>${c==="wild"?"LOCO":c.toUpperCase()}</div>`).join("");
  $("myTickets").innerHTML=p.tickets.map(t=>`<div class="ticket" onmouseenter="highlightTicket('${t.a.replaceAll("'","\\'")}','${t.b.replaceAll("'","\\'")}')" onmouseleave="clearGlow()"><span class="value">${t.v}</span><b>${t.a}</b><br>→ ${t.b}</div>`).join("");
+ $("sideTickets").innerHTML=$("myTickets").innerHTML;
  document.querySelectorAll(".route").forEach((e,i)=>{if(claimed[i]!=null){e.classList.add("claimed");e.style.background=players[claimed[i]].color}else{e.classList.remove("claimed");e.style.background=TRAINCOL[ROUTES[i][2]]}})
 }
 function beginTurn(){drawCount=0;turnAction=null;renderAll()}
