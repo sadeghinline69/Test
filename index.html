@@ -459,6 +459,23 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
   .mapTools .btn{min-height:36px!important;font-size:16px!important;padding:6px 2px!important}
 }
 
+
+/* Version 37 — Guide/Home moved to left; ticket chooser replaces/overlaps Destination Tickets button. */
+.sidebar{position:relative!important;padding-bottom:54px!important}
+.leftTools{position:absolute;left:5px;right:5px;bottom:5px;display:flex;gap:7px;z-index:45}
+.leftTools .btn{flex:1;min-height:40px!important;font-size:18px!important;padding:7px 2px!important}
+/* The chooser opens directly over the Destination Tickets action, so the action is hidden while active. */
+.sidebar:has(+ #ticketModal:not(.hidden)) #leftDestBtn{visibility:hidden!important}
+#ticketModal{top:112px!important;left:5px!important;bottom:auto!important;z-index:80!important}
+#ticketModal .modalBox{max-height:calc(100dvh - 170px)!important}
+@media(max-width:850px){
+ .sidebar{padding-bottom:45px!important}
+ .leftTools{left:3px;right:3px;bottom:3px;gap:4px}
+ .leftTools .btn{min-height:34px!important;font-size:15px!important;padding:5px 1px!important}
+ #ticketModal{top:82px!important;left:4px!important}
+ #ticketModal .modalBox{max-height:calc(100dvh - 130px)!important}
+}
+
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -469,14 +486,14 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 36</div>
+<div class="version">Version 37</div>
 </div></section>
 
 <section id="game" class="screen hidden">
-<aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button></aside>
+<aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button><div class="leftTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div>
 <main class="mapWrap"><div id="map"></div><div id="mapSavedTickets" class="mapSavedTickets"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
-<aside class="market"><div id="market"></div><div class="card deck" onclick="drawBlind()">BLIND DRAW</div><div class="destSide"><h3>DESTINATIONS</h3><div id="sideTickets"></div></div><div class="mapTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
+<aside class="market"><div id="market"></div><div class="card deck" onclick="drawBlind()">BLIND DRAW</div><div class="destSide"><h3>DESTINATIONS</h3><div id="sideTickets"></div></div></aside>
 <footer class="bottom"><div><b>DESTINATIONS</b><div id="myTickets" class="ticketsMini"></div></div><div><b>YOUR HAND</b><div id="hand" class="hand"></div></div>
 <div class="actions"><button class="btn" onclick="drawTickets()">🎫 Destination Tickets</button><button class="btn" onclick="showHelp()">? Rules</button><button class="btn" onclick="location.reload()">Main Menu</button></div></footer>
 </section>
