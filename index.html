@@ -552,6 +552,12 @@ body.finalScoringMode #game::after{display:none!important}
 /* Version 52 — bot match and configurable mixed multiplayer setup. */
 #names .seatSetup{display:flex;gap:10px;align-items:end}#names .seatSetup>.field{margin:5px 0}#names .seatSetup>.field:first-child{flex:.65}#names .seatSetup>.field:last-child{flex:1.35}
 @media(max-width:620px){#names .seatSetup{gap:6px}#names .seatSetup>.field{min-width:0}}
+
+/* Version 53 — visible in-game version and explicit animated score deltas. */
+.gameVersion{position:fixed;right:5px;bottom:4px;z-index:120000;padding:3px 7px;border-radius:8px;background:#120f0dcc;color:#f7dda1;border:1px solid #a77b3f;font:700 10px/1 Arial;pointer-events:none}
+.scoreNumberLine{display:flex;align-items:center;justify-content:center;gap:5px;min-height:43px}.scoreChange{display:inline-block;min-width:31px;font:1000 17px/1 system-ui;color:#75f69a;opacity:0;transform:translateY(6px) scale(.7)}.scoreChange.minus{color:#ff8585}.scoreChange.show{animation:scoreChangePop 1.25s ease both}
+@keyframes scoreChangePop{0%{opacity:0;transform:translateY(7px) scale(.6)}18%,72%{opacity:1;transform:translateY(0) scale(1.15)}100%{opacity:0;transform:translateY(-7px) scale(.9)}}
+@media(max-width:850px){.gameVersion{right:3px;bottom:2px;font-size:8px;padding:2px 5px}.scoreNumberLine{gap:2px;min-height:31px}.scoreChange{font-size:12px;min-width:22px}}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -563,10 +569,11 @@ body.finalScoringMode #game::after{display:none!important}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 52</div>
+<div class="version">Version 53</div>
 </div></section>
 
 <section id="game" class="screen hidden">
+<div class="gameVersion">Version 53</div>
 <div id="finalRoundAlert" role="alert" aria-live="assertive">⚠ FINAL ROUND — ONE LAST TURN FOR EVERY PLAYER ⚠</div>
 <aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button><div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div><div class="leftTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <main class="mapWrap"><div id="map"></div><div id="mapSavedTickets" class="mapSavedTickets"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
@@ -1137,6 +1144,7 @@ function showHelp(){$("help").classList.remove("hidden")}
  function showBadge(label,delta,bad=false){let b=document.getElementById('scoreMapBadge');b.className='on'+(bad?' bad':'');b.innerHTML=`${label}<span class="delta">${delta>=0?'+':''}${delta}</span>`}
  function hideBadge(){let b=document.getElementById('scoreMapBadge');b.className='';b.innerHTML=''}
  async function countScore(el,from,to,duration=520){let start=performance.now();return new Promise(resolve=>{function tick(now){let p=Math.min(1,(now-start)/duration),e=1-Math.pow(1-p,3);el.textContent=Math.round(from+(to-from)*e);if(p<1)requestAnimationFrame(tick);else resolve()}requestAnimationFrame(tick)})}
+ function showScoreDelta(row,delta){if(!delta)return;let el=row.querySelector('.scoreChange');if(!el)return;el.textContent=(delta>0?'+':'')+delta;el.classList.remove('show','minus');if(delta<0)el.classList.add('minus');void el.offsetWidth;el.classList.add('show')}
  function removeScoreTrain(){document.getElementById('scoreMovingTrain')?.remove()}
  async function animateTrainOnRoutes(routeIds,startCity,color='#ffd43b'){
    removeScoreTrain();let svg=document.getElementById('mapSvg');if(!svg||!routeIds.length)return;
@@ -1155,13 +1163,13 @@ function showHelp(){$("help").classList.remove("hidden")}
    rows.innerHTML='';win.textContent='';newGame.style.display='none';box.classList.add('on');document.body.classList.add('finalScoringMode');
    let railTotals=players.map((p,i)=>baseScore(i)),destinationTotals=players.map(()=>0),longestBonuses=players.map(()=>0),totals=[...railTotals],rowEls=[];
    players.forEach((p,i)=>{
-     let d=document.createElement('div');d.className='scorePlayer';d.innerHTML=`<div class="scoreHead"><span>${p.name||'Player '+(i+1)}</span><span>Score</span></div><strong class="scoreTotal">0</strong><div class="scoreEvent">Waiting…</div>`;
+     let d=document.createElement('div');d.className='scorePlayer';d.innerHTML=`<div class="scoreHead"><span>${p.name||'Player '+(i+1)}</span><span>Score</span></div><div class="scoreNumberLine"><strong class="scoreTotal">0</strong><span class="scoreChange"></span></div><div class="scoreEvent">Waiting…</div>`;
      rows.appendChild(d);rowEls.push(d)
    });
    await wait(500);
    for(let i=0;i<players.length;i++){
      clearScoreMap();document.querySelectorAll('.routeSeg').forEach(x=>{if(claimed[+x.dataset.i]===i)x.classList.add('finalRailScore')});rowEls.forEach((r,j)=>r.classList.toggle('leader',j===i));
-     rowEls[i].querySelector('.scoreEvent').textContent='Railway points';SFX.rail();await countScore(rowEls[i].querySelector('.scoreTotal'),0,railTotals[i],800);await wait(650);
+     rowEls[i].querySelector('.scoreEvent').textContent='Railway points';showScoreDelta(rowEls[i],railTotals[i]);SFX.rail();await countScore(rowEls[i].querySelector('.scoreTotal'),0,railTotals[i],800);await wait(650);
    }
    for(let i=0;i<players.length;i++){
      for(let j=0;j<ticketsOf(i).length;j++){
@@ -1169,7 +1177,7 @@ function showHelp(){$("help").classList.remove("hidden")}
        let ok=ticketDone(i,t),v=tVal(t),delta=ok?v:-v;destinationTotals[i]+=delta;totals[i]=railTotals[i]+destinationTotals[i]+longestBonuses[i];
        let ticketRoute=showTicketOnMap(t,i,ok);rowEls.forEach((r,k)=>r.classList.toggle('leader',k===i));
        let ev=rowEls[i].querySelector('.scoreEvent');ev.textContent=`${tName(t)}  ${delta>=0?'+':''}${delta}`;
-       ok?SFX.plus():SFX.minus();
+       showScoreDelta(rowEls[i],delta);ok?SFX.plus():SFX.minus();
        let jobs=[countScore(rowEls[i].querySelector('.scoreTotal'),totals[i]-delta,totals[i],750)];if(ok)jobs.push(animateTrainOnRoutes(ticketRoute,t.a,players[i].color));await Promise.all(jobs);await wait(500);
      }
    }
@@ -1178,7 +1186,7 @@ function showHelp(){$("help").classList.remove("hidden")}
      clearScoreMap();showLongestOnMap(paths[i].routes);rowEls.forEach((r,j)=>r.classList.toggle('leader',j===i));
      let wins=paths[i].length>0&&paths[i].length===mx,bonus=wins?10:0;longestBonuses[i]=bonus;totals[i]=railTotals[i]+destinationTotals[i]+longestBonuses[i];
      rowEls[i].querySelector('.scoreEvent').textContent=`Longest path: ${paths[i].length} trains${bonus?'  +10':''}`;
-     if(wins)SFX.longest();await Promise.all([countScore(rowEls[i].querySelector('.scoreTotal'),totals[i]-bonus,totals[i],750),animateTrainOnRoutes(paths[i].routes,paths[i].start,players[i].color)]);await wait(650);
+     if(bonus)showScoreDelta(rowEls[i],bonus);if(wins)SFX.longest();await Promise.all([countScore(rowEls[i].querySelector('.scoreTotal'),totals[i]-bonus,totals[i],750),animateTrainOnRoutes(paths[i].routes,paths[i].start,players[i].color)]);await wait(650);
    }
    showLongestOnMap(paths.flatMap((x,i)=>x.length===mx?x.routes:[]));rowEls.forEach(r=>r.classList.remove('leader'));
    let high=Math.max(...totals), winners=players.map((p,i)=>totals[i]===high?i:-1).filter(i=>i>=0);
