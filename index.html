@@ -44,7 +44,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 .hand{display:flex;align-items:end;justify-content:center;gap:3px;overflow:auto}.handCard{width:54px;height:72px;border:2px solid #e8d7a5;border-radius:6px;background:#f6ecd3;color:#111;flex:0 0 auto;text-align:center;padding-top:7px;font:11px Arial}.swatch{height:25px;margin:5px;border-radius:4px;border:1px solid #333}
 .actions{display:flex;flex-direction:column;justify-content:center;gap:7px}.actions .btn{padding:8px}
 .modal{position:fixed;inset:0;background:#000b;z-index:100;display:grid;place-items:center;padding:15px}.modalBox{width:min(760px,96vw);max-height:90dvh;overflow:auto;background:linear-gradient(#f8efda,#dbc89e);border:4px solid #9b6a30;border-radius:18px;padding:18px;box-shadow:0 20px 70px #000}
-.ticketChoices{display:flex;gap:10px;flex-wrap:wrap}.ticketChoice{flex:1;min-width:180px;min-height:120px;background:#f8efd8;border:3px solid #a98650;border-radius:12px;padding:12px;cursor:pointer}.ticketChoice.selected{outline:5px solid #3b9b45;transform:translateY(-4px)}
+.ticketChoices{display:flex;gap:10px;flex-wrap:wrap}.ticketChoice{flex:1;min-width:180px;min-height:120px;background:#f8efd8;border:3px solid #a98650;border-radius:12px;padding:12px;cursor:pointer}.ticketChoice.selected{outline:5px solid var(--tc,#3b9b45);transform:translateY(-4px)}
 .note{font:14px Arial;color:#5d4934}.version{text-align:center;font:12px Arial;color:#7c694c;margin-top:14px}
 @media(max-width:850px){#game{grid-template-columns:120px 1fr 112px;grid-template-rows:1fr 130px}.sidebar,.market{padding:4px}.playerCard{padding:5px}.city span{font-size:7px}.route{height:8px}.bottom{grid-template-columns:145px 1fr 130px;padding:4px}.card{height:52px}.handCard{width:40px;height:60px}.ticket{min-width:92px}.btn{font-size:12px;padding:7px}.stats{font-size:10px}}
 @media(max-width:620px) and (orientation:portrait){#game{height:100dvh;grid-template-columns:86px 1fr 84px;grid-template-rows:1fr 118px}.logo{font-size:44px}.playerCard{font-size:10px}.bottom{grid-template-columns:100px 1fr 95px}.ticket{min-width:82px;font-size:8px}.ticket b{font-size:9px}.handCard{width:34px;font-size:8px}.city span{font-size:6px}.market h3{font-size:11px}}
@@ -104,9 +104,9 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 #ticketModal p{font:8px Arial!important;line-height:1.1;margin:0 0 4px!important;text-align:center}
 #ticketModal .ticketChoices{display:block!important}
 #ticketModal .ticketChoice{min-width:0!important;width:100%!important;min-height:0!important;margin:4px 0!important;padding:4px!important;border:2px solid #a98650!important;border-radius:7px!important;transform:none!important}
-#ticketModal .ticketChoice.selected{outline:3px solid #3b9b45!important;background:#fff8df!important;transform:none!important}
+#ticketModal .ticketChoice.selected{outline:3px solid var(--tc,#3b9b45)!important;background:#fff8df!important;transform:none!important}
 #ticketModal .ticketChoice h3{font-size:8px!important;line-height:1.05;margin:1px 0!important;text-align:left;padding-right:18px}
-#ticketModal .ticketChoice .value{font-size:15px!important;line-height:1;float:right;color:#8b291e;font-weight:bold}
+#ticketModal .ticketChoice .value{font-size:15px!important;line-height:1;float:right;color:var(--tc,#8b291e)!important;font-weight:bold}
 #ticketModal .ticketChoice>div[style*="font-size:24px"]{display:none!important}
 #ticketModal .ticketChoice div[style*="height:3px"]{height:2px!important;margin:3px 8px!important}
 #ticketModal .primary{position:static!important;width:100%!important;margin:5px 0 0!important;padding:5px!important;font-size:10px!important}
@@ -127,7 +127,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 #ticketModal .modalBox{max-height:calc(100dvh - 120px)!important}
 @media(max-width:850px){.mapSavedTickets{left:4px;bottom:3px;max-width:40%}.mapSavedTickets .ticket{min-width:66px;max-width:78px;font-size:5px;padding:2px}.mapSavedTickets .ticket b{font-size:6px}.mapSavedTickets .ticket .value{font-size:10px}.bottom{left:40%!important;right:104px!important}#ticketModal{top:82px!important;bottom:auto!important}#ticketModal .modalBox{max-height:calc(100dvh - 88px)!important}}
 
-/* Version 8 — each kept Destination Ticket has its own persistent map-marker color */
+/* Version 9 — each kept Destination Ticket has its own persistent map-marker color */
 .mapSavedTickets .ticket{border-color:var(--ticket-color,#2f9e44)!important}
 .mapSavedTickets .ticket .value{color:var(--ticket-color,#2f9e44)!important;text-shadow:0 1px #fff}
 .mapSavedTickets .ticket.ticketTop{box-shadow:0 0 0 1px #fff7 inset,0 3px 7px #0008!important}
@@ -154,7 +154,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 8</div>
+<div class="version">Version 9</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -190,11 +190,11 @@ function startGame(){
 function refillMarket(){while(market.length<5&&deck.length)market.push(deck.pop());let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5)market.push(deck.pop())}}
 function offerInitialTickets(pi){turn=pi;pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=2;showTicketModal(`Choose ${players[pi].name}'s starting tickets`,`Keep at least 2. Tap a ticket to show its cities on the map.`)}
 function showTicketModal(title,instruction){$("ticketModal").classList.remove("hidden");renderTicketChoices()}
-function renderTicketChoices(){ $("ticketChoices").innerHTML=pendingTickets.map((t,i)=>`<div class="ticketChoice" data-i="${i}" onclick="toggleTicket(${i},this)"><span class="value">${t.v}</span><div style="font-size:24px">🎫</div><h3>${t.a}</h3><div style="height:3px;background:#9b3d2e;margin:8px 20px;position:relative"><i style="position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:#2d5d7c"></i><i style="position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:#2d5d7c"></i></div><h3>${t.b}</h3></div>`).join("")}
-function toggleTicket(i,el){el.classList.toggle("selected");document.querySelectorAll(".city").forEach(x=>x.classList.remove("glow"));document.querySelectorAll(".ticketChoice.selected").forEach(x=>{let t=pendingTickets[+x.dataset.i];glowCity(t.a);glowCity(t.b)})}
+function renderTicketChoices(){ $("ticketChoices").innerHTML=pendingTickets.map((t,i)=>{let tc=TICKET_COLORS[i%TICKET_COLORS.length];return `<div class="ticketChoice" data-i="${i}" data-tc="${tc}" style="--tc:${tc}" onclick="toggleTicket(${i},this)"><span class="value">${t.v}</span><div style="font-size:24px">🎫</div><h3>${t.a}</h3><div style="height:3px;background:${tc};margin:8px 20px;position:relative"><i style="position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i><i style="position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i></div><h3>${t.b}</h3></div>`}).join("")}
+function toggleTicket(i,el){el.classList.toggle("selected");clearGlow();document.querySelectorAll(".ticketChoice.selected").forEach(x=>{let t=pendingTickets[+x.dataset.i],tc=x.dataset.tc||TICKET_COLORS[(+x.dataset.i)%TICKET_COLORS.length];glowCityColor(t.a,tc);glowCityColor(t.b,tc)})}
 function glowCity(n,color="#5dff45"){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e){e.classList.add("glow");let d=e.querySelector(".dot");if(d){d.style.background=color;d.style.boxShadow=`0 0 7px 4px #fff,0 0 20px 8px ${color}`}}}
 function confirmTickets(){let sel=[...document.querySelectorAll(".ticketChoice.selected")].map(x=>+x.dataset.i);if(sel.length<pendingMin){toast(`Keep at least ${pendingMin} ticket${pendingMin>1?"s":""}.`);return}
- let keep=[],back=[];pendingTickets.forEach((t,i)=>(sel.includes(i)?keep:back).push(t)); keep.forEach((t,k)=>{if(!t.tc)t.tc=TICKET_COLORS[(players[turn].tickets.length+k)%TICKET_COLORS.length]}); players[turn].tickets.push(...keep);destDeck.unshift(...back);
+ let keep=[],back=[];pendingTickets.forEach((t,i)=>{if(sel.includes(i)){if(!t.tc)t.tc=TICKET_COLORS[i%TICKET_COLORS.length];keep.push(t)}else back.push(t)}); players[turn].tickets.push(...keep);destDeck.unshift(...back);
  $("ticketModal").classList.add("hidden");document.querySelectorAll(".city").forEach(x=>x.classList.remove("glow"));
  if(initialSetup){if(turn<players.length-1){offerInitialTickets(turn+1)}else{initialSetup=false;turn=0;beginTurn()}}else{endTurn()}
  renderAll()
