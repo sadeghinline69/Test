@@ -31,7 +31,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 .dot{width:9px;height:9px;border-radius:50%;background:#372d24;border:2px solid #e9d8a9;margin:auto;box-shadow:0 1px 2px #000}
 .city span{display:block;font:bold 10px Arial;color:#1c1a17;text-shadow:0 1px #eee;white-space:nowrap;margin-top:1px}
 .city.glow .dot{width:20px;height:20px;background:#ffe11a;box-shadow:0 0 8px 4px #fff,0 0 25px 10px #5eff44}
-.turnBanner{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:20;background:#20170edb;color:#fff3ca;padding:7px 18px;border:1px solid #c99b4d;border-radius:20px;font-weight:bold}
+.turnBanner{display:none!important;position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:20;background:#20170edb;color:#fff3ca;padding:7px 18px;border:1px solid #c99b4d;border-radius:20px;font-weight:bold}
 .toast{position:absolute;left:50%;top:18%;transform:translate(-50%,-50%);z-index:30;color:white;background:#19120ddd;border:2px solid #d8ad58;border-radius:16px;padding:12px 20px;font-size:20px;animation:pop .25s}
 @keyframes pop{from{transform:translate(-50%,-50%) scale(.7);opacity:0}}
 .market{background:linear-gradient(#33261c,#17120e);border-left:3px solid #8d622e;padding:8px;color:#f6e8c9;overflow:auto}
@@ -345,6 +345,45 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
   100%{opacity:0;transform:translate(-50%,-90%) scale(.9)}
 }
 
+
+/* Version 30 — sound cues + animated final scoring */
+#finalScoreShow{
+ position:fixed;inset:0;z-index:200000;background:rgba(14,18,22,.94);
+ display:none;align-items:center;justify-content:center;padding:18px;color:#fff;
+ font-family:system-ui,sans-serif;
+}
+#finalScoreShow.on{display:flex}
+.scoreStage{width:min(900px,96vw);max-height:92vh;overflow:auto;background:linear-gradient(145deg,#25303b,#11171d);
+ border:2px solid #c8a96b;border-radius:18px;padding:18px;box-shadow:0 20px 60px #000}
+.scoreStage h2{text-align:center;margin:0 0 12px;font-size:25px;letter-spacing:.5px}
+.scoreRows{display:grid;gap:10px}
+.scorePlayer{background:rgba(255,255,255,.07);border-radius:12px;padding:10px;border:1px solid rgba(255,255,255,.15)}
+.scorePlayer.leader{box-shadow:0 0 0 2px #f1c75b,0 0 24px rgba(241,199,91,.35)}
+.scoreHead{display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:16px}
+.scoreTotal{font-size:22px;min-width:56px;text-align:right}
+.scoreTrack{height:7px;background:#111;border-radius:10px;margin:7px 0;overflow:hidden}
+.scoreFill{height:100%;width:0;background:linear-gradient(90deg,#c8a96b,#ffe28a);transition:width .55s ease}
+.scoreEvent{min-height:24px;font-weight:800;font-size:13px;opacity:.95}
+.scoreDelta{display:inline-block;margin-left:8px;font-size:17px;animation:scorePop .55s ease}
+@keyframes scorePop{0%{transform:scale(.5);opacity:0}55%{transform:scale(1.25);opacity:1}100%{transform:scale(1)}}
+.scoreWinner{text-align:center;font-size:24px;font-weight:1000;margin-top:15px;animation:winnerPulse 1s ease infinite alternate}
+@keyframes winnerPulse{to{transform:scale(1.06);text-shadow:0 0 18px #ffd45d}}
+
+
+/* Version 31 — no persistent text above the board. Only invalid-railway warning is shown. */
+#turnBanner{display:none!important}
+#toast{
+  position:fixed!important;
+  top:10px!important;
+  left:50%!important;
+  transform:translateX(-50%)!important;
+  z-index:300000!important;
+  max-width:min(560px,88vw);
+  text-align:center;
+  font-size:15px!important;
+  padding:8px 15px!important;
+}
+
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -355,7 +394,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 29</div>
+<div class="version">Version 31</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -491,7 +530,7 @@ function renderAll(){
 function beginTurn(){
  if(gameFinished)return;
  drawCount=0;turnAction=null;selectedClaimColor=null;renderAll();
- if(finalRound)toast(`Final round — ${players[turn].name}'s last turn`);
+ 
 }
 function endTurn(){
  if(gameFinished)return;
@@ -501,7 +540,7 @@ function endTurn(){
  }else if(players[turn].trains<=2){
    finalRound=true;
    finalTurnsRemaining=players.length;
-   toast(`${players[turn].name} has ${players[turn].trains} trains — final round!`);
+   
  }
  turn=(turn+1)%players.length;beginTurn();
 }
@@ -525,7 +564,7 @@ function selectClaimColor(c){
  if(gameFinished||initialSetup||turnAction)return;
  selectedClaimColor=(selectedClaimColor===c?null:c);
  renderAll();
- if(selectedClaimColor)toast(`${selectedClaimColor==="wild"?"Locomotive":selectedClaimColor} selected — choose a railway.`);
+ 
 }
 function parallelRouteIndices(i){
  let [a,b]=ROUTES[i];
@@ -553,11 +592,11 @@ function updateClaimableRouteVisuals(){
 }
 function claimRoute(i){
  if(gameFinished||initialSetup||turnAction||claimed[i]!=null)return;
- if(!selectedClaimColor){toast("Choose a Train Card color from your hand first.");return}
+ if(!selectedClaimColor)return
  let [a,b,c,l]=ROUTES[i],p=players[turn];
- if(p.trains<l){toast("Not enough trains.");return}
- if(!parallelRouteAllowed(i)){toast(players.length<=3?"Only one of these parallel railways can be occupied in a 2–3 player game.":"You cannot occupy both parallel railways yourself.");return}
- if(!routeCanUseSelected(i)){toast("You can’t occupy this railway with the selected cards.");return}
+ if(p.trains<l){railWarning();return}
+ if(!parallelRouteAllowed(i)){railWarning();return}
+ if(!routeCanUseSelected(i)){railWarning();return}
  let chosen=selectedClaimColor,need=l,newHand=[];
  if(chosen==="wild"){
    for(let x of p.hand){if(need&&x==="wild"){need--;continue}newHand.push(x)}
@@ -566,13 +605,13 @@ function claimRoute(i){
    p.hand=newHand;newHand=[];
    for(let x of p.hand){if(need&&x==="wild"){need--;continue}newHand.push(x)}
  }
- p.hand=newHand;claimed[i]=turn;p.trains-=l;p.score+=SCORE[l]||0;turnAction="route";selectedClaimColor=null;renderAll();toast(`Route claimed! +${SCORE[l]||0}`);setTimeout(endTurn,700)
+ p.hand=newHand;claimed[i]=turn;p.trains-=l;p.score+=SCORE[l]||0;turnAction="route";selectedClaimColor=null;renderAll();setTimeout(endTurn,700)
 }
 function drawTickets(){if(gameFinished||initialSetup||turnAction)return;turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);if(!pendingTickets.length){turnAction=null;toast("No Destination Tickets left.");return}pendingMin=1;showTicketModal("Draw Destination Tickets","Keep at least 1. Tap a ticket to show its cities on the map.")}
 function highlightTicket(a,b,color="#5dff45"){clearGlow();glowCity(a,color);glowCity(b,color)}
 function glowCity(n,color){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e){e.classList.add("glow");let d=e.querySelector(".dot");if(d){d.style.background=color;d.style.boxShadow=`0 0 7px 4px #fff,0 0 20px 8px ${color}`}}}
 function clearGlow(){document.querySelectorAll(".city").forEach(x=>{x.classList.remove("glow");let d=x.querySelector(".dot");if(d){d.style.background="";d.style.boxShadow=""}})}
-let toastTimer;function toast(s){let e=$("toast");e.textContent=s;e.classList.remove("hidden");clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.add("hidden"),1800)}
+let toastTimer;function toast(s){let e=$("toast");e.textContent=s;e.classList.remove("hidden");clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.add("hidden"),2000)} function railWarning(){toast("This railway cannot be occupied with the selected cards.");}
 function showHelp(){$("help").classList.remove("hidden")}
 </script><div id="rotateNotice"><div><span class="rot">↻ 📱</span><h2>Rotate your device</h2><p>This game is designed for landscape play.</p></div></div>
 <script>
@@ -649,6 +688,134 @@ function showHelp(){$("help").classList.remove("hidden")}
    }
  },true);
  window.animateTrainCardDraw=animateDraw;
+})();
+</script>
+
+
+<div id="finalScoreShow">
+ <div class="scoreStage">
+  <h2>Final Scoring</h2>
+  <div class="scoreRows" id="scoreRows"></div>
+  <div class="scoreWinner" id="scoreWinner"></div>
+ </div>
+</div>
+
+
+<script>
+(function(){
+ let ac=null;
+ function ctx(){ if(!ac) ac=new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended')ac.resume(); return ac}
+ function tone(freq,dur=.1,type='sine',vol=.055,delay=0){
+   try{let c=ctx(),o=c.createOscillator(),g=c.createGain(),t=c.currentTime+delay;o.type=type;o.frequency.setValueAtTime(freq,t);
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+   o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+dur+.03)}catch(e){}
+ }
+ const SFX={
+   ticket(){tone(520,.08,'triangle');tone(700,.11,'triangle',.05,.08)},
+   draw(){tone(310,.06,'sine');tone(430,.08,'sine',.045,.06)},
+   rail(){tone(145,.07,'square',.035);tone(190,.07,'square',.035,.07);tone(245,.10,'square',.03,.14)},
+   complete(){tone(523,.12,'triangle');tone(659,.12,'triangle',.055,.12);tone(784,.22,'triangle',.06,.24)},
+   plus(){tone(660,.07,'sine',.035);tone(880,.08,'sine',.03,.06)},
+   minus(){tone(260,.10,'sawtooth',.025);tone(190,.12,'sawtooth',.02,.08)},
+   longest(){tone(392,.1,'triangle');tone(523,.1,'triangle',.05,.1);tone(659,.1,'triangle',.05,.2);tone(784,.25,'triangle',.06,.3)}
+ };
+ window.gameSFX=SFX;
+
+ // Semantic click cues for existing controls/cards.
+ document.addEventListener('click',e=>{
+   let el=e.target.closest('button,.ticketCard,.destCard,.destinationCard,.marketCard,.trainCard,.deck,.trainDeck,.routeHit');
+   if(!el)return;
+   let t=(el.textContent||'').toLowerCase(), c=el.className||'';
+   if(/ticket|destination|distinction/.test(t+' '+c)) SFX.ticket();
+   else if(/marketCard|trainCard|deck|trainDeck/.test(c)) SFX.draw();
+ },true);
+
+ // Observe claimed rails and completed-ticket UI/state changes visually, adding distinct sounds.
+ let claimedCount=0, completedCount=0;
+ function counts(){
+   let cc=document.querySelectorAll('.claimedSeg').length;
+   let dc=document.querySelectorAll('.ticketComplete,.completedTicket,.destComplete').length;
+   if(claimedCount && cc>claimedCount) SFX.rail();
+   if(completedCount && dc>completedCount) SFX.complete();
+   claimedCount=cc;completedCount=dc;
+ }
+ window.addEventListener('load',()=>{counts();new MutationObserver(counts).observe(document.body,{subtree:true,attributes:true,childList:true})});
+
+ // Longest continuous route in number of train segments, using only routes owned by player.
+ function longestForPlayer(pi){
+   if(typeof ROUTES==='undefined'||typeof claimed==='undefined')return 0;
+   let edges=[];
+   ROUTES.forEach((r,i)=>{if(claimed[i]===pi)edges.push({a:r[0],b:r[1],w:+r[3]||1,id:i})});
+   let best=0;
+   function dfs(city,used,total){
+     if(total>best)best=total;
+     for(const e of edges){
+       if(used.has(e.id))continue;
+       let nxt=null;if(e.a===city)nxt=e.b;else if(e.b===city)nxt=e.a;else continue;
+       let n=new Set(used);n.add(e.id);dfs(nxt,n,total+e.w);
+     }
+   }
+   let cities=new Set(edges.flatMap(e=>[e.a,e.b]));cities.forEach(c=>dfs(c,new Set(),0));
+   return best;
+ }
+ function ticketDone(pi,t){
+   try{
+     if(typeof isTicketComplete==='function')return !!isTicketComplete(pi,t);
+     if(typeof ticketComplete==='function')return !!ticketComplete(pi,t);
+     if(typeof connected==='function')return !!connected(pi,t[0],t[1]);
+   }catch(e){}
+   return false;
+ }
+ function ticketsOf(pi){
+   let p=players&&players[pi];
+   return (p&&(p.tickets||p.destinations||p.destinationTickets))||[];
+ }
+ function baseScore(pi){
+   let p=players&&players[pi]; return +(p&&(p.routeScore??p.score??p.points) ||0);
+ }
+ function tVal(t){return +(t.value??t.points??t[2]??0)}
+ function tName(t){return (t.a||t.from||t[0]||'')+' – '+(t.b||t.to||t[1]||'')}
+ const wait=ms=>new Promise(r=>setTimeout(r,ms));
+ async function animateFinalScoring(){
+   if(!window.players||!players.length)return;
+   const box=document.getElementById('finalScoreShow'),rows=document.getElementById('scoreRows'),win=document.getElementById('scoreWinner');
+   rows.innerHTML='';win.textContent='';box.classList.add('on');
+   let totals=players.map((p,i)=>baseScore(i)), rowEls=[];
+   players.forEach((p,i)=>{
+     let d=document.createElement('div');d.className='scorePlayer';d.innerHTML=`<div class="scoreHead"><span>${p.name||'Player '+(i+1)}</span><span class="scoreTotal">${totals[i]}</span></div><div class="scoreTrack"><div class="scoreFill"></div></div><div class="scoreEvent">Railway points: ${totals[i]}</div>`;
+     rows.appendChild(d);rowEls.push(d)
+   });
+   await wait(800);
+   for(let i=0;i<players.length;i++){
+     for(const t of ticketsOf(i)){
+       let ok=ticketDone(i,t),v=tVal(t),delta=ok?v:-v;totals[i]+=delta;
+       let ev=rowEls[i].querySelector('.scoreEvent');ev.innerHTML=`Destination Ticket ${ok?'completed':'incomplete'} <span class="scoreDelta">${delta>=0?'+':''}${delta}</span>`;
+       rowEls[i].querySelector('.scoreTotal').textContent=totals[i];
+       rowEls[i].querySelector('.scoreFill').style.width=Math.min(100,Math.max(4,totals[i]))+'%';
+       ok?SFX.plus():SFX.minus(); await wait(720);
+     }
+   }
+   let lens=players.map((p,i)=>longestForPlayer(i)), mx=Math.max(...lens);
+   if(mx>0){
+     for(let i=0;i<players.length;i++)if(lens[i]===mx){
+       totals[i]+=10;rowEls[i].querySelector('.scoreTotal').textContent=totals[i];
+       rowEls[i].querySelector('.scoreEvent').innerHTML=`Longest continuous railway (${mx} trains) <span class="scoreDelta">+10</span>`;
+       SFX.longest();await wait(800);
+     }
+   }
+   let high=Math.max(...totals), winners=players.map((p,i)=>totals[i]===high?i:-1).filter(i=>i>=0);
+   winners.forEach(i=>rowEls[i].classList.add('leader'));
+   win.textContent=(winners.length>1?'Winners: ':'Winner: ')+winners.map(i=>players[i].name||'Player '+(i+1)).join(' & ')+' — '+high+' points';
+   SFX.complete();
+ }
+ window.animateFinalScoring=animateFinalScoring;
+
+ // Hook common end-game functions if present, preserving existing logic.
+ ['endGame','finishGame','showFinalScores','finalScoring'].forEach(name=>{
+   if(typeof window[name]==='function' && window[name]!==animateFinalScoring){
+     const old=window[name];window[name]=function(){let r=old.apply(this,arguments);setTimeout(animateFinalScoring,250);return r}
+   }
+ });
 })();
 </script>
 
