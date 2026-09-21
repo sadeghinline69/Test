@@ -265,6 +265,86 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
   transform-origin:center;
 }
 
+
+/* Version 28 — clean top area; only transient warnings remain visible. */
+.topbar .turn,
+.topbar .status,
+.topbar .message,
+.topbar .instruction,
+#turnLabel,#turnText,#statusText,#messageText,#instructionText,
+.turnLabel,.turnText,.statusText,.messageText,.instructionText{
+  display:none!important;
+}
+
+/* Keep Destination Tickets and Train Cards on one horizontal bottom level. */
+.bottomDock,.bottomBar,.handArea,.playerBottom{
+  align-items:flex-end!important;
+}
+.ticketStack,.destStack,.destinationStack,.keptTickets{
+  align-self:flex-end!important;
+  margin-bottom:0!important;
+}
+.hand{
+  align-self:flex-end!important;
+  margin-bottom:0!important;
+}
+
+
+/* Version 29 — richer train-card artwork and visible draw-to-hand animation */
+.handCard,.marketCard,.trainCard{
+  position:relative!important;
+  overflow:hidden!important;
+  box-shadow:0 2px 5px rgba(0,0,0,.28)!important;
+}
+.handCard .swatch,.marketCard .swatch,.trainCard .swatch{
+  position:relative!important;
+  overflow:hidden!important;
+}
+.handCard .swatch::after,.marketCard .swatch::after,.trainCard .swatch::after{
+  content:"🚂";
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  filter:drop-shadow(0 1px 1px rgba(255,255,255,.75)) drop-shadow(0 1px 1px rgba(0,0,0,.5));
+}
+.drawFlyCard{
+  position:fixed;
+  z-index:99999;
+  width:44px;
+  height:64px;
+  border:3px solid rgba(255,255,255,.95);
+  border-radius:8px;
+  box-shadow:0 8px 22px rgba(0,0,0,.55);
+  pointer-events:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:25px;
+  transition:left .72s cubic-bezier(.2,.8,.2,1),top .72s cubic-bezier(.2,.8,.2,1),transform .72s cubic-bezier(.2,.8,.2,1),opacity .18s .62s;
+}
+.drawFlyCard::after{content:"🚂";filter:drop-shadow(0 1px 1px #fff)}
+.drawReveal{
+  position:fixed;
+  z-index:100000;
+  padding:5px 9px;
+  border-radius:8px;
+  background:rgba(20,20,20,.9);
+  color:white;
+  font:800 12px/1.1 system-ui,sans-serif;
+  pointer-events:none;
+  transform:translate(-50%,-50%);
+  animation:revealPop 1.15s ease forwards;
+  box-shadow:0 4px 14px rgba(0,0,0,.35);
+}
+@keyframes revealPop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}
+  18%,72%{opacity:1;transform:translate(-50%,-65%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-90%) scale(.9)}
+}
+
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -275,7 +355,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 27</div>
+<div class="version">Version 29</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -494,4 +574,82 @@ function glowCity(n,color){let e=document.querySelector(`.city[data-name="${CSS.
 function clearGlow(){document.querySelectorAll(".city").forEach(x=>{x.classList.remove("glow");let d=x.querySelector(".dot");if(d){d.style.background="";d.style.boxShadow=""}})}
 let toastTimer;function toast(s){let e=$("toast");e.textContent=s;e.classList.remove("hidden");clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.add("hidden"),1800)}
 function showHelp(){$("help").classList.remove("hidden")}
-</script><div id="rotateNotice"><div><span class="rot">↻ 📱</span><h2>Rotate your device</h2><p>This game is designed for landscape play.</p></div></div></body></html>
+</script><div id="rotateNotice"><div><span class="rot">↻ 📱</span><h2>Rotate your device</h2><p>This game is designed for landscape play.</p></div></div>
+<script>
+(function(){
+ function cleanTopText(){
+   const phrases=['player turn','player\\'s turn','train cards','train card','choose a train card','select a train card'];
+   document.querySelectorAll('.topbar,header,.header').forEach(box=>{
+     [...box.children].forEach(el=>{
+       if(el.classList.contains('version')) return;
+       const t=(el.textContent||'').trim().toLowerCase();
+       if(phrases.some(p=>t.includes(p)) && !el.classList.contains('toast') && !el.classList.contains('warning')) el.style.display='none';
+     });
+   });
+ }
+ window.addEventListener('load',cleanTopText);
+ setTimeout(cleanTopText,100);
+})();
+</script>
+
+
+<script>
+(function(){
+ const colorMap={
+  red:'#d93b35',orange:'#ed8b2c',yellow:'#e5c33b',green:'#3d9b57',
+  blue:'#438bd1',purple:'#9b59b6',pink:'#df6fa7',black:'#30343b',
+  gray:'#9aa0a6',grey:'#9aa0a6',white:'#eee',locomotive:'#8b5cf6',loco:'#8b5cf6'
+ };
+ function cardColor(el){
+   if(!el)return null;
+   const data=(el.dataset.color||el.dataset.card||'').toLowerCase();
+   if(data && colorMap[data]) return {name:data,color:colorMap[data]};
+   const txt=(el.textContent||'').toLowerCase();
+   for(const k of Object.keys(colorMap)) if(txt.includes(k)) return {name:k,color:colorMap[k]};
+   const sw=el.querySelector&&el.querySelector('.swatch');
+   if(sw){
+     const c=getComputedStyle(sw).backgroundColor;
+     if(c && c!=='rgba(0, 0, 0, 0)') return {name:'card',color:c};
+   }
+   return null;
+ }
+ function handTarget(){
+   return document.querySelector('.hand')||document.querySelector('.handArea')||document.querySelector('.bottomDock');
+ }
+ function animateDraw(source,known){
+   const target=handTarget(); if(!source||!target)return;
+   const a=source.getBoundingClientRect(), b=target.getBoundingClientRect();
+   let info=known||cardColor(source);
+   const fly=document.createElement('div'); fly.className='drawFlyCard';
+   fly.style.left=(a.left+a.width/2-22)+'px'; fly.style.top=(a.top+a.height/2-32)+'px';
+   fly.style.background=(info&&info.color)||'linear-gradient(135deg,#654,#c9a86a,#432)';
+   document.body.appendChild(fly);
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     fly.style.left=(b.left+b.width/2-22)+'px';
+     fly.style.top=(b.top+b.height/2-32)+'px';
+     fly.style.transform='rotate(10deg) scale(.72)';
+     fly.style.opacity='.15';
+   }));
+   if(info&&info.name&&info.name!=='card'){
+     const tag=document.createElement('div'); tag.className='drawReveal';
+     tag.textContent=info.name.toUpperCase();
+     tag.style.left=(a.left+a.width/2)+'px'; tag.style.top=(a.top+a.height/2)+'px';
+     tag.style.border='2px solid '+info.color;
+     document.body.appendChild(tag); setTimeout(()=>tag.remove(),1200);
+   }
+   setTimeout(()=>fly.remove(),900);
+ }
+ document.addEventListener('click',function(e){
+   const source=e.target.closest('.marketCard,.trainCard,.faceCard,.deck,.trainDeck,[data-color],[data-card]');
+   if(!source)return;
+   // Only animate sources in the right-side market/deck area, not cards already in the hand.
+   if(source.closest('.hand,.handArea,.bottomDock') && !source.closest('.rightPanel,.market,.marketPanel')) return;
+   if(source.closest('.rightPanel,.market,.marketPanel') || source.classList.contains('deck') || source.classList.contains('trainDeck')){
+     animateDraw(source,cardColor(source));
+   }
+ },true);
+ window.animateTrainCardDraw=animateDraw;
+})();
+</script>
+
+</body></html>
