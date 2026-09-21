@@ -495,14 +495,12 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 .playerCard.botThinking{animation:botPulse 1s ease-in-out infinite alternate}
 @keyframes botPulse{to{box-shadow:inset 0 0 15px #0008,0 0 12px #ffd65c}}
 
-/* Version 42 — visible, fair AI action feedback. */
-#botAction{position:fixed;left:50%;top:48px;transform:translateX(-50%) translateY(-8px);z-index:310000;min-width:240px;max-width:min(620px,78vw);padding:10px 16px;border-radius:13px;background:#161d25ed;color:#fff4cf;border:2px solid #d6ae57;box-shadow:0 8px 25px #000a,0 0 18px #d6ae5744;text-align:center;font:bold 14px/1.3 system-ui;opacity:0;pointer-events:none;transition:.22s}
-#botAction.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#botAction small{display:block;color:#d9e5ef;font-size:10px;margin-top:3px;font-weight:600}
+/* Version 44 — visual-only AI feedback and destination-card sounds. */
 .market .card.botCardChoice,.market .deck.botCardChoice{outline:4px solid #ffe26d!important;box-shadow:0 0 20px 8px #ffd84eaa!important;transform:scale(1.07);z-index:20}
 .routeSeg.botRoutePreview .routePiece{opacity:1!important;stroke:#fff17b!important;stroke-width:.85!important;filter:brightness(1.5) saturate(1.45) drop-shadow(0 0 2px #fff) drop-shadow(0 0 3px #ffd21f)!important;animation:botRoutePreviewPulse .55s ease-in-out infinite alternate}
+.routeSeg.botClaimComplete .routePiece{opacity:1!important;stroke:#fff!important;stroke-width:.8!important;filter:brightness(1.45) saturate(1.55) drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #69ff86)!important}
+#leftDestBtn.botTicketChoice{outline:4px solid #ffe26d!important;box-shadow:0 0 20px 8px #ffd84eaa!important;transform:scale(1.05);animation:botRoutePreviewPulse .55s ease-in-out infinite alternate}
 @keyframes botRoutePreviewPulse{to{opacity:.58}}
-@media(max-width:850px){#botAction{top:8px;min-width:190px;padding:6px 10px;font-size:10px}#botAction small{font-size:8px}}
 
 </style></head>
 <body>
@@ -515,11 +513,10 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 42</div>
+<div class="version">Version 44</div>
 </div></section>
 
 <section id="game" class="screen hidden">
-<div id="botAction"></div>
 <aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button><div class="leftTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div>
 <main class="mapWrap"><div id="map"></div><div id="mapSavedTickets" class="mapSavedTickets"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
@@ -536,6 +533,43 @@ const COLORS=["blue","red","green","goldenrod","black"];
 const TRAINCOL={blue:"#42b9e8",red:"#d54137",green:"#5aa84f",yellow:"#e6cc31",orange:"#e38a2b",white:"#eee9dc",black:"#34383d",purple:"#8e44ad",gray:"#aaa397",wild:"#d9b85f"};
 // Version 38: normalize the legacy white-route token so white cards and rails match.
 ROUTES.forEach(route=>{if(route[2]==="#00b8d4")route[2]="white"});
+// Version 43: exact North America board network reconstructed from the supplied reference map.
+// Parallel tracks are separate entries because each is independently claimable in 4–5 player games.
+const EXACT_ROUTES=[
+ ["Vancouver","Seattle","gray",1],["Vancouver","Seattle","gray",1],["Vancouver","Calgary","gray",3],
+ ["Seattle","Calgary","gray",4],["Seattle","Portland","gray",1],["Seattle","Portland","gray",1],["Seattle","Helena","yellow",6],
+ ["Portland","San Francisco","green",5],["Portland","San Francisco","purple",5],["Portland","Salt Lake City","blue",6],
+ ["San Francisco","Los Angeles","yellow",3],["San Francisco","Los Angeles","purple",3],["San Francisco","Salt Lake City","orange",5],
+ ["Los Angeles","Las Vegas","gray",2],["Los Angeles","Phoenix","gray",3],["Los Angeles","El Paso","black",6],
+ ["Calgary","Helena","gray",4],["Calgary","Winnipeg","white",6],
+ ["Helena","Winnipeg","blue",4],["Helena","Duluth","orange",6],["Helena","Omaha","red",5],["Helena","Denver","green",4],["Helena","Salt Lake City","purple",3],
+ ["Salt Lake City","Denver","red",3],["Salt Lake City","Denver","yellow",3],["Salt Lake City","Las Vegas","orange",3],
+ ["Phoenix","Denver","white",5],["Phoenix","Santa Fe","gray",3],["Phoenix","El Paso","gray",3],
+ ["Denver","Santa Fe","gray",2],["Denver","Omaha","purple",4],["Denver","Kansas City","black",4],["Denver","Kansas City","orange",4],["Denver","Oklahoma City","red",4],
+ ["Winnipeg","Duluth","black",4],["Winnipeg","Sault Ste. Marie","gray",6],
+ ["Duluth","Sault Ste. Marie","gray",3],["Duluth","Toronto","purple",6],["Duluth","Chicago","red",3],["Duluth","Omaha","gray",2],
+ ["Omaha","Chicago","blue",4],["Omaha","Kansas City","gray",1],["Omaha","Kansas City","gray",1],
+ ["Kansas City","Saint Louis","blue",2],["Kansas City","Saint Louis","purple",2],["Kansas City","Oklahoma City","gray",2],["Kansas City","Oklahoma City","gray",2],
+ ["Oklahoma City","Dallas","gray",2],["Oklahoma City","Dallas","gray",2],["Oklahoma City","Little Rock","gray",2],
+ ["Santa Fe","El Paso","gray",2],["Santa Fe","Oklahoma City","blue",3],["El Paso","Oklahoma City","yellow",5],
+ ["El Paso","Dallas","red",4],["El Paso","Houston","green",6],
+ ["Dallas","Houston","gray",1],["Dallas","Houston","gray",1],["Dallas","Little Rock","gray",2],["Houston","New Orleans","gray",2],
+ ["Little Rock","New Orleans","green",3],["Little Rock","Nashville","white",3],["Little Rock","Saint Louis","gray",2],["Saint Louis","Nashville","gray",2],
+ ["Sault Ste. Marie","Toronto","gray",2],["Sault Ste. Marie","Montreal","black",5],
+ ["Toronto","Montreal","gray",3],["Toronto","Pittsburgh","gray",2],["Chicago","Toronto","white",4],
+ ["Chicago","Pittsburgh","orange",3],["Chicago","Pittsburgh","black",3],["Chicago","Saint Louis","green",2],["Chicago","Saint Louis","white",2],
+ ["Saint Louis","Pittsburgh","green",5],["Pittsburgh","New York","green",2],["Pittsburgh","New York","white",2],
+ ["Pittsburgh","Washington","gray",2],["Pittsburgh","Raleigh","gray",2],["Pittsburgh","Nashville","yellow",4],
+ ["Montreal","Boston","gray",2],["Montreal","Boston","gray",2],["Montreal","New York","blue",3],
+ ["Boston","New York","yellow",2],["Boston","New York","red",2],
+ ["New York","Washington","orange",2],["New York","Washington","black",2],
+ ["Washington","Raleigh","gray",2],["Washington","Raleigh","gray",2],
+ ["Raleigh","Charleston","gray",2],["Raleigh","Atlanta","gray",2],["Raleigh","Atlanta","gray",2],["Raleigh","Nashville","black",3],
+ ["Nashville","Atlanta","gray",1],["Atlanta","Charleston","gray",2],
+ ["Atlanta","Miami","blue",5],["Atlanta","Miami","purple",5],["Charleston","Miami","purple",4],
+ ["Atlanta","New Orleans","yellow",4],["Atlanta","New Orleans","orange",4],["New Orleans","Miami","red",6]
+];
+ROUTES.splice(0,ROUTES.length,...EXACT_ROUTES);
 const SCORE={1:1,2:2,3:4,4:7,5:10,6:15};
 const TICKET_COLORS=[TRAINCOL.blue,TRAINCOL.red,TRAINCOL.green,TRAINCOL.yellow,TRAINCOL.orange,TRAINCOL.white,TRAINCOL.black,TRAINCOL.purple];
 let nextTicketColorIndex=0;
@@ -543,7 +577,7 @@ function ticketColor(t){ if(t.tc) return t.tc; const i=nextTicketColorIndex++; t
 let players=[],turn=0,deck=[],market=[],destDeck=[],claimed={},drawCount=0,turnAction=null,pendingTickets=[],pendingMin=1,initialSetup=false;
 let selectedClaimColor=null;
 let finalRound=false,finalTurnsRemaining=0,gameFinished=false;
-let gameMode="local",botDifficulty="medium",botTimer=null,botActionTimer=null;
+let gameMode="local",botDifficulty="medium",botTimer=null,lastTicketSoundAt=0;
 const $=id=>document.getElementById(id);
 function shuffle(a){a=[...a];for(let i=a.length-1;i;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function setupNames(){let ai=$("gameMode").value==="ai",n=ai?1:+$("numPlayers").value,s="";$("numPlayers").disabled=ai;$("difficultyField").classList.toggle("hidden",!ai);for(let i=0;i<n;i++)s+=`<div class="field"><label>${ai?"Your Name":"Player "+(i+1)}</label><input class="nm" value="${localStorage.getItem("railName"+i)||"Player "+(i+1)}"></div>`;$("names").innerHTML=s}
@@ -562,7 +596,7 @@ function startGame(){
  initialSetup=true;turn=0;offerInitialTickets(0)
 }
 function refillMarket(){while(market.length<5&&deck.length)market.push(deck.pop());let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5)market.push(deck.pop())}}
-function offerInitialTickets(pi){turn=pi;pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=2;if(players[pi].isBot){renderAll();showBotAction("🎫 The bot is choosing destination tickets.","The ticket routes and values remain hidden.");botTimer=setTimeout(()=>botConfirmTickets(),900)}else showTicketModal(`Choose ${players[pi].name}'s starting tickets`,`Keep at least 2. Tap a ticket to show its cities on the map.`)}
+function offerInitialTickets(pi){turn=pi;pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=2;if(players[pi].isBot){renderAll();setBotTicketGlow(true);botTimer=setTimeout(()=>botConfirmTickets(),900)}else showTicketModal(`Choose ${players[pi].name}'s starting tickets`,`Keep at least 2. Tap a ticket to show its cities on the map.`)}
 function showTicketModal(title,instruction){$("ticketModal").classList.remove("hidden");renderTicketChoices()}
 function renderTicketChoices(){ $("ticketChoices").innerHTML=pendingTickets.map((t,i)=>{let tc=ticketColor(t);return `<div class="ticketChoice" data-i="${i}" data-tc="${tc}" style="--tc:${tc}" onmouseenter="previewPendingTicket(${i},this)" onmouseleave="restorePendingTicketGlow()" ontouchstart="previewPendingTicket(${i},this)" onclick="toggleTicket(${i},this)"><span class="value">${t.v}</span><div style="height:3px;background:${tc};margin:8px 20px;position:relative"><i style="position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i><i style="position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i></div></div>`}).join("")}
 let pendingGlowTimer=null,pendingGlowStep=0;
@@ -589,8 +623,9 @@ function paintPendingHighlights(previewIndex=null){
  if(previewIndex!==null){let t=pendingTickets[previewIndex];if(t&&!active.includes(t))active.push(t)}
  paintTicketSet(active);
 }
-function toggleTicket(i,el){el.classList.toggle("selected");paintPendingHighlights(null)}
-function previewPendingTicket(i,el){paintPendingHighlights(i)}
+function ticketChoiceSound(kind="select"){let now=Date.now();if(kind==="move"&&now-lastTicketSoundAt<110)return;lastTicketSoundAt=now;if(!window.gameSFX)return;if(kind==="move"&&window.gameSFX.ticketMove)window.gameSFX.ticketMove();else window.gameSFX.ticket()}
+function toggleTicket(i,el){ticketChoiceSound("select");el.classList.toggle("selected");paintPendingHighlights(null)}
+function previewPendingTicket(i,el){ticketChoiceSound("move");paintPendingHighlights(i)}
 function restorePendingTicketGlow(){paintPendingHighlights(null)}
 function glowCity(n,color="#5dff45"){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e){e.classList.add("glow");let d=e.querySelector(".dot");if(d){d.style.background=color;d.style.boxShadow=`0 0 7px 4px #fff,0 0 20px 8px ${color}`}}}
 function finishTicketChoice(sel){stopPendingGlowCycle();
@@ -604,8 +639,7 @@ function botConfirmTickets(){
  let ranked=pendingTickets.map((t,i)=>({i,score:t.v-(cityDistance(t.a,t.b)*.08)+Math.random()*.6})).sort((a,b)=>b.score-a.score);
  let keepCount=initialSetup?(botDifficulty==="easy"?(Math.random()<.35?3:2):2):1;
  let selection=ranked.slice(0,Math.min(keepCount,pendingTickets.length)).map(x=>x.i);
- showBotAction(`🎫 The bot kept ${selection.length} destination ticket${selection.length===1?"":"s"}.`,"Their destinations and point values stay hidden.");
- botTimer=setTimeout(()=>finishTicketChoice(selection),1300);
+ botTimer=setTimeout(()=>{setBotTicketGlow(false);finishTicketChoice(selection)},1300);
 }
 function routeControl(A,B,i){
  let r=ROUTES[i], a=r[0],b=r[1], key=[a,b].sort().join('|');
@@ -638,8 +672,8 @@ function renderAll(){
  if(players[turn])$("turnBanner").textContent=`${players[turn].name}'s turn`;
  $("market").innerHTML=market.map((c,i)=>`<div class="card ${c==="wild"?"wild":""}" onclick="drawFace(${i})"><div class="train" style="background:${c==="wild"?"var(--loco-rainbow)":TRAINCOL[c]}"></div></div>`).join("");
  let p=players[turn]||players[0]; if(!p)return;
- let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=p.isBot?`<div style="padding:8px;color:#ffe59a">🤖 AI hand hidden</div>`:Object.entries(counts).map(([c,n])=>`<div class="handCard ${c==="wild"?"wildHand":""} ${selectedClaimColor===c?"claimColorSelected":""}" onclick="selectClaimColor('${c}')"><b>${n}×</b><div class="swatch" style="background:${c==="wild"?"var(--loco-rainbow)":TRAINCOL[c]}"></div></div>`).join("");
- $("myTickets").innerHTML=p.isBot?`<span style="color:#ffe59a">Hidden</span>`:p.tickets.map(t=>`<div class="ticket" style="--ticket-color:${ticketColor(t)}"><span class="value">${t.v}</span></div>`).join("");
+ let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=p.isBot?"":Object.entries(counts).map(([c,n])=>`<div class="handCard ${c==="wild"?"wildHand":""} ${selectedClaimColor===c?"claimColorSelected":""}" onclick="selectClaimColor('${c}')"><b>${n}×</b><div class="swatch" style="background:${c==="wild"?"var(--loco-rainbow)":TRAINCOL[c]}"></div></div>`).join("");
+ $("myTickets").innerHTML=p.isBot?"":p.tickets.map(t=>`<div class="ticket" style="--ticket-color:${ticketColor(t)}"><span class="value">${t.v}</span></div>`).join("");
  $("sideTickets").innerHTML="";
  let mt=$("mapSavedTickets");
  mt.innerHTML=p.isBot?"":p.tickets.map((t,i)=>{
@@ -664,13 +698,7 @@ function renderAll(){
  if($("ticketModal").classList.contains("hidden")) paintTicketSet(ownedActiveTickets());
 }
 function cityDistance(a,b){let A=CITIES[a],B=CITIES[b];return A&&B?Math.hypot(A[0]-B[0],A[1]-B[1]):100}
-function showBotAction(message,detail="",hold=0){
- let el=$("botAction");if(!el)return;clearTimeout(botActionTimer);el.innerHTML=`${message}${detail?`<small>${detail}</small>`:""}`;el.classList.add("show");
- if(hold)botActionTimer=setTimeout(()=>el.classList.remove("show"),hold);
-}
-function hideBotAction(){let el=$("botAction");if(el)el.classList.remove("show")}
-function botColorName(c){return c==="wild"?"LOCOMOTIVE":String(c||"").toUpperCase()}
-function botColorChip(c){let bg=c==="wild"?"var(--loco-rainbow)":TRAINCOL[c];return `<span style="display:inline-block;padding:2px 8px;margin:0 3px;border-radius:7px;background:${bg};color:${c==="white"||c==="yellow"?"#211b13":"#fff"};border:1px solid #fff;text-shadow:${c==="white"||c==="yellow"?"none":"0 1px 2px #000"}">${botColorName(c)}</span>`}
+function setBotTicketGlow(on){let el=$("leftDestBtn");if(el)el.classList.toggle("botTicketChoice",on)}
 function botPaymentForRoute(i){
  let p=players[turn],[a,b,c,l]=ROUTES[i],counts={};p.hand.forEach(x=>counts[x]=(counts[x]||0)+1);
  if(claimed[i]!=null||p.trains<l||!parallelRouteAllowed(i))return null;
@@ -696,14 +724,13 @@ function botRouteScore(i){
 function botClaim(i,color){
  let p=players[turn],r=ROUTES[i],l=r[3];turnAction="route";
  document.querySelectorAll(`.routeSeg[data-i="${i}"]`).forEach(x=>x.classList.add("botRoutePreview"));
- showBotAction(`🤖 The bot is selecting ${r[0]} – ${r[1]}.`,`A ${l}-train railway; watch it glow on the map.`);
  botTimer=setTimeout(()=>{
   document.querySelectorAll(`.routeSeg[data-i="${i}"]`).forEach(x=>x.classList.remove("botRoutePreview"));
   let need=l,newHand=[];for(let x of p.hand){if(need&&x===color){need--;continue}newHand.push(x)}p.hand=newHand;newHand=[];
   for(let x of p.hand){if(need&&x==="wild"){need--;continue}newHand.push(x)}p.hand=newHand;
   claimed[i]=turn;p.trains-=l;p.score+=SCORE[l]||0;renderAll();
-  showBotAction(`🚂 The bot occupied ${r[0]} – ${r[1]}.`,`${l} trains placed using ${botColorName(color)} cards.`);
-  if(window.gameSFX)window.gameSFX.rail();botTimer=setTimeout(endTurn,1900);
+  document.querySelectorAll(`.routeSeg[data-i="${i}"]`).forEach(x=>x.classList.add("botClaimComplete"));
+  if(window.gameSFX)window.gameSFX.rail();botTimer=setTimeout(()=>{document.querySelectorAll(`.routeSeg[data-i="${i}"]`).forEach(x=>x.classList.remove("botClaimComplete"));endTurn()},1900);
  },1500);
 }
 function desiredBotColors(){
@@ -719,8 +746,6 @@ function botTakeOne(drawNo){
  if(drawNo===1&&idx>=0&&market[idx]==="wild")idx=-1;
  let faceUp=idx>=0&&market[idx]!=null,c=faceUp?market[idx]:deck[deck.length-1];if(c==null){endTurn();return}
  let source=faceUp?$("market").children[idx]:document.querySelector(".market > .deck");if(source)source.classList.add("botCardChoice");
- if(faceUp)showBotAction(`🃏 The bot chose the face-up ${botColorChip(c)} card.`,"This color is public because the card was visible.");
- else showBotAction("🂠 The bot drew one card from the blind deck.","Its color remains hidden.");
  botTimer=setTimeout(()=>{
   if(source)source.classList.remove("botCardChoice");
   if(faceUp){market[idx]=deck.length?deck.pop():null;if(market[idx]===null)market.splice(idx,1)}else c=deck.pop();
@@ -736,13 +761,13 @@ function runBotTurn(){
   let threshold=botDifficulty==="easy"?.48:botDifficulty==="medium"?.22:.08;if(Math.random()>threshold){botClaim(choice.i,choice.color);return}
  }
  let unfinished=players[turn].tickets.filter(t=>!ticketCompleted(t,turn));
- if(!initialSetup&&destDeck.length>=3&&unfinished.length===0&&Math.random()<(botDifficulty==="hard"?.55:.22)){turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=1;showBotAction("🎫 The bot drew three destination tickets.","The routes and point values remain private.");botTimer=setTimeout(botConfirmTickets,1100);return}
+ if(!initialSetup&&destDeck.length>=3&&unfinished.length===0&&Math.random()<(botDifficulty==="hard"?.55:.22)){turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=1;setBotTicketGlow(true);botTimer=setTimeout(botConfirmTickets,1100);return}
  botTakeOne(0);
 }
 function beginTurn(){
  if(gameFinished)return;
  drawCount=0;turnAction=null;selectedClaimColor=null;renderAll();
- if(players[turn]?.isBot){showBotAction("🤖 The bot is thinking…","Its private cards and destinations remain hidden.");clearTimeout(botTimer);botTimer=setTimeout(runBotTurn,1050)}else hideBotAction()
+ if(players[turn]?.isBot){clearTimeout(botTimer);botTimer=setTimeout(runBotTurn,1050)}else setBotTicketGlow(false)
 }
 function endTurn(){
  if(gameFinished)return;
@@ -923,6 +948,7 @@ function showHelp(){$("help").classList.remove("hidden")}
  }
  const SFX={
    ticket(){tone(520,.08,'triangle');tone(700,.11,'triangle',.05,.08)},
+   ticketMove(){tone(430,.045,'sine',.025);tone(520,.055,'sine',.022,.035)},
    draw(){tone(310,.06,'sine');tone(430,.08,'sine',.045,.06)},
    rail(){tone(145,.07,'square',.035);tone(190,.07,'square',.035,.07);tone(245,.10,'square',.03,.14)},
    complete(){tone(523,.12,'triangle');tone(659,.12,'triangle',.055,.12);tone(784,.22,'triangle',.06,.24)},
