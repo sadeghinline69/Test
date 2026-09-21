@@ -126,6 +126,20 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 #ticketModal{top:112px!important;bottom:auto!important}
 #ticketModal .modalBox{max-height:calc(100dvh - 120px)!important}
 @media(max-width:850px){.mapSavedTickets{left:4px;bottom:3px;max-width:40%}.mapSavedTickets .ticket{min-width:66px;max-width:78px;font-size:5px;padding:2px}.mapSavedTickets .ticket b{font-size:6px}.mapSavedTickets .ticket .value{font-size:10px}.bottom{left:40%!important;right:104px!important}#ticketModal{top:82px!important;bottom:auto!important}#ticketModal .modalBox{max-height:calc(100dvh - 88px)!important}}
+
+/* Version 7 — compact stacked destination tickets + compact color cards */
+.mapSavedTickets{display:flex!important;align-items:flex-end!important;gap:0!important;max-width:42%!important;overflow:visible!important;height:51px!important;padding:2px!important}
+.mapSavedTickets .ticket{height:47px!important;min-height:47px!important;margin:0!important;overflow:hidden!important;position:relative!important;flex:0 0 auto!important}
+.mapSavedTickets .ticket.ticketUnder{width:25px!important;min-width:25px!important;max-width:25px!important;padding:2px!important;border-right-width:1px!important;border-radius:6px 0 0 6px!important;cursor:pointer!important}
+.mapSavedTickets .ticket.ticketUnder b,.mapSavedTickets .ticket.ticketUnder br,.mapSavedTickets .ticket.ticketUnder .destArrow{display:none!important}
+.mapSavedTickets .ticket.ticketUnder .value{float:none!important;display:block!important;width:100%!important;text-align:center!important;font-size:14px!important;line-height:39px!important;color:#8b291e!important;font-weight:bold!important}
+.mapSavedTickets .ticket.ticketTop{width:100px!important;min-width:100px!important;max-width:100px!important;padding:4px 5px!important;border-radius:7px!important;z-index:3!important}
+.mapSavedTickets .ticket.ticketTop .value{font-size:14px!important}
+.mapSavedTickets .ticket.ticketTop b{font-size:8px!important}
+.handCard{height:47px!important;padding:3px 2px!important;display:flex!important;flex-direction:column!important;justify-content:center!important}
+.handCard .swatch{height:27px!important;margin:1px 2px!important}
+.handCard .colorName{display:none!important}
+@media(max-width:850px){.mapSavedTickets{height:44px!important}.mapSavedTickets .ticket{height:40px!important;min-height:40px!important}.mapSavedTickets .ticket.ticketUnder{width:20px!important;min-width:20px!important;max-width:20px!important}.mapSavedTickets .ticket.ticketUnder .value{font-size:11px!important;line-height:32px!important}.mapSavedTickets .ticket.ticketTop{width:72px!important;min-width:72px!important;max-width:72px!important}.handCard{height:40px!important}.handCard .swatch{height:22px!important}}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -136,7 +150,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 6</div>
+<div class="version">Version 7</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -204,9 +218,15 @@ function renderAll(){
  if(players[turn])$("turnBanner").textContent=`${players[turn].name}'s turn`;
  $("market").innerHTML=market.map((c,i)=>`<div class="card ${c==="wild"?"wild":""}" onclick="drawFace(${i})"><div class="train" style="background:${TRAINCOL[c]}"></div></div>`).join("");
  let p=players[turn]||players[0]; if(!p)return;
- let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=Object.entries(counts).map(([c,n])=>`<div class="handCard"><b>${n}×</b><div class="swatch" style="background:${TRAINCOL[c]}"></div>${c==="wild"?"★":(c==="blue"?"LIGHT BLUE":c==="purple"?"NAVY":c.toUpperCase())}</div>`).join("");
+ let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=Object.entries(counts).map(([c,n])=>`<div class="handCard"><b>${n}×</b><div class="swatch" style="background:${TRAINCOL[c]}"></div></div>`).join("");
  $("myTickets").innerHTML=p.tickets.map(t=>`<div class="ticket" onmouseenter="highlightTicket('${t.a.replaceAll("'","\\'")}','${t.b.replaceAll("'","\\'")}')" onmouseleave="clearGlow()"><span class="value">${t.v}</span><b>${t.a}</b><br>→ ${t.b}</div>`).join("");
- $("sideTickets").innerHTML=""; $("mapSavedTickets").innerHTML=$("myTickets").innerHTML;
+ $("sideTickets").innerHTML="";
+ let mt=$("mapSavedTickets");
+ mt.innerHTML=p.tickets.map((t,i)=>{
+   let top=i===p.tickets.length-1;
+   let a=t.a.replaceAll("'","\\'"); let b=t.b.replaceAll("'","\\'");
+   return `<div class="ticket ${top?"ticketTop":"ticketUnder"}" onclick="highlightTicket('${a}','${b}')" onmouseenter="highlightTicket('${a}','${b}')" onmouseleave="clearGlow()"><span class="value">${t.v}</span>${top?`<b>${t.a}</b><br><span class="destArrow">→ ${t.b}</span>`:""}</div>`;
+ }).join("");
  document.querySelectorAll(".routeSeg").forEach(g=>{let i=+g.dataset.i,rect=g.querySelector(".routePiece");rect.setAttribute("fill",claimed[i]!=null?players[claimed[i]].color:TRAINCOL[ROUTES[i][2]])})
 }
 function beginTurn(){drawCount=0;turnAction=null;renderAll()}
