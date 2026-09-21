@@ -476,17 +476,24 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
  #ticketModal .modalBox{max-height:calc(100dvh - 130px)!important}
 }
 
+/* Version 39 — AI opponent setup and turn indicator. */
+#difficultyField.hidden{display:none!important}
+.playerCard.botCard .pname:after{content:"  AI";font-size:8px;color:#ffe59a;background:#2b211a;border:1px solid #9b6a30;border-radius:7px;padding:1px 4px;margin-left:3px;vertical-align:middle}
+.playerCard.botThinking{animation:botPulse 1s ease-in-out infinite alternate}
+@keyframes botPulse{to{box-shadow:inset 0 0 15px #0008,0 0 12px #ffd65c}}
+
 </style></head>
 <body>
 <section id="menu" class="screen menu">
 <div class="panel">
 <div class="logo">RAILWAY<br>RIVALS</div><div class="subtitle">A CROSS-COUNTRY RAIL ADVENTURE</div>
 <div class="row"><div class="field"><label>Players</label><select id="numPlayers"><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
-<div class="field"><label>Game</label><select><option>Local Game</option></select></div></div>
+<div class="field"><label>Game</label><select id="gameMode"><option value="local">Local Game</option><option value="ai">Play vs AI Bot</option></select></div>
+<div class="field hidden" id="difficultyField"><label>Bot Difficulty</label><select id="botDifficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div></div>
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 38</div>
+<div class="version">Version 39</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -499,7 +506,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 </section>
 
 <div id="finalModal" class="modal hidden"><div id="finalResults" class="modalBox"></div></div>
-<div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a route, first tap a Train Card color in your hand, then tap the railway you want. If that railway cannot be claimed with the selected color, the game will warn you. Gray routes may use any single color. Locomotives are wild. With 2–3 players, only one route of a parallel pair may be claimed; with 4–5 players, both may be claimed, but by different players.</p><p>When any player ends a turn with 2 or fewer trains, every player (including that player) gets exactly one final turn. Then completed Destination Tickets add their printed value and incomplete ones subtract it. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
+<div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a route, first tap a Train Card color in your hand, then tap the railway you want. If that railway cannot be claimed with the selected color, the game will warn you. Gray routes may use any single color. Locomotives are wild. With 2–3 players, only one route of a parallel pair may be claimed; with 4–5 players, both may be claimed, but by different players.</p><p><b>AI Bot:</b> Choose “Play vs AI Bot” on the main menu. Easy makes casual, less predictable choices; Medium considers route value and destinations; Hard plans shortest useful paths and targets the cards it needs. The bot's cards and tickets remain hidden.</p><p>When any player ends a turn with 2 or fewer trains, every player (including that player) gets exactly one final turn. Then completed Destination Tickets add their printed value and incomplete ones subtract it. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
 <script>
 const CITIES={"Vancouver":[8,8],"Seattle":[8,18],"Portland":[7,32],"San Francisco":[9,60],"Los Angeles":[14,79],"Calgary":[27,7],"Helena":[32,30],"Salt Lake City":[27,53],"Las Vegas":[23,68],"Phoenix":[31,80],"Winnipeg":[51,8],"Duluth":[58,27],"Denver":[44,50],"Santa Fe":[43,69],"El Paso":[48,84],"Omaha":[58,45],"Kansas City":[62,57],"Oklahoma City":[60,69],"Dallas":[61,81],"Houston":[65,91],"Sault Ste. Marie":[72,15],"Chicago":[70,42],"Saint Louis":[70,58],"Little Rock":[70,72],"New Orleans":[75,88],"Toronto":[81,28],"Pittsburgh":[82,46],"Nashville":[80,64],"Atlanta":[85,74],"Miami":[94,93],"Montreal":[91,14],"Boston":[96,27],"New York":[92,42],"Washington":[91,56],"Raleigh":[91,66],"Charleston":[93,75]}, ROUTES=[["Vancouver","Seattle","gray",1],["Vancouver","Calgary","gray",3],["Seattle","Portland","gray",1],["Seattle","Portland","gray",1],["Seattle","Helena","yellow",6],["Seattle","Helena","blue",6],["Portland","San Francisco","green",5],["Portland","San Francisco","purple",5],["Portland","Salt Lake City","blue",6],["San Francisco","Los Angeles","yellow",3],["San Francisco","Los Angeles","purple",3],["San Francisco","Salt Lake City","orange",5],["Los Angeles","Las Vegas","gray",2],["Los Angeles","Phoenix","gray",3],["Los Angeles","El Paso","black",6],["Calgary","Helena","gray",4],["Calgary","Winnipeg","#00b8d4",6],["Helena","Winnipeg","blue",4],["Helena","Duluth","orange",6],["Helena","Denver","green",4],["Helena","Salt Lake City","purple",3],["Salt Lake City","Denver","red",3],["Salt Lake City","Denver","yellow",3],["Salt Lake City","Las Vegas","orange",3],["Phoenix","Santa Fe","gray",3],["Phoenix","El Paso","gray",3],["Denver","Santa Fe","gray",2],["Denver","Omaha","purple",4],["Denver","Kansas City","black",4],["Denver","Kansas City","orange",4],["Denver","Oklahoma City","red",4],["Winnipeg","Duluth","black",4],["Winnipeg","Sault Ste. Marie","gray",6],["Duluth","Omaha","gray",2],["Duluth","Chicago","red",3],["Duluth","Sault Ste. Marie","gray",3],["Omaha","Chicago","blue",4],["Omaha","Kansas City","gray",1],["Kansas City","Saint Louis","blue",2],["Kansas City","Saint Louis","purple",2],["Kansas City","Oklahoma City","gray",2],["Oklahoma City","Dallas","gray",2],["Oklahoma City","Little Rock","gray",2],["Santa Fe","El Paso","gray",2],["Santa Fe","Oklahoma City","blue",3],["El Paso","Dallas","red",4],["El Paso","Houston","green",6],["Dallas","Houston","gray",1],["Dallas","Little Rock","gray",2],["Houston","New Orleans","gray",2],["Sault Ste. Marie","Toronto","gray",2],["Sault Ste. Marie","Montreal","black",5],["Chicago","Toronto","#00b8d4",4],["Chicago","Pittsburgh","orange",3],["Chicago","Pittsburgh","black",3],["Chicago","Saint Louis","green",2],["Chicago","Saint Louis","#00b8d4",2],["Saint Louis","Pittsburgh","green",5],["Saint Louis","Nashville","gray",2],["Saint Louis","Little Rock","gray",2],["Little Rock","Nashville","#00b8d4",3],["Little Rock","New Orleans","green",3],["New Orleans","Atlanta","yellow",4],["New Orleans","Atlanta","orange",4],["New Orleans","Miami","red",6],["Nashville","Atlanta","gray",1],["Nashville","Raleigh","black",3],["Atlanta","Raleigh","gray",2],["Atlanta","Charleston","gray",2],["Atlanta","Miami","blue",5],["Atlanta","Miami","purple",5],["Toronto","Montreal","gray",3],["Toronto","Pittsburgh","gray",2],["Montreal","Boston","gray",2],["Montreal","New York","blue",3],["Boston","New York","yellow",2],["Boston","New York","red",2],["Pittsburgh","New York","green",2],["Pittsburgh","Washington","gray",2],["Pittsburgh","Raleigh","gray",2],["New York","Washington","orange",2],["New York","Washington","black",2],["Washington","Raleigh","gray",2],["Raleigh","Charleston","gray",2],["Charleston","Miami","purple",4]], TICKETS=[["Los Angeles", "New York", 21], ["Duluth", "Houston", 8], ["Sault Ste. Marie", "Nashville", 8], ["New York", "Atlanta", 6], ["Portland", "Nashville", 17], ["Vancouver", "Montreal", 20], ["Duluth", "El Paso", 10], ["Toronto", "Miami", 10], ["Portland", "Phoenix", 11], ["Dallas", "New York", 11], ["Calgary", "Salt Lake City", 7], ["Calgary", "Phoenix", 13], ["Los Angeles", "Miami", 20], ["Winnipeg", "Little Rock", 11], ["San Francisco", "Atlanta", 17], ["Kansas City", "Houston", 5], ["Los Angeles", "Chicago", 16], ["Denver", "Pittsburgh", 11], ["Helena", "Los Angeles", 8], ["Winnipeg", "Houston", 12], ["Montreal", "Atlanta", 9], ["Seattle", "New York", 22], ["Denver", "El Paso", 4], ["Vancouver", "Santa Fe", 13], ["Boston", "Miami", 12], ["Chicago", "New Orleans", 7], ["Montreal", "New Orleans", 13], ["Seattle", "Los Angeles", 9], ["Dallas", "Chicago", 9], ["San Francisco", "New York", 21]];
 const COLORS=["blue","red","green","goldenrod","black"];
@@ -513,14 +520,18 @@ function ticketColor(t){ if(t.tc) return t.tc; const i=nextTicketColorIndex++; t
 let players=[],turn=0,deck=[],market=[],destDeck=[],claimed={},drawCount=0,turnAction=null,pendingTickets=[],pendingMin=1,initialSetup=false;
 let selectedClaimColor=null;
 let finalRound=false,finalTurnsRemaining=0,gameFinished=false;
+let gameMode="local",botDifficulty="medium",botTimer=null;
 const $=id=>document.getElementById(id);
 function shuffle(a){a=[...a];for(let i=a.length-1;i;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function setupNames(){let n=+$("numPlayers").value,s="";for(let i=0;i<n;i++)s+=`<div class="field"><label>Player ${i+1}</label><input class="nm" value="${localStorage.getItem("railName"+i)||"Player "+(i+1)}"></div>`;$("names").innerHTML=s}
+function setupNames(){let ai=$("gameMode").value==="ai",n=ai?1:+$("numPlayers").value,s="";$("numPlayers").disabled=ai;$("difficultyField").classList.toggle("hidden",!ai);for(let i=0;i<n;i++)s+=`<div class="field"><label>${ai?"Your Name":"Player "+(i+1)}</label><input class="nm" value="${localStorage.getItem("railName"+i)||"Player "+(i+1)}"></div>`;$("names").innerHTML=s}
 $("numPlayers").onchange=setupNames;setupNames();
+$("gameMode").onchange=setupNames;
 function startGame(){
  finalRound=false;finalTurnsRemaining=0;gameFinished=false;claimed={};nextTicketColorIndex=0;market=[];
- let n=+$("numPlayers").value;players=[...document.querySelectorAll(".nm")].slice(0,n).map((x,i)=>({name:x.value.trim()||`Player ${i+1}`,color:COLORS[i],score:0,trains:45,hand:[],tickets:[]}));
+ gameMode=$("gameMode").value;botDifficulty=$("botDifficulty").value;
+ let n=gameMode==="ai"?1:+$("numPlayers").value;players=[...document.querySelectorAll(".nm")].slice(0,n).map((x,i)=>({name:x.value.trim()||`Player ${i+1}`,color:COLORS[i],score:0,trains:45,hand:[],tickets:[],isBot:false}));
  players.forEach((p,i)=>localStorage.setItem("railName"+i,p.name));
+ if(gameMode==="ai")players.push({name:`Conductor AI (${botDifficulty[0].toUpperCase()+botDifficulty.slice(1)})`,color:COLORS[1],score:0,trains:45,hand:[],tickets:[],isBot:true});
  let types=["blue","red","green","yellow","orange","white","black","purple"]; deck=[];types.forEach(c=>{for(let i=0;i<12;i++)deck.push(c)});for(let i=0;i<14;i++)deck.push("wild");deck=shuffle(deck);
  destDeck=shuffle(TICKETS.map((t,i)=>({a:t[0],b:t[1],v:t[2],id:i})));
  players.forEach(p=>{for(let i=0;i<4;i++)p.hand.push(deck.pop())});
@@ -528,7 +539,7 @@ function startGame(){
  initialSetup=true;turn=0;offerInitialTickets(0)
 }
 function refillMarket(){while(market.length<5&&deck.length)market.push(deck.pop());let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5)market.push(deck.pop())}}
-function offerInitialTickets(pi){turn=pi;pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=2;showTicketModal(`Choose ${players[pi].name}'s starting tickets`,`Keep at least 2. Tap a ticket to show its cities on the map.`)}
+function offerInitialTickets(pi){turn=pi;pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=2;if(players[pi].isBot){renderAll();toast(`${players[pi].name} is choosing tickets…`);botTimer=setTimeout(()=>botConfirmTickets(),650)}else showTicketModal(`Choose ${players[pi].name}'s starting tickets`,`Keep at least 2. Tap a ticket to show its cities on the map.`)}
 function showTicketModal(title,instruction){$("ticketModal").classList.remove("hidden");renderTicketChoices()}
 function renderTicketChoices(){ $("ticketChoices").innerHTML=pendingTickets.map((t,i)=>{let tc=ticketColor(t);return `<div class="ticketChoice" data-i="${i}" data-tc="${tc}" style="--tc:${tc}" onmouseenter="previewPendingTicket(${i},this)" onmouseleave="restorePendingTicketGlow()" ontouchstart="previewPendingTicket(${i},this)" onclick="toggleTicket(${i},this)"><span class="value">${t.v}</span><div style="height:3px;background:${tc};margin:8px 20px;position:relative"><i style="position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i><i style="position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i></div></div>`}).join("")}
 let pendingGlowTimer=null,pendingGlowStep=0;
@@ -539,7 +550,7 @@ function ticketCompleted(t,pi=turn){
  while(q.length){let x=q.shift();if(x===t.b)return true;for(const y of (adj[x]||[]))if(!seen.has(y)){seen.add(y);q.push(y)}}
  return false;
 }
-function ownedActiveTickets(){let p=players[turn];return p?p.tickets.filter(t=>!ticketCompleted(t,turn)):[]}
+function ownedActiveTickets(){let p=players[turn];return p&&!p.isBot?p.tickets.filter(t=>!ticketCompleted(t,turn)):[]}
 function paintTicketSet(active){
  stopPendingGlowCycle();clearGlow();
  const cityColors={};
@@ -559,11 +570,17 @@ function toggleTicket(i,el){el.classList.toggle("selected");paintPendingHighligh
 function previewPendingTicket(i,el){paintPendingHighlights(i)}
 function restorePendingTicketGlow(){paintPendingHighlights(null)}
 function glowCity(n,color="#5dff45"){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e){e.classList.add("glow");let d=e.querySelector(".dot");if(d){d.style.background=color;d.style.boxShadow=`0 0 7px 4px #fff,0 0 20px 8px ${color}`}}}
-function confirmTickets(){stopPendingGlowCycle();let sel=[...document.querySelectorAll(".ticketChoice.selected")].map(x=>+x.dataset.i);if(sel.length<pendingMin){toast(`Keep at least ${pendingMin} ticket${pendingMin>1?"s":""}.`);return}
+function finishTicketChoice(sel){stopPendingGlowCycle();
  let keep=[],back=[];pendingTickets.forEach((t,i)=>{if(sel.includes(i)){ticketColor(t);keep.push(t)}else back.push(t)}); players[turn].tickets.push(...keep);destDeck.unshift(...back);
  $("ticketModal").classList.add("hidden");
  if(initialSetup){if(turn<players.length-1){offerInitialTickets(turn+1)}else{initialSetup=false;turn=0;beginTurn()}}else{endTurn()}
  renderAll()
+}
+function confirmTickets(){let sel=[...document.querySelectorAll(".ticketChoice.selected")].map(x=>+x.dataset.i);if(sel.length<pendingMin){toast(`Keep at least ${pendingMin} ticket${pendingMin>1?"s":""}.`);return}finishTicketChoice(sel)}
+function botConfirmTickets(){
+ let ranked=pendingTickets.map((t,i)=>({i,score:t.v-(cityDistance(t.a,t.b)*.08)+Math.random()*.6})).sort((a,b)=>b.score-a.score);
+ let keepCount=initialSetup?(botDifficulty==="easy"?(Math.random()<.35?3:2):2):1;
+ finishTicketChoice(ranked.slice(0,Math.min(keepCount,pendingTickets.length)).map(x=>x.i));
 }
 function routeControl(A,B,i){
  let r=ROUTES[i], a=r[0],b=r[1], key=[a,b].sort().join('|');
@@ -592,15 +609,15 @@ function renderMap(){
  Object.entries(CITIES).forEach(([n,p])=>{let e=document.createElement('div');e.className='city';e.dataset.name=n;e.style.left=p[0]+'%';e.style.top=p[1]+'%';e.innerHTML=`<div class="dot"></div>`;m.appendChild(e)})
 }
 function renderAll(){
- $("players").innerHTML=players.map((p,i)=>`<div class="playerCard ${i===turn&&!initialSetup?"active":""}" style="border-left:8px solid ${p.color}"><div class="pname">${p.name}</div><div class="stats"><span>★ ${p.score}</span><span>🚂 ${p.trains}</span><span>🎴 ${p.hand.length}</span></div></div>`).join("");
+ $("players").innerHTML=players.map((p,i)=>`<div class="playerCard ${i===turn&&!initialSetup?"active":""} ${p.isBot?"botCard":""} ${p.isBot&&i===turn&&!initialSetup?"botThinking":""}" style="border-left:8px solid ${p.color}"><div class="pname">${p.name}</div><div class="stats"><span>★ ${p.score}</span><span>🚂 ${p.trains}</span><span>🎴 ${p.hand.length}</span></div></div>`).join("");
  if(players[turn])$("turnBanner").textContent=`${players[turn].name}'s turn`;
  $("market").innerHTML=market.map((c,i)=>`<div class="card ${c==="wild"?"wild":""}" onclick="drawFace(${i})"><div class="train" style="background:${c==="wild"?"var(--loco-rainbow)":TRAINCOL[c]}"></div></div>`).join("");
  let p=players[turn]||players[0]; if(!p)return;
- let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=Object.entries(counts).map(([c,n])=>`<div class="handCard ${c==="wild"?"wildHand":""} ${selectedClaimColor===c?"claimColorSelected":""}" onclick="selectClaimColor('${c}')"><b>${n}×</b><div class="swatch" style="background:${c==="wild"?"var(--loco-rainbow)":TRAINCOL[c]}"></div></div>`).join("");
- $("myTickets").innerHTML=p.tickets.map(t=>`<div class="ticket" style="--ticket-color:${ticketColor(t)}"><span class="value">${t.v}</span></div>`).join("");
+ let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=p.isBot?`<div style="padding:8px;color:#ffe59a">🤖 AI hand hidden</div>`:Object.entries(counts).map(([c,n])=>`<div class="handCard ${c==="wild"?"wildHand":""} ${selectedClaimColor===c?"claimColorSelected":""}" onclick="selectClaimColor('${c}')"><b>${n}×</b><div class="swatch" style="background:${c==="wild"?"var(--loco-rainbow)":TRAINCOL[c]}"></div></div>`).join("");
+ $("myTickets").innerHTML=p.isBot?`<span style="color:#ffe59a">Hidden</span>`:p.tickets.map(t=>`<div class="ticket" style="--ticket-color:${ticketColor(t)}"><span class="value">${t.v}</span></div>`).join("");
  $("sideTickets").innerHTML="";
  let mt=$("mapSavedTickets");
- mt.innerHTML=p.tickets.map((t,i)=>{
+ mt.innerHTML=p.isBot?"":p.tickets.map((t,i)=>{
    let top=i===p.tickets.length-1;
    let a=t.a.replaceAll("'","\\'"); let b=t.b.replaceAll("'","\\'");
    let tc=ticketColor(t);
@@ -621,10 +638,65 @@ function renderAll(){
  updateClaimableRouteVisuals();
  if($("ticketModal").classList.contains("hidden")) paintTicketSet(ownedActiveTickets());
 }
+function cityDistance(a,b){let A=CITIES[a],B=CITIES[b];return A&&B?Math.hypot(A[0]-B[0],A[1]-B[1]):100}
+function botPaymentForRoute(i){
+ let p=players[turn],[a,b,c,l]=ROUTES[i],counts={};p.hand.forEach(x=>counts[x]=(counts[x]||0)+1);
+ if(claimed[i]!=null||p.trains<l||!parallelRouteAllowed(i))return null;
+ let colors=c==="gray"?["blue","red","green","yellow","orange","white","black","purple"]:[c];
+ let legal=colors.filter(x=>(counts[x]||0)+(counts.wild||0)>=l);
+ if(!legal.length&&((counts.wild||0)>=l))return "wild";
+ return legal.sort((x,y)=>(counts[y]||0)-(counts[x]||0))[0]||null;
+}
+function botTargetPath(ticket,pi){
+ let dist={},prev={},unseen=new Set(Object.keys(CITIES));Object.keys(CITIES).forEach(c=>dist[c]=Infinity);dist[ticket.a]=0;
+ while(unseen.size){let u=[...unseen].sort((a,b)=>dist[a]-dist[b])[0];unseen.delete(u);if(!u||dist[u]===Infinity||u===ticket.b)break;
+  ROUTES.forEach((r,i)=>{if(r[0]!==u&&r[1]!==u)return;if(claimed[i]!=null&&claimed[i]!==pi)return;let v=r[0]===u?r[1]:r[0],cost=claimed[i]===pi?.05:r[3];if(unseen.has(v)&&dist[u]+cost<dist[v]){dist[v]=dist[u]+cost;prev[v]={u,i}}});
+ }
+ let path=[],v=ticket.b;while(prev[v]){path.push(prev[v].i);v=prev[v].u}return path;
+}
+function botRouteScore(i){
+ let r=ROUTES[i],p=players[turn],score=(SCORE[r[3]]||0)*2+r[3]*.4+Math.random()*.35;
+ let active=p.tickets.filter(t=>!ticketCompleted(t,turn));
+ active.forEach(t=>{if(botDifficulty==="hard"&&botTargetPath(t,turn).includes(i))score+=9+t.v*.18;if(botDifficulty==="medium"&&[r[0],r[1]].some(c=>c===t.a||c===t.b))score+=4+t.v*.08});
+ if(botDifficulty==="hard"){let rivals=players.map((x,j)=>j).filter(j=>j!==turn);rivals.forEach(j=>{if(players[j].tickets?.some(t=>[r[0],r[1]].includes(t.a)||[r[0],r[1]].includes(t.b)))score+=.35})}
+ return score;
+}
+function botClaim(i,color){
+ let p=players[turn],l=ROUTES[i][3],need=l,newHand=[];
+ for(let x of p.hand){if(need&&x===color){need--;continue}newHand.push(x)}p.hand=newHand;newHand=[];
+ for(let x of p.hand){if(need&&x==="wild"){need--;continue}newHand.push(x)}p.hand=newHand;
+ claimed[i]=turn;p.trains-=l;p.score+=SCORE[l]||0;turnAction="route";renderAll();toast(`${p.name} claimed a ${l}-train railway.`);botTimer=setTimeout(endTurn,700);
+}
+function desiredBotColors(){
+ let p=players[turn],wanted=[];p.tickets.filter(t=>!ticketCompleted(t,turn)).forEach(t=>botTargetPath(t,turn).forEach(i=>{if(claimed[i]==null&&ROUTES[i][2]!=="gray")wanted.push(ROUTES[i][2])}));
+ return wanted;
+}
+function botTakeOne(drawNo){
+ if(!deck.length&&!market.length){endTurn();return}
+ let desired=desiredBotColors(),idx=-1;
+ if(botDifficulty!=="easy")idx=market.findIndex(c=>c!=="wild"&&desired.includes(c));
+ if(botDifficulty==="hard"&&idx<0&&drawNo===0)idx=market.findIndex(c=>c==="wild");
+ if(botDifficulty==="easy"&&Math.random()<.55)idx=Math.floor(Math.random()*market.length);
+ if(drawNo===1&&idx>=0&&market[idx]==="wild")idx=-1;
+ let c;if(idx>=0&&market[idx]!=null){c=market[idx];market[idx]=deck.length?deck.pop():null;if(market[idx]===null)market.splice(idx,1)}else c=deck.pop();
+ if(c==null){endTurn();return}players[turn].hand.push(c);turnAction="cards";refillMarket();renderAll();
+ if(c==="wild"||drawNo===1){botTimer=setTimeout(endTurn,620)}else botTimer=setTimeout(()=>botTakeOne(1),430);
+}
+function runBotTurn(){
+ if(gameFinished||initialSetup||!players[turn]?.isBot)return;
+ let legal=ROUTES.map((r,i)=>({i,color:botPaymentForRoute(i)})).filter(x=>x.color);
+ if(legal.length){
+  let choice;if(botDifficulty==="easy")choice=legal[Math.floor(Math.random()*legal.length)];else choice=legal.sort((a,b)=>botRouteScore(b.i)-botRouteScore(a.i))[0];
+  let threshold=botDifficulty==="easy"?.48:botDifficulty==="medium"?.22:.08;if(Math.random()>threshold){botClaim(choice.i,choice.color);return}
+ }
+ let unfinished=players[turn].tickets.filter(t=>!ticketCompleted(t,turn));
+ if(!initialSetup&&destDeck.length>=3&&unfinished.length===0&&Math.random()<(botDifficulty==="hard"?.55:.22)){turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=1;botTimer=setTimeout(botConfirmTickets,500);return}
+ botTakeOne(0);
+}
 function beginTurn(){
  if(gameFinished)return;
  drawCount=0;turnAction=null;selectedClaimColor=null;renderAll();
- 
+ if(players[turn]?.isBot){toast(`${players[turn].name} is thinking…`);clearTimeout(botTimer);botTimer=setTimeout(runBotTurn,850)}
 }
 function endTurn(){
  if(gameFinished)return;
@@ -658,10 +730,10 @@ function highlightDrawnHandColor(c){
    if(sw && sw.getAttribute("style")?.includes(TRAINCOL[c])){el.classList.add("drawHighlight");setTimeout(()=>el.classList.remove("drawHighlight"),700)}
  });
 }
-function drawFace(i){if(gameFinished||initialSetup||turnAction==="route"||turnAction==="ticket")return;let c=market[i];if(c==null)return;if(drawCount===1&&c==="wild"){toast("A face-up Locomotive cannot be your second draw.");return}turnAction="cards";players[turn].hand.push(c);market[i]=deck.length?deck.pop():null;if(market[i]===null)market.splice(i,1);let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5&&deck.length)market.push(deck.pop())}drawCount++;renderAll();if(window.gameSFX)window.gameSFX.draw();highlightDrawnHandColor(c);if(c==="wild"||drawCount>=2)setTimeout(endTurn,720)}
-function drawBlind(){if(gameFinished||initialSetup||turnAction==="route"||turnAction==="ticket"||!deck.length)return;turnAction="cards";let c=deck.pop();players[turn].hand.push(c);drawCount++;renderAll();highlightDrawnHandColor(c);if(drawCount>=2)setTimeout(endTurn,720)}
+function drawFace(i){if(gameFinished||initialSetup||players[turn]?.isBot||turnAction==="route"||turnAction==="ticket")return;let c=market[i];if(c==null)return;if(drawCount===1&&c==="wild"){toast("A face-up Locomotive cannot be your second draw.");return}turnAction="cards";players[turn].hand.push(c);market[i]=deck.length?deck.pop():null;if(market[i]===null)market.splice(i,1);let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5&&deck.length)market.push(deck.pop())}drawCount++;renderAll();if(window.gameSFX)window.gameSFX.draw();highlightDrawnHandColor(c);if(c==="wild"||drawCount>=2)setTimeout(endTurn,720)}
+function drawBlind(){if(gameFinished||initialSetup||players[turn]?.isBot||turnAction==="route"||turnAction==="ticket"||!deck.length)return;turnAction="cards";let c=deck.pop();players[turn].hand.push(c);drawCount++;renderAll();highlightDrawnHandColor(c);if(drawCount>=2)setTimeout(endTurn,720)}
 function selectClaimColor(c){
- if(gameFinished||initialSetup||turnAction)return;
+ if(gameFinished||initialSetup||players[turn]?.isBot||turnAction)return;
  selectedClaimColor=(selectedClaimColor===c?null:c);
  renderAll();
  
@@ -691,7 +763,7 @@ function updateClaimableRouteVisuals(){
  document.querySelectorAll(".routeSeg").forEach(g=>g.classList.remove("claimEligible","claimIneligible"));
 }
 function claimRoute(i){
- if(gameFinished||initialSetup||turnAction||claimed[i]!=null)return;
+ if(gameFinished||initialSetup||players[turn]?.isBot||turnAction||claimed[i]!=null)return;
  if(!selectedClaimColor)return
  let [a,b,c,l]=ROUTES[i],p=players[turn];
  if(p.trains<l){railWarning();return}
@@ -707,7 +779,7 @@ function claimRoute(i){
  }
  p.hand=newHand;claimed[i]=turn;p.trains-=l;p.score+=SCORE[l]||0;turnAction="route";selectedClaimColor=null;renderAll();setTimeout(endTurn,700)
 }
-function drawTickets(){if(gameFinished||initialSetup||turnAction)return;turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);if(!pendingTickets.length){turnAction=null;toast("No Destination Tickets left.");return}pendingMin=1;showTicketModal("Draw Destination Tickets","Keep at least 1. Tap a ticket to show its cities on the map.")}
+function drawTickets(){if(gameFinished||initialSetup||players[turn]?.isBot||turnAction)return;turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);if(!pendingTickets.length){turnAction=null;toast("No Destination Tickets left.");return}pendingMin=1;showTicketModal("Draw Destination Tickets","Keep at least 1. Tap a ticket to show its cities on the map.")}
 function highlightTicket(a,b,color="#5dff45"){clearGlow();glowCity(a,color);glowCity(b,color)}
 function glowCity(n,color){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e){e.classList.add("glow");let d=e.querySelector(".dot");if(d){d.style.background=color;d.style.boxShadow=`0 0 7px 4px #fff,0 0 20px 8px ${color}`}}}
 function clearGlow(){document.querySelectorAll(".city").forEach(x=>{x.classList.remove("glow");let d=x.querySelector(".dot");if(d){d.style.background="";d.style.boxShadow=""}})}
