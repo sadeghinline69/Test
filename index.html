@@ -524,6 +524,20 @@ body.finalScoringMode .routeSeg{opacity:.18;transition:opacity .28s,filter .28s}
 #scoreMapBadge.on{display:block;animation:badgeIn .35s ease both}#scoreMapBadge .delta{display:block;font-size:28px;color:#ffe36b;margin-top:3px}#scoreMapBadge.bad .delta{color:#ff7777}
 @keyframes scoreShadeIn{from{opacity:0}to{opacity:1}}@keyframes scoreRailPulse{to{filter:brightness(1.8) saturate(1.7) drop-shadow(0 0 3px #fff)!important}}@keyframes ticketTrace{to{opacity:.55;filter:brightness(1.85) drop-shadow(0 0 5px #ffe85b)!important}}@keyframes endpointPulse{to{transform:scale(2.8)}}@keyframes badgeIn{from{opacity:0;transform:translate(-50%,-18px) scale(.8)}to{opacity:1;transform:translateX(-50%) scale(1)}}
 @media(max-width:850px){.scoreStage{width:54vw!important;max-height:45vh!important;padding:5px!important}.scoreRows{grid-template-columns:1fr 1fr}.scoreStage h2{font-size:12px!important}#scoreMapBadge{left:64%;top:8%;min-width:130px;font-size:10px;padding:6px 9px}#scoreMapBadge .delta{font-size:19px}}
+
+/* Version 49 — one running score in the sidebar; the entire map stays visible. */
+body.finalScoringMode #game::after{display:none!important}
+#finalScoreShow{inset:0 auto 148px 0!important;width:190px!important;height:auto!important;padding:0!important;align-items:stretch!important;z-index:200000!important}
+.scoreStage{width:100%!important;max-height:none!important;height:100%!important;border-radius:0!important;border-width:0 3px 0 0!important;padding:9px!important;display:flex;flex-direction:column;justify-content:center;overflow:auto!important}
+.scoreStage h2{font-size:15px!important;margin:0 0 7px!important}.scoreRows{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
+.scorePlayer{padding:7px!important;text-align:center}.scoreHead{display:block!important;font-size:11px!important}.scoreHead span:last-child{display:none!important}
+.scoreTotal{display:block!important;width:auto!important;min-width:0!important;text-align:center!important;font:1000 34px/1 system-ui!important;color:#ffe37b!important;margin:6px 0;text-shadow:0 2px 8px #000}
+.scoreEvent{min-height:27px!important;font:800 9px/1.25 system-ui!important;color:#fff!important}.scoreTrack,.scoreBreakdown,.scoreTickets,.longestReadout{display:none!important}
+.scoreWinner{font-size:13px!important;line-height:1.2!important;margin-top:8px!important}.scoreNewGame{font-size:11px!important;padding:7px!important}
+#scoreMapBadge{display:none!important}
+.scoreMovingTrain{pointer-events:none;filter:drop-shadow(0 0 1.3px #fff) drop-shadow(0 0 2.7px #ffd83d)}
+.scoreMovingTrain .trainBody{stroke:#fff;stroke-width:.35}.scoreMovingTrain .trainCab{fill:#fff}.scoreMovingTrain .trainWheel{fill:#151515;stroke:#fff;stroke-width:.18}
+@media(max-width:850px){#finalScoreShow{width:92px!important;bottom:130px!important}.scoreStage{padding:4px!important}.scoreStage h2{font-size:10px!important}.scorePlayer{padding:4px!important}.scoreHead{font-size:8px!important}.scoreTotal{font-size:23px!important}.scoreEvent{font-size:7px!important;min-height:22px!important}.scoreWinner{font-size:9px!important}.scoreNewGame{font-size:8px!important;padding:4px!important}}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -535,7 +549,7 @@ body.finalScoringMode .routeSeg{opacity:.18;transition:opacity .28s,filter .28s}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 48</div>
+<div class="version">Version 49</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -1028,17 +1042,17 @@ function showHelp(){$("help").classList.remove("hidden")}
    if(typeof ROUTES==='undefined'||typeof claimed==='undefined')return 0;
    let edges=[];
    ROUTES.forEach((r,i)=>{if(claimed[i]===pi)edges.push({a:r[0],b:r[1],w:+r[3]||1,id:i})});
-   let best=0,bestRoutes=[];
-   function dfs(city,used,total){
-     if(total>best){best=total;bestRoutes=[...used]}
+   let best=0,bestRoutes=[],bestCities=[];
+   function dfs(city,used,total,cities){
+     if(total>best){best=total;bestRoutes=[...used];bestCities=[...cities]}
      for(const e of edges){
        if(used.has(e.id))continue;
        let nxt=null;if(e.a===city)nxt=e.b;else if(e.b===city)nxt=e.a;else continue;
-       let n=new Set(used);n.add(e.id);dfs(nxt,n,total+e.w);
+       let n=new Set(used);n.add(e.id);dfs(nxt,n,total+e.w,[...cities,nxt]);
      }
    }
-   let cities=new Set(edges.flatMap(e=>[e.a,e.b]));cities.forEach(c=>dfs(c,new Set(),0));
-   return {length:best,routes:bestRoutes};
+   let cities=new Set(edges.flatMap(e=>[e.a,e.b]));cities.forEach(c=>dfs(c,new Set(),0,[c]));
+   return {length:best,routes:bestRoutes,start:bestCities[0]||null,cities:bestCities};
  }
  function ticketDone(pi,t){
    try{return typeof ticketCompleted==='function'?!!ticketCompleted(t,pi):false}catch(e){return false}
@@ -1073,10 +1087,22 @@ function showHelp(){$("help").classList.remove("hidden")}
  function showTicketOnMap(t,pi,ok){
    clearScoreMap();markEndpoints(t);let ids=routePath(t.a,t.b,pi,ok);if(!ids.length)ids=routePath(t.a,t.b,pi,false);
    ids.forEach(id=>document.querySelectorAll(`.routeSeg[data-i="${id}"]`).forEach(x=>x.classList.add(claimed[id]===pi?'finalTicketComplete':'finalTicketMissing')));
+   return ids;
  }
  function showBadge(label,delta,bad=false){let b=document.getElementById('scoreMapBadge');b.className='on'+(bad?' bad':'');b.innerHTML=`${label}<span class="delta">${delta>=0?'+':''}${delta}</span>`}
  function hideBadge(){let b=document.getElementById('scoreMapBadge');b.className='';b.innerHTML=''}
  async function countScore(el,from,to,duration=520){let start=performance.now();return new Promise(resolve=>{function tick(now){let p=Math.min(1,(now-start)/duration),e=1-Math.pow(1-p,3);el.textContent=Math.round(from+(to-from)*e);if(p<1)requestAnimationFrame(tick);else resolve()}requestAnimationFrame(tick)})}
+ function removeScoreTrain(){document.getElementById('scoreMovingTrain')?.remove()}
+ async function animateTrainOnRoutes(routeIds,startCity,color='#ffd43b'){
+   removeScoreTrain();let svg=document.getElementById('mapSvg');if(!svg||!routeIds.length)return;
+   const ns='http://www.w3.org/2000/svg',g=document.createElementNS(ns,'g');g.id='scoreMovingTrain';g.setAttribute('class','scoreMovingTrain');
+   g.innerHTML=`<rect class="trainBody" x="-2.2" y="-1.15" width="4.4" height="2.3" rx=".45" fill="${color}"/><rect class="trainCab" x=".45" y="-2" width="1.35" height="1.2" rx=".22"/><circle class="trainWheel" cx="-1.25" cy="1.25" r=".48"/><circle class="trainWheel" cx="1.25" cy="1.25" r=".48"/>`;svg.appendChild(g);
+   let city=startCity;
+   for(const id of routeIds){let r=ROUTES[id],forward=city===r[0];if(city!==r[0]&&city!==r[1]){forward=true;city=r[0]}let A=CITIES[r[0]],B=CITIES[r[1]],C=routeControl(A,B,id),duration=260+(+r[3]||1)*85;
+     await new Promise(resolve=>{let began=performance.now();function frame(now){let t=Math.min(1,(now-began)/duration);if(!forward)t=1-t;let p=qPoint(A,C,B,t),a=qAngle(A,C,B,t)+(forward?0:180);g.setAttribute('transform',`translate(${p[0]} ${p[1]}) rotate(${a})`);if(now-began<duration)requestAnimationFrame(frame);else resolve()}requestAnimationFrame(frame)});city=forward?r[1]:r[0];
+   }
+   await wait(180);removeScoreTrain();
+ }
  const wait=ms=>new Promise(r=>setTimeout(r,ms));
  async function animateFinalScoring(){
    if(!window.players||!players.length)return;
@@ -1084,42 +1110,36 @@ function showHelp(){$("help").classList.remove("hidden")}
    rows.innerHTML='';win.textContent='';newGame.style.display='none';box.classList.add('on');document.body.classList.add('finalScoringMode');
    let railTotals=players.map((p,i)=>baseScore(i)),destinationTotals=players.map(()=>0),longestBonuses=players.map(()=>0),totals=[...railTotals],rowEls=[];
    players.forEach((p,i)=>{
-     let cards=ticketsOf(i).map((t,j)=>`<div class="scoreTicket" data-ticket="${j}"><span>🎫 ${tName(t)}</span><strong>${tVal(t)}</strong></div>`).join('');
-     let d=document.createElement('div');d.className='scorePlayer';d.innerHTML=`<div class="scoreHead"><span>${p.name||'Player '+(i+1)}</span><span>Final score</span></div><div class="scoreTrack"><div class="scoreFill"></div></div><div class="scoreBreakdown"><div class="scoreLine"><span>🚂 Railway points</span><strong class="railSubtotal">${railTotals[i]>=0?'+':''}${railTotals[i]}</strong></div><div class="scoreLine"><span>🎫 Destination tickets</span><strong class="ticketSubtotal">0</strong></div><div class="scoreLine"><span>🏆 Longest-path bonus</span><strong class="longestSubtotal">0</strong></div><div class="scoreLine totalLine"><span>Final total</span><strong class="scoreTotal">${totals[i]}</strong></div></div><div class="scoreEvent">Starting with railway points <span class="scoreDelta">${railTotals[i]>=0?'+':''}${railTotals[i]}</span></div><div class="scoreTickets">${cards||'<span style="font-size:10px;opacity:.7">No destination tickets</span>'}</div><div class="longestReadout">Longest continuous path: waiting…</div>`;
+     let d=document.createElement('div');d.className='scorePlayer';d.innerHTML=`<div class="scoreHead"><span>${p.name||'Player '+(i+1)}</span><span>Score</span></div><strong class="scoreTotal">0</strong><div class="scoreEvent">Waiting…</div>`;
      rows.appendChild(d);rowEls.push(d)
    });
    await wait(500);
    for(let i=0;i<players.length;i++){
      clearScoreMap();document.querySelectorAll('.routeSeg').forEach(x=>{if(claimed[+x.dataset.i]===i)x.classList.add('finalRailScore')});rowEls.forEach((r,j)=>r.classList.toggle('leader',j===i));
-     showBadge(`${players[i].name} · railway points`,railTotals[i]);SFX.rail();await countScore(rowEls[i].querySelector('.scoreTotal'),0,railTotals[i],700);await wait(650);
+     rowEls[i].querySelector('.scoreEvent').textContent='Railway points';SFX.rail();await countScore(rowEls[i].querySelector('.scoreTotal'),0,railTotals[i],800);await wait(650);
    }
    for(let i=0;i<players.length;i++){
      for(let j=0;j<ticketsOf(i).length;j++){
        const t=ticketsOf(i)[j];
        let ok=ticketDone(i,t),v=tVal(t),delta=ok?v:-v;destinationTotals[i]+=delta;totals[i]=railTotals[i]+destinationTotals[i]+longestBonuses[i];
-       showTicketOnMap(t,i,ok);rowEls.forEach((r,k)=>r.classList.toggle('leader',k===i));showBadge(`${players[i].name}<br>${tName(t)}`,delta,!ok);
-       let card=rowEls[i].querySelector(`[data-ticket="${j}"]`);card.classList.add('active',ok?'complete':'incomplete');card.querySelector('strong').textContent=(delta>=0?'+':'')+delta;
-       let ev=rowEls[i].querySelector('.scoreEvent');ev.innerHTML=`${tName(t)}: ${ok?'completed':'incomplete'} <span class="scoreDelta">${delta>=0?'+':''}${delta}</span>`;
-       rowEls[i].querySelector('.ticketSubtotal').textContent=(destinationTotals[i]>=0?'+':'')+destinationTotals[i];
-       await countScore(rowEls[i].querySelector('.scoreTotal'),totals[i]-delta,totals[i],600);
-       rowEls[i].querySelector('.scoreFill').style.width=Math.min(100,Math.max(4,totals[i]))+'%';
-       ok?SFX.plus():SFX.minus(); await wait(1150);card.classList.remove('active');
+       let ticketRoute=showTicketOnMap(t,i,ok);rowEls.forEach((r,k)=>r.classList.toggle('leader',k===i));
+       let ev=rowEls[i].querySelector('.scoreEvent');ev.textContent=`${tName(t)}  ${delta>=0?'+':''}${delta}`;
+       ok?SFX.plus():SFX.minus();
+       let jobs=[countScore(rowEls[i].querySelector('.scoreTotal'),totals[i]-delta,totals[i],750)];if(ok)jobs.push(animateTrainOnRoutes(ticketRoute,t.a,players[i].color));await Promise.all(jobs);await wait(500);
      }
    }
    let paths=players.map((p,i)=>longestPathForPlayer(i)),mx=Math.max(...paths.map(x=>x.length));
    for(let i=0;i<players.length;i++){
      clearScoreMap();showLongestOnMap(paths[i].routes);rowEls.forEach((r,j)=>r.classList.toggle('leader',j===i));
      let wins=paths[i].length>0&&paths[i].length===mx,bonus=wins?10:0;longestBonuses[i]=bonus;totals[i]=railTotals[i]+destinationTotals[i]+longestBonuses[i];
-     rowEls[i].querySelector('.longestReadout').innerHTML=`Longest continuous path: <b>${paths[i].length} trains</b>${wins?' — longest-path bonus <span class="scoreDelta">+10</span>':''}`;
-     rowEls[i].querySelector('.scoreEvent').innerHTML=`Map: ${players[i].name}'s longest continuous path${wins?' <span class="scoreDelta">+10</span>':''}`;
-     rowEls[i].querySelector('.longestSubtotal').textContent=bonus?'+10':'0';
-     showBadge(`${players[i].name}<br>Longest continuous path: ${paths[i].length} trains`,bonus);await countScore(rowEls[i].querySelector('.scoreTotal'),totals[i]-bonus,totals[i],650);if(wins)SFX.longest();await wait(1450);
+     rowEls[i].querySelector('.scoreEvent').textContent=`Longest path: ${paths[i].length} trains${bonus?'  +10':''}`;
+     if(wins)SFX.longest();await Promise.all([countScore(rowEls[i].querySelector('.scoreTotal'),totals[i]-bonus,totals[i],750),animateTrainOnRoutes(paths[i].routes,paths[i].start,players[i].color)]);await wait(650);
    }
    showLongestOnMap(paths.flatMap((x,i)=>x.length===mx?x.routes:[]));rowEls.forEach(r=>r.classList.remove('leader'));
    let high=Math.max(...totals), winners=players.map((p,i)=>totals[i]===high?i:-1).filter(i=>i>=0);
    winners.forEach(i=>rowEls[i].classList.add('leader'));
    win.textContent=(winners.length>1?'Winners: ':'Winner: ')+winners.map(i=>players[i].name||'Player '+(i+1)).join(' & ')+' — '+high+' points';
-   hideBadge();newGame.style.display='block';
+   removeScoreTrain();newGame.style.display='block';
    SFX.complete();
  }
  window.animateFinalScoring=animateFinalScoring;
