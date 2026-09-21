@@ -152,7 +152,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 #ticketModal .modalBox{max-height:calc(100dvh - 158px)!important;}
 @media(max-width:850px){.leftDestBtn{margin:5px 2px 2px!important;padding:8px 3px!important;font-size:9px!important;min-height:40px!important}#ticketModal{top:128px!important}#ticketModal .modalBox{max-height:calc(100dvh - 134px)!important}}
 
-/* Version 20 — claimed wagons approximately twice as thick as empty rails */
+/* Version 21 — claimed wagons are about 1.8x the thickness of empty rails */
 .city span{display:none!important}
 /* Empty routes: midway between V17 subtle rails and V18 strong rails. */
 .routePiece{opacity:.76!important;filter:saturate(.82) brightness(1.06) drop-shadow(0 .35px .28px #0006)!important;stroke:#4b4034!important;stroke-width:.27!important;transition:filter .18s ease,stroke .18s ease,stroke-width .18s ease,opacity .18s ease}
@@ -171,7 +171,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 .mapSavedTickets .ticket.ticketTop{width:48px!important;min-width:48px!important;max-width:48px!important}
 .mapSavedTickets .ticket.ticketTop .value{float:none!important;display:block!important;text-align:center!important;font-size:18px!important;line-height:37px!important}
 
-/* Version 20 — strong size hierarchy: occupied trains are ~2x the thickness of empty rails. */
+/* Version 21 — occupied trains are ~1.8x the thickness of empty rails. */
 .routeSeg.claimedSeg .routePiece{stroke-width:.55!important;filter:saturate(1.55) brightness(.86) contrast(1.3) drop-shadow(0 0 .65px #fff) drop-shadow(0 1.15px .85px #000)!important}
 .routeSeg.claimedSeg .routePieceInner{stroke-width:.18!important}
 </style></head>
@@ -184,7 +184,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 20</div>
+<div class="version">Version 21</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -196,7 +196,8 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div class="actions"><button class="btn" onclick="drawTickets()">🎫 Destination Tickets</button><button class="btn" onclick="showHelp()">? Rules</button><button class="btn" onclick="location.reload()">Main Menu</button></div></footer>
 </section>
 
-<div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a colored route, spend the same number of matching cards as the route length. Gray routes may use any single color. Locomotives are wild.</p><p>Completed Destination Tickets add their printed value at game end; incomplete ones subtract it. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
+<div id="finalModal" class="modal hidden"><div id="finalResults" class="modalBox"></div></div>
+<div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a colored route, spend the same number of matching cards as the route length. Gray routes may use any single color. Locomotives are wild.</p><p>When any player ends a turn with 2 or fewer trains, every player (including that player) gets exactly one final turn. Then completed Destination Tickets add their printed value and incomplete ones subtract it. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
 <script>
 const CITIES={"Vancouver": [8, 10], "Seattle": [8, 20], "Portland": [7, 31], "San Francisco": [8, 58], "Los Angeles": [14, 78], "Calgary": [27, 8], "Helena": [31, 31], "Salt Lake City": [28, 54], "Las Vegas": [24, 69], "Phoenix": [31, 80], "Winnipeg": [51, 10], "Duluth": [58, 28], "Denver": [44, 51], "Santa Fe": [43, 70], "El Paso": [48, 84], "Omaha": [58, 47], "Kansas City": [62, 58], "Oklahoma City": [60, 70], "Dallas": [61, 82], "Houston": [65, 91], "Sault Ste. Marie": [72, 16], "Chicago": [70, 43], "Saint Louis": [70, 59], "Little Rock": [70, 73], "New Orleans": [75, 88], "Toronto": [81, 29], "Pittsburgh": [82, 47], "Nashville": [80, 65], "Atlanta": [85, 75], "Miami": [94, 93], "Montreal": [91, 15], "Boston": [96, 28], "New York": [92, 43], "Washington": [91, 57], "Raleigh": [91, 67], "Charleston": [93, 76]}, ROUTES=[["Vancouver", "Seattle", "gray", 1], ["Vancouver", "Calgary", "gray", 3], ["Seattle", "Portland", "gray", 1], ["Seattle", "Helena", "yellow", 6], ["Portland", "San Francisco", "green", 5], ["Portland", "Salt Lake City", "blue", 6], ["San Francisco", "Los Angeles", "yellow", 3], ["San Francisco", "Salt Lake City", "orange", 5], ["Los Angeles", "Las Vegas", "gray", 2], ["Los Angeles", "Phoenix", "gray", 3], ["Los Angeles", "El Paso", "black", 6], ["Calgary", "Helena", "gray", 4], ["Calgary", "Winnipeg", "white", 6], ["Helena", "Winnipeg", "blue", 4], ["Helena", "Duluth", "orange", 6], ["Helena", "Denver", "green", 4], ["Helena", "Salt Lake City", "purple", 3], ["Salt Lake City", "Denver", "red", 3], ["Salt Lake City", "Las Vegas", "orange", 3], ["Phoenix", "Santa Fe", "gray", 3], ["Phoenix", "El Paso", "gray", 3], ["Denver", "Santa Fe", "gray", 2], ["Denver", "Omaha", "purple", 4], ["Denver", "Kansas City", "black", 4], ["Denver", "Oklahoma City", "red", 4], ["Winnipeg", "Duluth", "black", 4], ["Winnipeg", "Sault Ste. Marie", "gray", 6], ["Duluth", "Omaha", "gray", 2], ["Duluth", "Chicago", "red", 3], ["Duluth", "Sault Ste. Marie", "gray", 3], ["Omaha", "Chicago", "blue", 4], ["Omaha", "Kansas City", "gray", 1], ["Kansas City", "Saint Louis", "blue", 2], ["Kansas City", "Oklahoma City", "gray", 2], ["Oklahoma City", "Dallas", "gray", 2], ["Oklahoma City", "Little Rock", "gray", 2], ["Santa Fe", "El Paso", "gray", 2], ["Santa Fe", "Oklahoma City", "blue", 3], ["El Paso", "Dallas", "red", 4], ["El Paso", "Houston", "green", 6], ["Dallas", "Houston", "gray", 1], ["Dallas", "Little Rock", "gray", 2], ["Houston", "New Orleans", "gray", 2], ["Sault Ste. Marie", "Toronto", "gray", 2], ["Sault Ste. Marie", "Montreal", "black", 5], ["Chicago", "Toronto", "white", 4], ["Chicago", "Pittsburgh", "orange", 3], ["Chicago", "Saint Louis", "green", 2], ["Saint Louis", "Pittsburgh", "green", 5], ["Saint Louis", "Nashville", "gray", 2], ["Saint Louis", "Little Rock", "gray", 2], ["Little Rock", "Nashville", "white", 3], ["Little Rock", "New Orleans", "green", 3], ["New Orleans", "Atlanta", "yellow", 4], ["New Orleans", "Miami", "red", 6], ["Nashville", "Atlanta", "gray", 1], ["Nashville", "Raleigh", "black", 3], ["Atlanta", "Raleigh", "gray", 2], ["Atlanta", "Charleston", "gray", 2], ["Atlanta", "Miami", "blue", 5], ["Toronto", "Montreal", "gray", 3], ["Toronto", "Pittsburgh", "gray", 2], ["Montreal", "Boston", "gray", 2], ["Montreal", "New York", "blue", 3], ["Boston", "New York", "yellow", 2], ["Pittsburgh", "New York", "green", 2], ["Pittsburgh", "Washington", "gray", 2], ["Pittsburgh", "Raleigh", "gray", 2], ["New York", "Washington", "orange", 2], ["Washington", "Raleigh", "gray", 2], ["Raleigh", "Charleston", "gray", 2], ["Charleston", "Miami", "purple", 4]], TICKETS=[["Los Angeles", "New York", 21], ["Duluth", "Houston", 8], ["Sault Ste. Marie", "Nashville", 8], ["New York", "Atlanta", 6], ["Portland", "Nashville", 17], ["Vancouver", "Montreal", 20], ["Duluth", "El Paso", 10], ["Toronto", "Miami", 10], ["Portland", "Phoenix", 11], ["Dallas", "New York", 11], ["Calgary", "Salt Lake City", 7], ["Calgary", "Phoenix", 13], ["Los Angeles", "Miami", 20], ["Winnipeg", "Little Rock", 11], ["San Francisco", "Atlanta", 17], ["Kansas City", "Houston", 5], ["Los Angeles", "Chicago", 16], ["Denver", "Pittsburgh", 11], ["Helena", "Los Angeles", 8], ["Winnipeg", "Houston", 12], ["Montreal", "Atlanta", 9], ["Seattle", "New York", 22], ["Denver", "El Paso", 4], ["Vancouver", "Santa Fe", 13], ["Boston", "Miami", 12], ["Chicago", "New Orleans", 7], ["Montreal", "New Orleans", 13], ["Seattle", "Los Angeles", 9], ["Dallas", "Chicago", 9], ["San Francisco", "New York", 21]];
 const COLORS=["blue","red","green","goldenrod","black"];
@@ -206,11 +207,13 @@ const TICKET_COLORS=[TRAINCOL.blue,TRAINCOL.red,TRAINCOL.green,TRAINCOL.yellow,T
 let nextTicketColorIndex=0;
 function ticketColor(t){ if(t.tc) return t.tc; const i=nextTicketColorIndex++; t.tc=i<TICKET_COLORS.length?TICKET_COLORS[i]:`hsl(${((i-8)*137.508+18)%360} 78% 48%)`; return t.tc; }
 let players=[],turn=0,deck=[],market=[],destDeck=[],claimed={},drawCount=0,turnAction=null,pendingTickets=[],pendingMin=1,initialSetup=false;
+let finalRound=false,finalTurnsRemaining=0,gameFinished=false;
 const $=id=>document.getElementById(id);
 function shuffle(a){a=[...a];for(let i=a.length-1;i;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function setupNames(){let n=+$("numPlayers").value,s="";for(let i=0;i<n;i++)s+=`<div class="field"><label>Player ${i+1}</label><input class="nm" value="${localStorage.getItem("railName"+i)||"Player "+(i+1)}"></div>`;$("names").innerHTML=s}
 $("numPlayers").onchange=setupNames;setupNames();
 function startGame(){
+ finalRound=false;finalTurnsRemaining=0;gameFinished=false;claimed={};nextTicketColorIndex=0;market=[];
  let n=+$("numPlayers").value;players=[...document.querySelectorAll(".nm")].slice(0,n).map((x,i)=>({name:x.value.trim()||`Player ${i+1}`,color:COLORS[i],score:0,trains:45,hand:[],tickets:[]}));
  players.forEach((p,i)=>localStorage.setItem("railName"+i,p.name));
  let types=["blue","red","green","yellow","orange","white","black","purple"]; deck=[];types.forEach(c=>{for(let i=0;i<12;i++)deck.push(c)});for(let i=0;i<14;i++)deck.push("wild");deck=shuffle(deck);
@@ -297,21 +300,50 @@ function renderAll(){
    g.classList.toggle("claimedSeg",isClaimed);
    rect.setAttribute("fill",isClaimed?players[owner].color:TRAINCOL[ROUTES[i][2]]);
    // Claimed wagons are deliberately about twice as thick as empty railway pieces.
-   rect.setAttribute("y",isClaimed?-1.18:-.62);
-   rect.setAttribute("height",isClaimed?2.36:1.24);
+   rect.setAttribute("y",isClaimed?-1.115:-.62);
+   rect.setAttribute("height",isClaimed?2.23:1.24);
    rect.setAttribute("rx",isClaimed?.46:.32);
    let inner=g.querySelector(".routePieceInner");
    if(inner) inner.setAttribute("y1",isClaimed?-.34:-.18),inner.setAttribute("y2",isClaimed?-.34:-.18);
-   g.querySelectorAll(".routeWheel").forEach(wh=>{wh.setAttribute("cy",isClaimed?1.18:.62);wh.setAttribute("r",isClaimed?.27:.20)});
+   g.querySelectorAll(".routeWheel").forEach(wh=>{wh.setAttribute("cy",isClaimed?1.115:.62);wh.setAttribute("r",isClaimed?.25:.20)});
  })
  if($("ticketModal").classList.contains("hidden")) paintTicketSet(ownedActiveTickets());
 }
-function beginTurn(){drawCount=0;turnAction=null;renderAll()}
-function endTurn(){turn=(turn+1)%players.length;beginTurn()}
-function drawFace(i){if(initialSetup||turnAction==="route"||turnAction==="ticket")return;let c=market[i];if(drawCount===1&&c==="wild"){toast("A face-up Locomotive cannot be your second draw.");return}turnAction="cards";players[turn].hand.push(c);market.splice(i,1);refillMarket();drawCount++;renderAll();if(c==="wild"||drawCount>=2)endTurn()}
-function drawBlind(){if(initialSetup||turnAction==="route"||turnAction==="ticket"||!deck.length)return;turnAction="cards";players[turn].hand.push(deck.pop());drawCount++;renderAll();if(drawCount>=2)endTurn()}
+function beginTurn(){
+ if(gameFinished)return;
+ drawCount=0;turnAction=null;renderAll();
+ if(finalRound)toast(`Final round — ${players[turn].name}'s last turn`);
+}
+function endTurn(){
+ if(gameFinished)return;
+ if(finalRound){
+   finalTurnsRemaining--;
+   if(finalTurnsRemaining<=0){finishGame();return}
+ }else if(players[turn].trains<=2){
+   finalRound=true;
+   finalTurnsRemaining=players.length;
+   toast(`${players[turn].name} has ${players[turn].trains} trains — final round!`);
+ }
+ turn=(turn+1)%players.length;beginTurn();
+}
+function finishGame(){
+ gameFinished=true;stopPendingGlowCycle();clearGlow();
+ const rows=players.map((p,pi)=>{
+   let ticketDelta=0,done=0,missed=0;
+   p.tickets.forEach(t=>{if(ticketCompleted(t,pi)){ticketDelta+=t.v;done++}else{ticketDelta-=t.v;missed++}});
+   p.score+=ticketDelta;
+   return {p,pi,ticketDelta,done,missed,total:p.score};
+ }).sort((a,b)=>b.total-a.total);
+ renderAll();
+ const top=rows[0]?.total, winners=rows.filter(r=>r.total===top).map(r=>r.p.name).join(' & ');
+ const body=rows.map((r,i)=>`<div style="display:grid;grid-template-columns:24px 1fr 58px;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px solid #9b6a3066"><b>${i+1}</b><span><b>${r.p.name}</b><small style="display:block">Tickets: ${r.ticketDelta>=0?'+':''}${r.ticketDelta} (${r.done} complete, ${r.missed} incomplete)</small></span><strong style="font-size:20px">${r.total}</strong></div>`).join('');
+ $('finalResults').innerHTML=`<h2 style="margin-top:0">Journey Complete</h2><div style="font-size:18px;margin-bottom:8px">🏆 ${winners}</div>${body}<button class="btn primary" style="width:100%;margin-top:12px" onclick="location.reload()">New Game</button>`;
+ $('finalModal').classList.remove('hidden');
+}
+function drawFace(i){if(gameFinished||initialSetup||turnAction==="route"||turnAction==="ticket")return;let c=market[i];if(drawCount===1&&c==="wild"){toast("A face-up Locomotive cannot be your second draw.");return}turnAction="cards";players[turn].hand.push(c);market.splice(i,1);refillMarket();drawCount++;renderAll();if(c==="wild"||drawCount>=2)endTurn()}
+function drawBlind(){if(gameFinished||initialSetup||turnAction==="route"||turnAction==="ticket"||!deck.length)return;turnAction="cards";players[turn].hand.push(deck.pop());drawCount++;renderAll();if(drawCount>=2)endTurn()}
 function claimRoute(i){
- if(initialSetup||turnAction||claimed[i]!=null)return;let [a,b,c,l]=ROUTES[i],p=players[turn];if(p.trains<l){toast("Not enough trains.");return}
+ if(gameFinished||initialSetup||turnAction||claimed[i]!=null)return;let [a,b,c,l]=ROUTES[i],p=players[turn];if(p.trains<l){toast("Not enough trains.");return}
  let counts={};p.hand.forEach(x=>counts[x]=(counts[x]||0)+1);let chosen=null;
  if(c!=="gray" && (counts[c]||0)+(counts.wild||0)>=l)chosen=c;
  if(c==="gray"){for(let k of ["blue","red","green","yellow","orange","white","black","purple"])if((counts[k]||0)+(counts.wild||0)>=l){chosen=k;break}if(!chosen&&(counts.wild||0)>=l)chosen="wild"}
@@ -320,7 +352,7 @@ function claimRoute(i){
  if(need){newHand=[];for(let x of p.hand){if(need&&x==="wild"){need--;continue}newHand.push(x)}p.hand=newHand}
  claimed[i]=turn;p.trains-=l;p.score+=SCORE[l]||0;turnAction="route";renderAll();toast(`Route claimed! +${SCORE[l]||0}`);setTimeout(endTurn,700)
 }
-function drawTickets(){if(initialSetup||turnAction)return;turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);if(!pendingTickets.length){turnAction=null;toast("No Destination Tickets left.");return}pendingMin=1;showTicketModal("Draw Destination Tickets","Keep at least 1. Tap a ticket to show its cities on the map.")}
+function drawTickets(){if(gameFinished||initialSetup||turnAction)return;turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);if(!pendingTickets.length){turnAction=null;toast("No Destination Tickets left.");return}pendingMin=1;showTicketModal("Draw Destination Tickets","Keep at least 1. Tap a ticket to show its cities on the map.")}
 function highlightTicket(a,b,color="#5dff45"){clearGlow();glowCity(a,color);glowCity(b,color)}
 function glowCity(n,color){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e){e.classList.add("glow");let d=e.querySelector(".dot");if(d){d.style.background=color;d.style.boxShadow=`0 0 7px 4px #fff,0 0 20px 8px ${color}`}}}
 function clearGlow(){document.querySelectorAll(".city").forEach(x=>{x.classList.remove("glow");let d=x.querySelector(".dot");if(d){d.style.background="";d.style.boxShadow=""}})}
