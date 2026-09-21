@@ -154,7 +154,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 13</div>
+<div class="version">Version 15</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -193,26 +193,28 @@ function offerInitialTickets(pi){turn=pi;pendingTickets=[destDeck.pop(),destDeck
 function showTicketModal(title,instruction){$("ticketModal").classList.remove("hidden");renderTicketChoices()}
 function renderTicketChoices(){ $("ticketChoices").innerHTML=pendingTickets.map((t,i)=>{let tc=ticketColor(t);return `<div class="ticketChoice" data-i="${i}" data-tc="${tc}" style="--tc:${tc}" onmouseenter="previewPendingTicket(${i},this)" onmouseleave="restorePendingTicketGlow()" ontouchstart="previewPendingTicket(${i},this)" onclick="toggleTicket(${i},this)"><span class="value">${t.v}</span><div style="font-size:24px">🎫</div><h3>${t.a}</h3><div style="height:3px;background:${tc};margin:8px 20px;position:relative"><i style="position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i><i style="position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i></div><h3>${t.b}</h3></div>`}).join("")}
 let pendingGlowTimer=null,pendingGlowStep=0;
+function ticketCompleted(t,pi=turn){
+ const adj={};
+ ROUTES.forEach((r,i)=>{if(claimed[i]!==pi)return;let a=r[0],b=r[1];(adj[a]??=[]).push(b);(adj[b]??=[]).push(a)});
+ const seen=new Set([t.a]),q=[t.a];
+ while(q.length){let x=q.shift();if(x===t.b)return true;for(const y of (adj[x]||[]))if(!seen.has(y)){seen.add(y);q.push(y)}}
+ return false;
+}
+function ownedActiveTickets(){let p=players[turn];return p?p.tickets.filter(t=>!ticketCompleted(t,turn)):[]}
+function paintTicketSet(active){
+ stopPendingGlowCycle();clearGlow();
+ const cityColors={};
+ active.forEach(t=>{let tc=ticketColor(t);[t.a,t.b].forEach(city=>{let a=(cityColors[city]??=[]);if(!a.includes(tc))a.push(tc)})});
+ const draw=()=>{Object.entries(cityColors).forEach(([city,colors])=>glowCity(city,colors[pendingGlowStep%colors.length]));pendingGlowStep++};
+ pendingGlowStep=0;draw();
+ if(Object.values(cityColors).some(colors=>colors.length>1))pendingGlowTimer=setInterval(draw,600);
+}
 function stopPendingGlowCycle(){if(pendingGlowTimer){clearInterval(pendingGlowTimer);pendingGlowTimer=null}}
 function paintPendingHighlights(previewIndex=null){
- stopPendingGlowCycle();
- clearGlow();
- const active=[];
- document.querySelectorAll(".ticketChoice.selected").forEach(x=>{
-   let i=+x.dataset.i,t=pendingTickets[i]; if(t)active.push(t);
- });
+ const active=ownedActiveTickets();
+ document.querySelectorAll(".ticketChoice.selected").forEach(x=>{let i=+x.dataset.i,t=pendingTickets[i];if(t&&!active.includes(t))active.push(t)});
  if(previewIndex!==null){let t=pendingTickets[previewIndex];if(t&&!active.includes(t))active.push(t)}
- const cityColors={};
- active.forEach(t=>{let tc=ticketColor(t);[t.a,t.b].forEach(city=>{(cityColors[city]??=[]).push(tc)})});
- const draw=()=>{
-   Object.entries(cityColors).forEach(([city,colors])=>{
-     // A city shared by two or more active tickets cycles through all their colors.
-     glowCity(city,colors[pendingGlowStep%colors.length]);
-   });
-   pendingGlowStep++;
- };
- pendingGlowStep=0;draw();
- if(Object.values(cityColors).some(colors=>colors.length>1))pendingGlowTimer=setInterval(draw,1200);
+ paintTicketSet(active);
 }
 function toggleTicket(i,el){el.classList.toggle("selected");paintPendingHighlights(null)}
 function previewPendingTicket(i,el){paintPendingHighlights(i)}
@@ -220,7 +222,7 @@ function restorePendingTicketGlow(){paintPendingHighlights(null)}
 function glowCity(n,color="#5dff45"){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e){e.classList.add("glow");let d=e.querySelector(".dot");if(d){d.style.background=color;d.style.boxShadow=`0 0 7px 4px #fff,0 0 20px 8px ${color}`}}}
 function confirmTickets(){stopPendingGlowCycle();let sel=[...document.querySelectorAll(".ticketChoice.selected")].map(x=>+x.dataset.i);if(sel.length<pendingMin){toast(`Keep at least ${pendingMin} ticket${pendingMin>1?"s":""}.`);return}
  let keep=[],back=[];pendingTickets.forEach((t,i)=>{if(sel.includes(i)){ticketColor(t);keep.push(t)}else back.push(t)}); players[turn].tickets.push(...keep);destDeck.unshift(...back);
- $("ticketModal").classList.add("hidden");document.querySelectorAll(".city").forEach(x=>x.classList.remove("glow"));
+ $("ticketModal").classList.add("hidden");
  if(initialSetup){if(turn<players.length-1){offerInitialTickets(turn+1)}else{initialSetup=false;turn=0;beginTurn()}}else{endTurn()}
  renderAll()
 }
@@ -249,16 +251,17 @@ function renderAll(){
  $("market").innerHTML=market.map((c,i)=>`<div class="card ${c==="wild"?"wild":""}" onclick="drawFace(${i})"><div class="train" style="background:${TRAINCOL[c]}"></div></div>`).join("");
  let p=players[turn]||players[0]; if(!p)return;
  let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=Object.entries(counts).map(([c,n])=>`<div class="handCard"><b>${n}×</b><div class="swatch" style="background:${TRAINCOL[c]}"></div></div>`).join("");
- $("myTickets").innerHTML=p.tickets.map(t=>`<div class="ticket" onmouseenter="highlightTicket('${t.a.replaceAll("'","\\'")}','${t.b.replaceAll("'","\\'")}')" onmouseleave="clearGlow()"><span class="value">${t.v}</span><b>${t.a}</b><br>→ ${t.b}</div>`).join("");
+ $("myTickets").innerHTML=p.tickets.map(t=>`<div class="ticket"><span class="value">${t.v}</span><b>${t.a}</b><br>→ ${t.b}</div>`).join("");
  $("sideTickets").innerHTML="";
  let mt=$("mapSavedTickets");
  mt.innerHTML=p.tickets.map((t,i)=>{
    let top=i===p.tickets.length-1;
    let a=t.a.replaceAll("'","\\'"); let b=t.b.replaceAll("'","\\'");
    let tc=ticketColor(t);
-   return `<div class="ticket ${top?"ticketTop":"ticketUnder"}" style="--ticket-color:${tc}" onclick="highlightTicket('${a}','${b}','${tc}')" onmouseenter="highlightTicket('${a}','${b}','${tc}')" onmouseleave="clearGlow()"><span class="value">${t.v}</span>${top?`<b>${t.a}</b><br><span class="destArrow">→ ${t.b}</span>`:""}</div>`;
+   return `<div class="ticket ${top?"ticketTop":"ticketUnder"}" style="--ticket-color:${tc}"><span class="value">${t.v}</span>${top?`<b>${t.a}</b><br><span class="destArrow">→ ${t.b}</span>`:""}</div>`;
  }).join("");
  document.querySelectorAll(".routeSeg").forEach(g=>{let i=+g.dataset.i,rect=g.querySelector(".routePiece");rect.setAttribute("fill",claimed[i]!=null?players[claimed[i]].color:TRAINCOL[ROUTES[i][2]])})
+ if($("ticketModal").classList.contains("hidden")) paintTicketSet(ownedActiveTickets());
 }
 function beginTurn(){drawCount=0;turnAction=null;renderAll()}
 function endTurn(){turn=(turn+1)%players.length;beginTurn()}
