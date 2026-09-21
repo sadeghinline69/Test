@@ -565,6 +565,17 @@ body.finalScoringMode #game::after{display:none!important}
 .bottom{left:0!important;right:0!important}.bottom>div:nth-child(2){width:100%!important;justify-content:center!important}.hand{max-width:min(760px,76vw)!important;justify-content:center!important}
 .handCard{width:72px!important;height:37px!important;min-height:37px!important;padding-left:6px!important;padding-right:6px!important}.handCard .swatch{width:36px!important;min-width:36px!important}
 @media(max-width:850px){.bottom{left:0!important;right:0!important}.hand{max-width:78vw!important}.handCard{width:56px!important;height:32px!important;min-height:32px!important}.handCard .swatch{width:28px!important;min-width:28px!important}}
+/* Version 56 — viewport-safe Windows and desktop layout. */
+html,body{width:100%;max-width:100%;min-width:0;overflow-x:hidden}
+.screen{width:100%;max-width:100vw;min-width:0}.menu{display:flex!important;align-items:flex-start!important;justify-content:center!important;min-height:100vh!important;min-height:100dvh!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;padding:clamp(10px,3vh,28px) 12px!important}.menu.hidden{display:none!important}
+.menu .panel{flex:0 0 auto;width:min(760px,calc(100vw - 24px))!important;max-width:calc(100vw - 24px)!important;margin:auto 0!important}
+#game:not(.hidden){position:fixed!important;inset:0!important;width:100vw!important;max-width:100vw!important;height:100vh!important;height:100dvh!important;min-width:0!important;min-height:0!important}
+#game>*{min-width:0;min-height:0}.sidebar,.mapWrap,.market{max-height:100%}
+@media (max-height:760px) and (min-width:851px){
+ .menu{padding:8px 12px!important}.menu .panel{padding:14px 20px!important}.menu .logo{font-size:46px!important}.menu .subtitle{margin:7px 0 10px!important}.menu .field{margin:4px 0!important}.menu select,.menu input{padding:7px!important}.menu .primary{margin-top:8px!important;padding:9px!important}.menu .note{margin:7px 0!important;font-size:11px}
+ #game{grid-template-columns:155px minmax(0,1fr) 140px!important}.sidebar{padding:6px!important}.playerCard{padding:5px!important;margin-bottom:4px!important}.stats{font-size:10px!important}.market{padding:5px!important}.market .card{height:44px!important}
+ #finalScoreShow{width:155px!important}.leftDestBtn{left:4px!important;right:4px!important}.leftTools{left:4px!important;right:4px!important}
+}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -577,11 +588,11 @@ body.finalScoringMode #game::after{display:none!important}
 <div id="onlinePanel" class="hidden"><div class="row"><div class="field"><label>Room Action</label><select id="onlineAction"><option value="create">Create Room</option><option value="join">Join Room</option></select></div><div class="field" id="onlineBotsField"><label>Bots in Room</label><select id="onlineBots"><option>0</option><option>1</option><option>2</option><option>3</option></select></div><div class="field hidden" id="joinCodeField"><label>Room Code</label><input id="joinCode" maxlength="6" placeholder="ABC123"></div></div><button id="onlineConnectBtn" class="btn" type="button" onclick="onlineConnect()">Create Room</button><div id="onlineStatus" class="onlineStatus">Choose Create Room or Join Room.</div><div id="roomCodeBox" class="roomCodeBox hidden"></div><button id="onlineStartBtn" class="btn primary hidden" type="button" onclick="startOnlineHostedGame()">Start Online Game</button></div>
 <button id="startJourneyBtn" class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 55</div>
+<div class="version">Version 56</div>
 </div></section>
 
 <section id="game" class="screen hidden">
-<div class="gameVersion">Version 55</div>
+<div class="gameVersion">Version 56</div>
 <div id="finalRoundAlert" role="alert" aria-live="assertive">⚠ FINAL ROUND — ONE LAST TURN FOR EVERY PLAYER ⚠</div>
 <aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button><div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div><div class="leftTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <main class="mapWrap"><div id="map"></div><div id="mapSavedTickets" class="mapSavedTickets"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
