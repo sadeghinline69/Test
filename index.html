@@ -370,7 +370,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 @keyframes winnerPulse{to{transform:scale(1.06);text-shadow:0 0 18px #ffd45d}}
 
 
-/* Version 32 — no persistent text above the board. Only invalid-railway warning is shown. */
+/* Version 31 — no persistent text above the board. Only invalid-railway warning is shown. */
 #turnBanner{display:none!important}
 #toast{
   position:fixed!important;
@@ -385,7 +385,97 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 }
 
 
-/* Version 32 — white train-card routes now render white instead of falling back to black. */
+/* Version 32 — white railways are clearly ivory/white, distinct from black routes. */
+.routeSeg[data-route-color="white"] .routePiece:not(.claimedRoutePiece){
+  fill:#fffdf2!important;
+  stroke:#8b8172!important;
+  filter:brightness(1.13) contrast(.94) drop-shadow(0 .45px .35px #0007)!important;
+}
+.routeSeg[data-route-color="white"] .routePieceInner{stroke:#ffffff!important;opacity:1!important}
+
+
+/* Version 33 — simple player cards; graphical face-up market only; no draw-to-hand flight. */
+/* Cards in the player's hand stay deliberately simple: pure color + quantity, no train artwork. */
+.handCard .swatch::after{content:none!important;display:none!important}
+.handCard{background:#f6ecd3!important}
+/* Unrevealed deck stays plain and graphic-free. */
+.market .deck{background:repeating-linear-gradient(45deg,#b89b69 0 6px,#e1c995 6px 12px)!important;color:#2d2116!important;font-weight:900!important;letter-spacing:.4px}
+.market .deck::before,.market .deck::after{content:none!important}
+/* Only the five revealed cards in the right panel receive a simple line-art locomotive. */
+.market .card:not(.deck) .train{position:relative!important;overflow:visible!important}
+.market .card:not(.deck) .train::before{
+ content:"";position:absolute;left:17%;right:19%;top:25%;height:38%;
+ border:2px solid rgba(255,255,255,.92);border-radius:2px 5px 2px 2px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.55);
+}
+.market .card:not(.deck) .train::after{
+ content:"○  ○";position:absolute;left:19%;right:18%;bottom:-8px;
+ color:#fff;text-shadow:0 0 1px #000,1px 1px 0 #000;font:bold 11px/1 Arial;
+ letter-spacing:7px;white-space:nowrap;text-align:center;
+}
+/* Briefly identify the color that was just added to the current player's hand. */
+.handCard.drawHighlight{transform:translateY(-4px) scale(1.08)!important;border-color:#fff!important;box-shadow:0 0 0 3px #ffd65a,0 0 18px 7px #ffd65acc!important;z-index:50}
+/* Disable the Version-29 flying-card/reveal animation completely. */
+.drawFlyCard,.drawReveal{display:none!important}
+
+
+/* Version 34 — cleaner right panel, larger blind deck, unified draw sound. */
+.market > .deck{
+  height:62px!important;
+  min-height:62px!important;
+  margin-top:7px!important;
+  font-size:12px!important;
+}
+@media(max-width:850px){
+  .market > .deck{height:50px!important;min-height:50px!important;font-size:9px!important}
+}
+
+
+/* Version 35 — rainbow Locomotives + fixed face-up market slots. */
+:root{--loco-rainbow:linear-gradient(135deg,#ff3b30 0%,#ff9500 16%,#ffdd00 32%,#34c759 48%,#00b7ff 64%,#5856d6 80%,#af52de 100%)}
+/* Locomotive cards are unmistakably multicolor everywhere they are visible. */
+.market .card.wild{background:var(--loco-rainbow)!important}
+.market .card.wild .train{background:var(--loco-rainbow)!important;border-color:#fff!important;box-shadow:inset 0 0 0 1px #2228,0 2px 5px #0008!important}
+.handCard.wildHand{background:var(--loco-rainbow)!important;border-color:#fff!important}
+.handCard.wildHand .swatch{background:var(--loco-rainbow)!important;border-color:#fff!important;box-shadow:inset 0 0 0 1px #2228!important}
+
+/* Version 36 — larger Guide/Home controls; compact Destination Tickets action. */
+.leftDestBtn{
+  margin:6px 4px 3px!important;
+  padding:7px 5px!important;
+  font-size:10px!important;
+  min-height:36px!important;
+}
+.mapTools{gap:7px!important;margin-top:auto!important;padding-top:6px!important}
+.mapTools .btn{
+  min-height:42px!important;
+  font-size:18px!important;
+  padding:8px 5px!important;
+  border-radius:11px!important;
+}
+@media(max-width:850px){
+  .leftDestBtn{margin:4px 2px 2px!important;padding:5px 2px!important;font-size:8px!important;min-height:30px!important}
+  .mapTools{gap:4px!important;padding-top:4px!important}
+  .mapTools .btn{min-height:36px!important;font-size:16px!important;padding:6px 2px!important}
+}
+
+
+/* Version 37 — Guide/Home moved to left; ticket chooser replaces/overlaps Destination Tickets button. */
+.sidebar{position:relative!important;padding-bottom:54px!important}
+.leftTools{position:absolute;left:5px;right:5px;bottom:5px;display:flex;gap:7px;z-index:45}
+.leftTools .btn{flex:1;min-height:40px!important;font-size:18px!important;padding:7px 2px!important}
+/* The chooser opens directly over the Destination Tickets action, so the action is hidden while active. */
+.sidebar:has(+ #ticketModal:not(.hidden)) #leftDestBtn{visibility:hidden!important}
+#ticketModal{top:112px!important;left:5px!important;bottom:auto!important;z-index:80!important}
+#ticketModal .modalBox{max-height:calc(100dvh - 170px)!important}
+@media(max-width:850px){
+ .sidebar{padding-bottom:45px!important}
+ .leftTools{left:3px;right:3px;bottom:3px;gap:4px}
+ .leftTools .btn{min-height:34px!important;font-size:15px!important;padding:5px 1px!important}
+ #ticketModal{top:82px!important;left:4px!important}
+ #ticketModal .modalBox{max-height:calc(100dvh - 130px)!important}
+}
+
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -396,14 +486,14 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 32</div>
+<div class="version">Version 37</div>
 </div></section>
 
 <section id="game" class="screen hidden">
-<aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button></aside>
+<aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button><div class="leftTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div>
 <main class="mapWrap"><div id="map"></div><div id="mapSavedTickets" class="mapSavedTickets"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
-<aside class="market"><h3>TRAIN CARDS</h3><div id="market"></div><div class="card deck" onclick="drawBlind()">🎴 BLIND DRAW</div><div class="destSide"><h3>DESTINATIONS</h3><div id="sideTickets"></div></div><div class="mapTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
+<aside class="market"><div id="market"></div><div class="card deck" onclick="drawBlind()">BLIND DRAW</div><div class="destSide"><h3>DESTINATIONS</h3><div id="sideTickets"></div></div></aside>
 <footer class="bottom"><div><b>DESTINATIONS</b><div id="myTickets" class="ticketsMini"></div></div><div><b>YOUR HAND</b><div id="hand" class="hand"></div></div>
 <div class="actions"><button class="btn" onclick="drawTickets()">🎫 Destination Tickets</button><button class="btn" onclick="showHelp()">? Rules</button><button class="btn" onclick="location.reload()">Main Menu</button></div></footer>
 </section>
@@ -411,7 +501,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="finalModal" class="modal hidden"><div id="finalResults" class="modalBox"></div></div>
 <div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a route, first tap a Train Card color in your hand, then tap the railway you want. If that railway cannot be claimed with the selected color, the game will warn you. Gray routes may use any single color. Locomotives are wild. With 2–3 players, only one route of a parallel pair may be claimed; with 4–5 players, both may be claimed, but by different players.</p><p>When any player ends a turn with 2 or fewer trains, every player (including that player) gets exactly one final turn. Then completed Destination Tickets add their printed value and incomplete ones subtract it. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
 <script>
-const CITIES={"Vancouver":[8,8],"Seattle":[8,18],"Portland":[7,32],"San Francisco":[9,60],"Los Angeles":[14,79],"Calgary":[27,7],"Helena":[32,30],"Salt Lake City":[27,53],"Las Vegas":[23,68],"Phoenix":[31,80],"Winnipeg":[51,8],"Duluth":[58,27],"Denver":[44,50],"Santa Fe":[43,69],"El Paso":[48,84],"Omaha":[58,45],"Kansas City":[62,57],"Oklahoma City":[60,69],"Dallas":[61,81],"Houston":[65,91],"Sault Ste. Marie":[72,15],"Chicago":[70,42],"Saint Louis":[70,58],"Little Rock":[70,72],"New Orleans":[75,88],"Toronto":[81,28],"Pittsburgh":[82,46],"Nashville":[80,64],"Atlanta":[85,74],"Miami":[94,93],"Montreal":[91,14],"Boston":[96,27],"New York":[92,42],"Washington":[91,56],"Raleigh":[91,66],"Charleston":[93,75]}, ROUTES=[["Vancouver","Seattle","gray",1],["Vancouver","Calgary","gray",3],["Seattle","Portland","gray",1],["Seattle","Portland","gray",1],["Seattle","Helena","yellow",6],["Seattle","Helena","blue",6],["Portland","San Francisco","green",5],["Portland","San Francisco","purple",5],["Portland","Salt Lake City","blue",6],["San Francisco","Los Angeles","yellow",3],["San Francisco","Los Angeles","purple",3],["San Francisco","Salt Lake City","orange",5],["Los Angeles","Las Vegas","gray",2],["Los Angeles","Phoenix","gray",3],["Los Angeles","El Paso","black",6],["Calgary","Helena","gray",4],["Calgary","Winnipeg","white",6],["Helena","Winnipeg","blue",4],["Helena","Duluth","orange",6],["Helena","Denver","green",4],["Helena","Salt Lake City","purple",3],["Salt Lake City","Denver","red",3],["Salt Lake City","Denver","yellow",3],["Salt Lake City","Las Vegas","orange",3],["Phoenix","Santa Fe","gray",3],["Phoenix","El Paso","gray",3],["Denver","Santa Fe","gray",2],["Denver","Omaha","purple",4],["Denver","Kansas City","black",4],["Denver","Kansas City","orange",4],["Denver","Oklahoma City","red",4],["Winnipeg","Duluth","black",4],["Winnipeg","Sault Ste. Marie","gray",6],["Duluth","Omaha","gray",2],["Duluth","Chicago","red",3],["Duluth","Sault Ste. Marie","gray",3],["Omaha","Chicago","blue",4],["Omaha","Kansas City","gray",1],["Kansas City","Saint Louis","blue",2],["Kansas City","Saint Louis","purple",2],["Kansas City","Oklahoma City","gray",2],["Oklahoma City","Dallas","gray",2],["Oklahoma City","Little Rock","gray",2],["Santa Fe","El Paso","gray",2],["Santa Fe","Oklahoma City","blue",3],["El Paso","Dallas","red",4],["El Paso","Houston","green",6],["Dallas","Houston","gray",1],["Dallas","Little Rock","gray",2],["Houston","New Orleans","gray",2],["Sault Ste. Marie","Toronto","gray",2],["Sault Ste. Marie","Montreal","black",5],["Chicago","Toronto","white",4],["Chicago","Pittsburgh","orange",3],["Chicago","Pittsburgh","black",3],["Chicago","Saint Louis","green",2],["Chicago","Saint Louis","white",2],["Saint Louis","Pittsburgh","green",5],["Saint Louis","Nashville","gray",2],["Saint Louis","Little Rock","gray",2],["Little Rock","Nashville","white",3],["Little Rock","New Orleans","green",3],["New Orleans","Atlanta","yellow",4],["New Orleans","Atlanta","orange",4],["New Orleans","Miami","red",6],["Nashville","Atlanta","gray",1],["Nashville","Raleigh","black",3],["Atlanta","Raleigh","gray",2],["Atlanta","Charleston","gray",2],["Atlanta","Miami","blue",5],["Atlanta","Miami","purple",5],["Toronto","Montreal","gray",3],["Toronto","Pittsburgh","gray",2],["Montreal","Boston","gray",2],["Montreal","New York","blue",3],["Boston","New York","yellow",2],["Boston","New York","red",2],["Pittsburgh","New York","green",2],["Pittsburgh","Washington","gray",2],["Pittsburgh","Raleigh","gray",2],["New York","Washington","orange",2],["New York","Washington","black",2],["Washington","Raleigh","gray",2],["Raleigh","Charleston","gray",2],["Charleston","Miami","purple",4]], TICKETS=[["Los Angeles", "New York", 21], ["Duluth", "Houston", 8], ["Sault Ste. Marie", "Nashville", 8], ["New York", "Atlanta", 6], ["Portland", "Nashville", 17], ["Vancouver", "Montreal", 20], ["Duluth", "El Paso", 10], ["Toronto", "Miami", 10], ["Portland", "Phoenix", 11], ["Dallas", "New York", 11], ["Calgary", "Salt Lake City", 7], ["Calgary", "Phoenix", 13], ["Los Angeles", "Miami", 20], ["Winnipeg", "Little Rock", 11], ["San Francisco", "Atlanta", 17], ["Kansas City", "Houston", 5], ["Los Angeles", "Chicago", 16], ["Denver", "Pittsburgh", 11], ["Helena", "Los Angeles", 8], ["Winnipeg", "Houston", 12], ["Montreal", "Atlanta", 9], ["Seattle", "New York", 22], ["Denver", "El Paso", 4], ["Vancouver", "Santa Fe", 13], ["Boston", "Miami", 12], ["Chicago", "New Orleans", 7], ["Montreal", "New Orleans", 13], ["Seattle", "Los Angeles", 9], ["Dallas", "Chicago", 9], ["San Francisco", "New York", 21]];
+const CITIES={"Vancouver":[8,8],"Seattle":[8,18],"Portland":[7,32],"San Francisco":[9,60],"Los Angeles":[14,79],"Calgary":[27,7],"Helena":[32,30],"Salt Lake City":[27,53],"Las Vegas":[23,68],"Phoenix":[31,80],"Winnipeg":[51,8],"Duluth":[58,27],"Denver":[44,50],"Santa Fe":[43,69],"El Paso":[48,84],"Omaha":[58,45],"Kansas City":[62,57],"Oklahoma City":[60,69],"Dallas":[61,81],"Houston":[65,91],"Sault Ste. Marie":[72,15],"Chicago":[70,42],"Saint Louis":[70,58],"Little Rock":[70,72],"New Orleans":[75,88],"Toronto":[81,28],"Pittsburgh":[82,46],"Nashville":[80,64],"Atlanta":[85,74],"Miami":[94,93],"Montreal":[91,14],"Boston":[96,27],"New York":[92,42],"Washington":[91,56],"Raleigh":[91,66],"Charleston":[93,75]}, ROUTES=[["Vancouver","Seattle","gray",1],["Vancouver","Calgary","gray",3],["Seattle","Portland","gray",1],["Seattle","Portland","gray",1],["Seattle","Helena","yellow",6],["Seattle","Helena","blue",6],["Portland","San Francisco","green",5],["Portland","San Francisco","purple",5],["Portland","Salt Lake City","blue",6],["San Francisco","Los Angeles","yellow",3],["San Francisco","Los Angeles","purple",3],["San Francisco","Salt Lake City","orange",5],["Los Angeles","Las Vegas","gray",2],["Los Angeles","Phoenix","gray",3],["Los Angeles","El Paso","black",6],["Calgary","Helena","gray",4],["Calgary","Winnipeg","#00b8d4",6],["Helena","Winnipeg","blue",4],["Helena","Duluth","orange",6],["Helena","Denver","green",4],["Helena","Salt Lake City","purple",3],["Salt Lake City","Denver","red",3],["Salt Lake City","Denver","yellow",3],["Salt Lake City","Las Vegas","orange",3],["Phoenix","Santa Fe","gray",3],["Phoenix","El Paso","gray",3],["Denver","Santa Fe","gray",2],["Denver","Omaha","purple",4],["Denver","Kansas City","black",4],["Denver","Kansas City","orange",4],["Denver","Oklahoma City","red",4],["Winnipeg","Duluth","black",4],["Winnipeg","Sault Ste. Marie","gray",6],["Duluth","Omaha","gray",2],["Duluth","Chicago","red",3],["Duluth","Sault Ste. Marie","gray",3],["Omaha","Chicago","blue",4],["Omaha","Kansas City","gray",1],["Kansas City","Saint Louis","blue",2],["Kansas City","Saint Louis","purple",2],["Kansas City","Oklahoma City","gray",2],["Oklahoma City","Dallas","gray",2],["Oklahoma City","Little Rock","gray",2],["Santa Fe","El Paso","gray",2],["Santa Fe","Oklahoma City","blue",3],["El Paso","Dallas","red",4],["El Paso","Houston","green",6],["Dallas","Houston","gray",1],["Dallas","Little Rock","gray",2],["Houston","New Orleans","gray",2],["Sault Ste. Marie","Toronto","gray",2],["Sault Ste. Marie","Montreal","black",5],["Chicago","Toronto","#00b8d4",4],["Chicago","Pittsburgh","orange",3],["Chicago","Pittsburgh","black",3],["Chicago","Saint Louis","green",2],["Chicago","Saint Louis","#00b8d4",2],["Saint Louis","Pittsburgh","green",5],["Saint Louis","Nashville","gray",2],["Saint Louis","Little Rock","gray",2],["Little Rock","Nashville","#00b8d4",3],["Little Rock","New Orleans","green",3],["New Orleans","Atlanta","yellow",4],["New Orleans","Atlanta","orange",4],["New Orleans","Miami","red",6],["Nashville","Atlanta","gray",1],["Nashville","Raleigh","black",3],["Atlanta","Raleigh","gray",2],["Atlanta","Charleston","gray",2],["Atlanta","Miami","blue",5],["Atlanta","Miami","purple",5],["Toronto","Montreal","gray",3],["Toronto","Pittsburgh","gray",2],["Montreal","Boston","gray",2],["Montreal","New York","blue",3],["Boston","New York","yellow",2],["Boston","New York","red",2],["Pittsburgh","New York","green",2],["Pittsburgh","Washington","gray",2],["Pittsburgh","Raleigh","gray",2],["New York","Washington","orange",2],["New York","Washington","black",2],["Washington","Raleigh","gray",2],["Raleigh","Charleston","gray",2],["Charleston","Miami","purple",4]], TICKETS=[["Los Angeles", "New York", 21], ["Duluth", "Houston", 8], ["Sault Ste. Marie", "Nashville", 8], ["New York", "Atlanta", 6], ["Portland", "Nashville", 17], ["Vancouver", "Montreal", 20], ["Duluth", "El Paso", 10], ["Toronto", "Miami", 10], ["Portland", "Phoenix", 11], ["Dallas", "New York", 11], ["Calgary", "Salt Lake City", 7], ["Calgary", "Phoenix", 13], ["Los Angeles", "Miami", 20], ["Winnipeg", "Little Rock", 11], ["San Francisco", "Atlanta", 17], ["Kansas City", "Houston", 5], ["Los Angeles", "Chicago", 16], ["Denver", "Pittsburgh", 11], ["Helena", "Los Angeles", 8], ["Winnipeg", "Houston", 12], ["Montreal", "Atlanta", 9], ["Seattle", "New York", 22], ["Denver", "El Paso", 4], ["Vancouver", "Santa Fe", 13], ["Boston", "Miami", 12], ["Chicago", "New Orleans", 7], ["Montreal", "New Orleans", 13], ["Seattle", "Los Angeles", 9], ["Dallas", "Chicago", 9], ["San Francisco", "New York", 21]];
 const COLORS=["blue","red","green","goldenrod","black"];
 const TRAINCOL={blue:"#42b9e8",red:"#d54137",green:"#5aa84f",yellow:"#e6cc31",orange:"#e38a2b",white:"#eee9dc",black:"#34383d",purple:"#8e44ad",gray:"#aaa397",wild:"#d9b85f"};
 const SCORE={1:1,2:2,3:4,4:7,5:10,6:15};
@@ -429,7 +519,7 @@ function startGame(){
  finalRound=false;finalTurnsRemaining=0;gameFinished=false;claimed={};nextTicketColorIndex=0;market=[];
  let n=+$("numPlayers").value;players=[...document.querySelectorAll(".nm")].slice(0,n).map((x,i)=>({name:x.value.trim()||`Player ${i+1}`,color:COLORS[i],score:0,trains:45,hand:[],tickets:[]}));
  players.forEach((p,i)=>localStorage.setItem("railName"+i,p.name));
- let types=["blue","red","green","yellow","orange","white","black","purple"]; deck=[];types.forEach(c=>{for(let i=0;i<12;i++)deck.push(c)});for(let i=0;i<14;i++)deck.push("wild");deck=shuffle(deck);
+ let types=["blue","red","green","yellow","orange","#00b8d4","black","purple"]; deck=[];types.forEach(c=>{for(let i=0;i<12;i++)deck.push(c)});for(let i=0;i<14;i++)deck.push("wild");deck=shuffle(deck);
  destDeck=shuffle(TICKETS.map((t,i)=>({a:t[0],b:t[1],v:t[2],id:i})));
  players.forEach(p=>{for(let i=0;i<4;i++)p.hand.push(deck.pop())});
  refillMarket(); $("menu").classList.add("hidden");$("game").classList.remove("hidden");renderMap();renderAll();
@@ -491,7 +581,7 @@ function renderMap(){
    let hit=document.createElementNS(ns,'path');hit.setAttribute('d',`M${A[0]},${A[1]} Q${C[0]},${C[1]} ${B[0]},${B[1]}`);hit.setAttribute('class','routeHit');hit.dataset.i=i;hit.onclick=()=>claimRoute(i);svg.appendChild(hit);
    let approxLen=Math.hypot(B[0]-A[0],B[1]-A[1]);
    let wagonW = l===2 ? Math.max(3.2,Math.min(8.2,(approxLen/l)*.94)) : Math.max(2.7,Math.min(4.35,(approxLen/l)*.88));
-   for(let k=0;k<l;k++){let t=(k+.5)/l,p=qPoint(A,C,B,t),ang=qAngle(A,C,B,t),g=document.createElementNS(ns,'g');g.setAttribute('class','routeSeg');g.dataset.i=i;g.setAttribute('transform',`translate(${p[0]} ${p[1]}) rotate(${ang})`);g.onclick=()=>claimRoute(i);
+   for(let k=0;k<l;k++){let t=(k+.5)/l,p=qPoint(A,C,B,t),ang=qAngle(A,C,B,t),g=document.createElementNS(ns,'g');g.setAttribute('class','routeSeg');g.dataset.i=i;g.dataset.routeColor=c;g.setAttribute('transform',`translate(${p[0]} ${p[1]}) rotate(${ang})`);g.onclick=()=>claimRoute(i);
      let rect=document.createElementNS(ns,'rect');rect.setAttribute('x',-wagonW/2);rect.setAttribute('y',-.62);rect.setAttribute('width',wagonW);rect.setAttribute('height',1.24);rect.setAttribute('rx',.32);rect.setAttribute('class','routePiece');rect.setAttribute('fill',TRAINCOL[c]);g.appendChild(rect);
      let inner=document.createElementNS(ns,'line');inner.setAttribute('x1',-wagonW*.34);inner.setAttribute('x2',wagonW*.34);inner.setAttribute('y1',-.18);inner.setAttribute('y2',-.18);inner.setAttribute('class','routePieceInner');g.appendChild(inner);
      [-wagonW*.27,wagonW*.27].forEach(wx=>{let wh=document.createElementNS(ns,'circle');wh.setAttribute('cx',wx);wh.setAttribute('cy',.62);wh.setAttribute('r',.20);wh.setAttribute('class','routeWheel');g.appendChild(wh)});svg.appendChild(g)
@@ -502,9 +592,9 @@ function renderMap(){
 function renderAll(){
  $("players").innerHTML=players.map((p,i)=>`<div class="playerCard ${i===turn&&!initialSetup?"active":""}" style="border-left:8px solid ${p.color}"><div class="pname">${p.name}</div><div class="stats"><span>★ ${p.score}</span><span>🚂 ${p.trains}</span><span>🎴 ${p.hand.length}</span></div></div>`).join("");
  if(players[turn])$("turnBanner").textContent=`${players[turn].name}'s turn`;
- $("market").innerHTML=market.map((c,i)=>`<div class="card ${c==="wild"?"wild":""}" onclick="drawFace(${i})"><div class="train" style="background:${TRAINCOL[c]}"></div></div>`).join("");
+ $("market").innerHTML=market.map((c,i)=>`<div class="card ${c==="wild"?"wild":""}" onclick="drawFace(${i})"><div class="train" style="background:${c==="wild"?"var(--loco-rainbow)":TRAINCOL[c]}"></div></div>`).join("");
  let p=players[turn]||players[0]; if(!p)return;
- let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=Object.entries(counts).map(([c,n])=>`<div class="handCard ${selectedClaimColor===c?"claimColorSelected":""}" onclick="selectClaimColor('${c}')"><b>${n}×</b><div class="swatch" style="background:${TRAINCOL[c]}"></div></div>`).join("");
+ let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=Object.entries(counts).map(([c,n])=>`<div class="handCard ${c==="wild"?"wildHand":""} ${selectedClaimColor===c?"claimColorSelected":""}" onclick="selectClaimColor('${c}')"><b>${n}×</b><div class="swatch" style="background:${c==="wild"?"var(--loco-rainbow)":TRAINCOL[c]}"></div></div>`).join("");
  $("myTickets").innerHTML=p.tickets.map(t=>`<div class="ticket" style="--ticket-color:${ticketColor(t)}"><span class="value">${t.v}</span></div>`).join("");
  $("sideTickets").innerHTML="";
  let mt=$("mapSavedTickets");
@@ -516,7 +606,7 @@ function renderAll(){
  }).join("");
  document.querySelectorAll(".routeSeg").forEach(g=>{
    let i=+g.dataset.i,rect=g.querySelector(".routePiece"),owner=claimed[i],isClaimed=owner!=null;
-   g.classList.toggle("claimedSeg",isClaimed);
+   g.classList.toggle("claimedSeg",isClaimed); rect.classList.toggle("claimedRoutePiece",isClaimed);
    rect.setAttribute("fill",isClaimed?players[owner].color:TRAINCOL[ROUTES[i][2]]);
    // Claimed wagons are deliberately about twice as thick as empty railway pieces.
    rect.setAttribute("y",isClaimed?-1.115:-.62);
@@ -560,8 +650,14 @@ function finishGame(){
  $('finalResults').innerHTML=`<h2 style="margin-top:0">Journey Complete</h2><div style="font-size:18px;margin-bottom:8px">🏆 ${winners}</div>${body}<button class="btn primary" style="width:100%;margin-top:12px" onclick="location.reload()">New Game</button>`;
  $('finalModal').classList.remove('hidden');
 }
-function drawFace(i){if(gameFinished||initialSetup||turnAction==="route"||turnAction==="ticket")return;let c=market[i];if(drawCount===1&&c==="wild"){toast("A face-up Locomotive cannot be your second draw.");return}turnAction="cards";players[turn].hand.push(c);market.splice(i,1);refillMarket();drawCount++;renderAll();if(c==="wild"||drawCount>=2)endTurn()}
-function drawBlind(){if(gameFinished||initialSetup||turnAction==="route"||turnAction==="ticket"||!deck.length)return;turnAction="cards";players[turn].hand.push(deck.pop());drawCount++;renderAll();if(drawCount>=2)endTurn()}
+function highlightDrawnHandColor(c){
+ document.querySelectorAll(".handCard").forEach(el=>{
+   const sw=el.querySelector(".swatch");
+   if(sw && sw.getAttribute("style")?.includes(TRAINCOL[c])){el.classList.add("drawHighlight");setTimeout(()=>el.classList.remove("drawHighlight"),700)}
+ });
+}
+function drawFace(i){if(gameFinished||initialSetup||turnAction==="route"||turnAction==="ticket")return;let c=market[i];if(c==null)return;if(drawCount===1&&c==="wild"){toast("A face-up Locomotive cannot be your second draw.");return}turnAction="cards";players[turn].hand.push(c);market[i]=deck.length?deck.pop():null;if(market[i]===null)market.splice(i,1);let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5&&deck.length)market.push(deck.pop())}drawCount++;renderAll();if(window.gameSFX)window.gameSFX.draw();highlightDrawnHandColor(c);if(c==="wild"||drawCount>=2)setTimeout(endTurn,720)}
+function drawBlind(){if(gameFinished||initialSetup||turnAction==="route"||turnAction==="ticket"||!deck.length)return;turnAction="cards";let c=deck.pop();players[turn].hand.push(c);drawCount++;renderAll();highlightDrawnHandColor(c);if(drawCount>=2)setTimeout(endTurn,720)}
 function selectClaimColor(c){
  if(gameFinished||initialSetup||turnAction)return;
  selectedClaimColor=(selectedClaimColor===c?null:c);
@@ -619,7 +715,7 @@ function showHelp(){$("help").classList.remove("hidden")}
 <script>
 (function(){
  function cleanTopText(){
-   const phrases=['player turn','player\\'s turn','train cards','train card','choose a train card','select a train card'];
+   const phrases=['player turn',"player's turn",'train cards','train card','choose a train card','select a train card'];
    document.querySelectorAll('.topbar,header,.header').forEach(box=>{
      [...box.children].forEach(el=>{
        if(el.classList.contains('version')) return;
@@ -658,6 +754,7 @@ function showHelp(){$("help").classList.remove("hidden")}
    return document.querySelector('.hand')||document.querySelector('.handArea')||document.querySelector('.bottomDock');
  }
  function animateDraw(source,known){
+   return; // Version 33: card-flight animation intentionally disabled.
    const target=handTarget(); if(!source||!target)return;
    const a=source.getBoundingClientRect(), b=target.getBoundingClientRect();
    let info=known||cardColor(source);
