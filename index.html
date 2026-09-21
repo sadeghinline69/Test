@@ -152,13 +152,18 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 #ticketModal .modalBox{max-height:calc(100dvh - 158px)!important;}
 @media(max-width:850px){.leftDestBtn{margin:5px 2px 2px!important;padding:8px 3px!important;font-size:9px!important;min-height:40px!important}#ticketModal{top:128px!important}#ticketModal .modalBox{max-height:calc(100dvh - 134px)!important}}
 
-/* Version 17 — anonymous cities + strong occupied/unoccupied railway contrast */
+/* Version 18 — restore readable empty rails; claimed rails become bold train wagons */
 .city span{display:none!important}
-.routePiece{opacity:.42!important;filter:saturate(.55) brightness(1.35) drop-shadow(0 .25px .2px #0005)!important;stroke:#756f66!important;stroke-width:.22!important;transition:opacity .18s ease,filter .18s ease,stroke .18s ease}
-.routePieceInner{opacity:.32!important}
-.routeSeg.claimedSeg .routePiece{opacity:1!important;filter:saturate(1.65) brightness(.72) contrast(1.35) drop-shadow(0 0 .75px #fff) drop-shadow(0 1.2px 1px #000)!important;stroke:#17120f!important;stroke-width:.48!important}
-.routeSeg.claimedSeg .routePieceInner{opacity:.9!important;stroke:#ffffffaa!important;stroke-width:.18!important}
-.routeSeg:not(.claimedSeg):hover .routePiece{opacity:.72!important;filter:saturate(.8) brightness(1.15)!important}
+/* Empty routes: restore the strong, readable Version-16 appearance. */
+.routePiece{opacity:.96!important;filter:drop-shadow(0 .45px .35px #0008)!important;stroke:#342a21!important;stroke-width:.32!important;transition:filter .18s ease,stroke .18s ease,stroke-width .18s ease}
+.routePieceInner{opacity:1!important;stroke:#ffffff55!important;stroke-width:.13!important}
+.routeSeg:not(.claimedSeg):hover .routePiece{filter:brightness(1.18) drop-shadow(0 .55px .45px #0009)!important}
+/* Claimed routes: each segment reads as a heavy, dark-edged railway wagon. */
+.routeSeg.claimedSeg .routePiece{opacity:1!important;filter:saturate(1.45) brightness(.88) contrast(1.25) drop-shadow(0 0 .65px #fff) drop-shadow(0 1.1px .8px #000)!important;stroke:#15100d!important;stroke-width:.58!important;stroke-dasharray:.7 .18!important}
+.routeSeg.claimedSeg .routePieceInner{opacity:1!important;stroke:#ffffffc7!important;stroke-width:.18!important}
+.routeWheel{display:none;fill:#17120f;stroke:#eadfbd;stroke-width:.08;vector-effect:non-scaling-stroke;pointer-events:none}
+.routeSeg.claimedSeg .routeWheel{display:block}
+
 /* Destination Tickets intentionally show points only; endpoints are communicated by map highlights. */
 .ticket b,.ticket .destArrow,.ticketChoice h3{display:none!important}
 #ticketModal .ticketChoice{min-height:36px!important;text-align:center!important}
@@ -175,7 +180,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 17</div>
+<div class="version">Version 18</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -262,7 +267,8 @@ function renderMap(){
    let hit=document.createElementNS(ns,'path');hit.setAttribute('d',`M${A[0]},${A[1]} Q${C[0]},${C[1]} ${B[0]},${B[1]}`);hit.setAttribute('class','routeHit');hit.dataset.i=i;hit.onclick=()=>claimRoute(i);svg.appendChild(hit);
    for(let k=0;k<l;k++){let t=(k+.5)/l,p=qPoint(A,C,B,t),ang=qAngle(A,C,B,t),g=document.createElementNS(ns,'g');g.setAttribute('class','routeSeg');g.dataset.i=i;g.setAttribute('transform',`translate(${p[0]} ${p[1]}) rotate(${ang})`);g.onclick=()=>claimRoute(i);
      let rect=document.createElementNS(ns,'rect');rect.setAttribute('x',-1.55);rect.setAttribute('y',-.72);rect.setAttribute('width',3.1);rect.setAttribute('height',1.44);rect.setAttribute('rx',.32);rect.setAttribute('class','routePiece');rect.setAttribute('fill',TRAINCOL[c]);g.appendChild(rect);
-     let inner=document.createElementNS(ns,'line');inner.setAttribute('x1',-1.05);inner.setAttribute('x2',1.05);inner.setAttribute('y1',-.18);inner.setAttribute('y2',-.18);inner.setAttribute('class','routePieceInner');g.appendChild(inner);svg.appendChild(g)
+     let inner=document.createElementNS(ns,'line');inner.setAttribute('x1',-1.05);inner.setAttribute('x2',1.05);inner.setAttribute('y1',-.18);inner.setAttribute('y2',-.18);inner.setAttribute('class','routePieceInner');g.appendChild(inner);
+     [-.82,.82].forEach(wx=>{let wh=document.createElementNS(ns,'circle');wh.setAttribute('cx',wx);wh.setAttribute('cy',.72);wh.setAttribute('r',.23);wh.setAttribute('class','routeWheel');g.appendChild(wh)});svg.appendChild(g)
    }
  });
  Object.entries(CITIES).forEach(([n,p])=>{let e=document.createElement('div');e.className='city';e.dataset.name=n;e.style.left=p[0]+'%';e.style.top=p[1]+'%';e.innerHTML=`<div class="dot"></div>`;m.appendChild(e)})
