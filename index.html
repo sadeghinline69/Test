@@ -439,6 +439,26 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 .handCard.wildHand{background:var(--loco-rainbow)!important;border-color:#fff!important}
 .handCard.wildHand .swatch{background:var(--loco-rainbow)!important;border-color:#fff!important;box-shadow:inset 0 0 0 1px #2228!important}
 
+/* Version 36 — larger Guide/Home controls; compact Destination Tickets action. */
+.leftDestBtn{
+  margin:6px 4px 3px!important;
+  padding:7px 5px!important;
+  font-size:10px!important;
+  min-height:36px!important;
+}
+.mapTools{gap:7px!important;margin-top:auto!important;padding-top:6px!important}
+.mapTools .btn{
+  min-height:42px!important;
+  font-size:18px!important;
+  padding:8px 5px!important;
+  border-radius:11px!important;
+}
+@media(max-width:850px){
+  .leftDestBtn{margin:4px 2px 2px!important;padding:5px 2px!important;font-size:8px!important;min-height:30px!important}
+  .mapTools{gap:4px!important;padding-top:4px!important}
+  .mapTools .btn{min-height:36px!important;font-size:16px!important;padding:6px 2px!important}
+}
+
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -449,7 +469,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 35</div>
+<div class="version">Version 36</div>
 </div></section>
 
 <section id="game" class="screen hidden">
