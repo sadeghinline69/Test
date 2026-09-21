@@ -348,12 +348,12 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 
 /* Version 30 — sound cues + animated final scoring */
 #finalScoreShow{
- position:fixed;inset:0;z-index:200000;background:rgba(14,18,22,.94);
- display:none;align-items:center;justify-content:center;padding:18px;color:#fff;
+ position:fixed;inset:0;z-index:200000;background:rgba(14,18,22,.28);
+ display:none;align-items:center;justify-content:flex-start;padding:12px;color:#fff;
  font-family:system-ui,sans-serif;
 }
 #finalScoreShow.on{display:flex}
-.scoreStage{width:min(900px,96vw);max-height:92vh;overflow:auto;background:linear-gradient(145deg,#25303b,#11171d);
+.scoreStage{width:min(430px,44vw);max-height:94vh;overflow:auto;background:linear-gradient(145deg,#25303bf2,#11171df2);
  border:2px solid #c8a96b;border-radius:18px;padding:18px;box-shadow:0 20px 60px #000}
 .scoreStage h2{text-align:center;margin:0 0 12px;font-size:25px;letter-spacing:.5px}
 .scoreRows{display:grid;gap:10px}
@@ -365,9 +365,20 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 .scoreFill{height:100%;width:0;background:linear-gradient(90deg,#c8a96b,#ffe28a);transition:width .55s ease}
 .scoreEvent{min-height:24px;font-weight:800;font-size:13px;opacity:.95}
 .scoreDelta{display:inline-block;margin-left:8px;font-size:17px;animation:scorePop .55s ease}
+.scoreTickets{display:grid;gap:4px;margin-top:7px}
+.scoreTicket{display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center;padding:5px 7px;border-radius:8px;background:#ffffff0c;border:1px solid #ffffff26;font-size:11px;transition:.25s}
+.scoreTicket.active{transform:scale(1.025);border-color:#ffe28a;box-shadow:0 0 10px #ffe28a66}
+.scoreTicket.complete{background:#287a4655;border-color:#6fec94}.scoreTicket.incomplete{background:#8a303055;border-color:#ff7777}
+.scoreTicket strong{font-size:14px}.scoreTicket.complete strong{color:#76f49b}.scoreTicket.incomplete strong{color:#ff8d8d}
+.longestReadout{margin-top:6px;padding:5px 7px;border-radius:8px;background:#d49f252b;border:1px solid #d9b65e55;font-size:11px}
+.routeSeg.finalLongest .routePiece{opacity:1!important;stroke:#ffe36b!important;stroke-width:.9!important;filter:brightness(1.35) saturate(1.5) drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 2.8px #ffd633)!important;animation:longestRailPulse .7s ease-in-out infinite alternate}
+.routeSeg.finalLongest .routePieceInner{stroke:#fff!important;opacity:1!important}
+@keyframes longestRailPulse{to{filter:brightness(1.7) saturate(1.7) drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #ffbf00)!important}}
 @keyframes scorePop{0%{transform:scale(.5);opacity:0}55%{transform:scale(1.25);opacity:1}100%{transform:scale(1)}}
 .scoreWinner{text-align:center;font-size:24px;font-weight:1000;margin-top:15px;animation:winnerPulse 1s ease infinite alternate}
+.scoreNewGame{display:none;width:100%;margin-top:12px}
 @keyframes winnerPulse{to{transform:scale(1.06);text-shadow:0 0 18px #ffd45d}}
+@media(max-width:850px){#finalScoreShow{padding:5px}.scoreStage{width:46vw;max-height:96vh;padding:8px;border-radius:11px}.scoreStage h2{font-size:15px;margin-bottom:6px}.scoreRows{gap:5px}.scorePlayer{padding:6px}.scoreHead{font-size:11px}.scoreTotal{font-size:16px}.scoreEvent,.scoreTicket,.longestReadout{font-size:8px}.scoreTicket strong{font-size:10px}.scoreWinner{font-size:14px;margin-top:7px}}
 
 
 /* Version 31 — no persistent text above the board. Only invalid-railway warning is shown. */
@@ -493,7 +504,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 39</div>
+<div class="version">Version 40</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -506,7 +517,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 </section>
 
 <div id="finalModal" class="modal hidden"><div id="finalResults" class="modalBox"></div></div>
-<div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a route, first tap a Train Card color in your hand, then tap the railway you want. If that railway cannot be claimed with the selected color, the game will warn you. Gray routes may use any single color. Locomotives are wild. With 2–3 players, only one route of a parallel pair may be claimed; with 4–5 players, both may be claimed, but by different players.</p><p><b>AI Bot:</b> Choose “Play vs AI Bot” on the main menu. Easy makes casual, less predictable choices; Medium considers route value and destinations; Hard plans shortest useful paths and targets the cards it needs. The bot's cards and tickets remain hidden.</p><p>When any player ends a turn with 2 or fewer trains, every player (including that player) gets exactly one final turn. Then completed Destination Tickets add their printed value and incomplete ones subtract it. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
+<div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a route, first tap a Train Card color in your hand, then tap the railway you want. If that railway cannot be claimed with the selected color, the game will warn you. Gray routes may use any single color. Locomotives are wild. With 2–3 players, only one route of a parallel pair may be claimed; with 4–5 players, both may be claimed, but by different players.</p><p><b>AI Bot:</b> Choose “Play vs AI Bot” on the main menu. Easy makes casual, less predictable choices; Medium considers route value and destinations; Hard plans shortest useful paths and targets the cards it needs. The bot's cards and tickets remain hidden.</p><p>When any player ends a turn with 2 or fewer trains, every player (including that player) gets exactly one final turn. Completed Destination Tickets add their printed value, incomplete tickets subtract it, and the player with the longest continuous railway receives 10 bonus points. The final sequence shows every change and highlights each longest path on the map. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
 <script>
 const CITIES={"Vancouver":[8,8],"Seattle":[8,18],"Portland":[7,32],"San Francisco":[9,60],"Los Angeles":[14,79],"Calgary":[27,7],"Helena":[32,30],"Salt Lake City":[27,53],"Las Vegas":[23,68],"Phoenix":[31,80],"Winnipeg":[51,8],"Duluth":[58,27],"Denver":[44,50],"Santa Fe":[43,69],"El Paso":[48,84],"Omaha":[58,45],"Kansas City":[62,57],"Oklahoma City":[60,69],"Dallas":[61,81],"Houston":[65,91],"Sault Ste. Marie":[72,15],"Chicago":[70,42],"Saint Louis":[70,58],"Little Rock":[70,72],"New Orleans":[75,88],"Toronto":[81,28],"Pittsburgh":[82,46],"Nashville":[80,64],"Atlanta":[85,74],"Miami":[94,93],"Montreal":[91,14],"Boston":[96,27],"New York":[92,42],"Washington":[91,56],"Raleigh":[91,66],"Charleston":[93,75]}, ROUTES=[["Vancouver","Seattle","gray",1],["Vancouver","Calgary","gray",3],["Seattle","Portland","gray",1],["Seattle","Portland","gray",1],["Seattle","Helena","yellow",6],["Seattle","Helena","blue",6],["Portland","San Francisco","green",5],["Portland","San Francisco","purple",5],["Portland","Salt Lake City","blue",6],["San Francisco","Los Angeles","yellow",3],["San Francisco","Los Angeles","purple",3],["San Francisco","Salt Lake City","orange",5],["Los Angeles","Las Vegas","gray",2],["Los Angeles","Phoenix","gray",3],["Los Angeles","El Paso","black",6],["Calgary","Helena","gray",4],["Calgary","Winnipeg","#00b8d4",6],["Helena","Winnipeg","blue",4],["Helena","Duluth","orange",6],["Helena","Denver","green",4],["Helena","Salt Lake City","purple",3],["Salt Lake City","Denver","red",3],["Salt Lake City","Denver","yellow",3],["Salt Lake City","Las Vegas","orange",3],["Phoenix","Santa Fe","gray",3],["Phoenix","El Paso","gray",3],["Denver","Santa Fe","gray",2],["Denver","Omaha","purple",4],["Denver","Kansas City","black",4],["Denver","Kansas City","orange",4],["Denver","Oklahoma City","red",4],["Winnipeg","Duluth","black",4],["Winnipeg","Sault Ste. Marie","gray",6],["Duluth","Omaha","gray",2],["Duluth","Chicago","red",3],["Duluth","Sault Ste. Marie","gray",3],["Omaha","Chicago","blue",4],["Omaha","Kansas City","gray",1],["Kansas City","Saint Louis","blue",2],["Kansas City","Saint Louis","purple",2],["Kansas City","Oklahoma City","gray",2],["Oklahoma City","Dallas","gray",2],["Oklahoma City","Little Rock","gray",2],["Santa Fe","El Paso","gray",2],["Santa Fe","Oklahoma City","blue",3],["El Paso","Dallas","red",4],["El Paso","Houston","green",6],["Dallas","Houston","gray",1],["Dallas","Little Rock","gray",2],["Houston","New Orleans","gray",2],["Sault Ste. Marie","Toronto","gray",2],["Sault Ste. Marie","Montreal","black",5],["Chicago","Toronto","#00b8d4",4],["Chicago","Pittsburgh","orange",3],["Chicago","Pittsburgh","black",3],["Chicago","Saint Louis","green",2],["Chicago","Saint Louis","#00b8d4",2],["Saint Louis","Pittsburgh","green",5],["Saint Louis","Nashville","gray",2],["Saint Louis","Little Rock","gray",2],["Little Rock","Nashville","#00b8d4",3],["Little Rock","New Orleans","green",3],["New Orleans","Atlanta","yellow",4],["New Orleans","Atlanta","orange",4],["New Orleans","Miami","red",6],["Nashville","Atlanta","gray",1],["Nashville","Raleigh","black",3],["Atlanta","Raleigh","gray",2],["Atlanta","Charleston","gray",2],["Atlanta","Miami","blue",5],["Atlanta","Miami","purple",5],["Toronto","Montreal","gray",3],["Toronto","Pittsburgh","gray",2],["Montreal","Boston","gray",2],["Montreal","New York","blue",3],["Boston","New York","yellow",2],["Boston","New York","red",2],["Pittsburgh","New York","green",2],["Pittsburgh","Washington","gray",2],["Pittsburgh","Raleigh","gray",2],["New York","Washington","orange",2],["New York","Washington","black",2],["Washington","Raleigh","gray",2],["Raleigh","Charleston","gray",2],["Charleston","Miami","purple",4]], TICKETS=[["Los Angeles", "New York", 21], ["Duluth", "Houston", 8], ["Sault Ste. Marie", "Nashville", 8], ["New York", "Atlanta", 6], ["Portland", "Nashville", 17], ["Vancouver", "Montreal", 20], ["Duluth", "El Paso", 10], ["Toronto", "Miami", 10], ["Portland", "Phoenix", 11], ["Dallas", "New York", 11], ["Calgary", "Salt Lake City", 7], ["Calgary", "Phoenix", 13], ["Los Angeles", "Miami", 20], ["Winnipeg", "Little Rock", 11], ["San Francisco", "Atlanta", 17], ["Kansas City", "Houston", 5], ["Los Angeles", "Chicago", 16], ["Denver", "Pittsburgh", 11], ["Helena", "Los Angeles", 8], ["Winnipeg", "Houston", 12], ["Montreal", "Atlanta", 9], ["Seattle", "New York", 22], ["Denver", "El Paso", 4], ["Vancouver", "Santa Fe", 13], ["Boston", "Miami", 12], ["Chicago", "New Orleans", 7], ["Montreal", "New Orleans", 13], ["Seattle", "Los Angeles", 9], ["Dallas", "Chicago", 9], ["San Francisco", "New York", 21]];
 const COLORS=["blue","red","green","goldenrod","black"];
@@ -712,17 +723,8 @@ function endTurn(){
 }
 function finishGame(){
  gameFinished=true;stopPendingGlowCycle();clearGlow();
- const rows=players.map((p,pi)=>{
-   let ticketDelta=0,done=0,missed=0;
-   p.tickets.forEach(t=>{if(ticketCompleted(t,pi)){ticketDelta+=t.v;done++}else{ticketDelta-=t.v;missed++}});
-   p.score+=ticketDelta;
-   return {p,pi,ticketDelta,done,missed,total:p.score};
- }).sort((a,b)=>b.total-a.total);
  renderAll();
- const top=rows[0]?.total, winners=rows.filter(r=>r.total===top).map(r=>r.p.name).join(' & ');
- const body=rows.map((r,i)=>`<div style="display:grid;grid-template-columns:24px 1fr 58px;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px solid #9b6a3066"><b>${i+1}</b><span><b>${r.p.name}</b><small style="display:block">Tickets: ${r.ticketDelta>=0?'+':''}${r.ticketDelta} (${r.done} complete, ${r.missed} incomplete)</small></span><strong style="font-size:20px">${r.total}</strong></div>`).join('');
- $('finalResults').innerHTML=`<h2 style="margin-top:0">Journey Complete</h2><div style="font-size:18px;margin-bottom:8px">🏆 ${winners}</div>${body}<button class="btn primary" style="width:100%;margin-top:12px" onclick="location.reload()">New Game</button>`;
- $('finalModal').classList.remove('hidden');
+ setTimeout(()=>window.animateFinalScoring&&window.animateFinalScoring(),250);
 }
 function highlightDrawnHandColor(c){
  document.querySelectorAll(".handCard").forEach(el=>{
@@ -870,6 +872,7 @@ function showHelp(){$("help").classList.remove("hidden")}
   <h2>Final Scoring</h2>
   <div class="scoreRows" id="scoreRows"></div>
   <div class="scoreWinner" id="scoreWinner"></div>
+  <button id="scoreNewGame" class="btn primary scoreNewGame" onclick="location.reload()">New Game</button>
  </div>
 </div>
 
@@ -914,14 +917,14 @@ function showHelp(){$("help").classList.remove("hidden")}
  }
  window.addEventListener('load',()=>{counts();new MutationObserver(counts).observe(document.body,{subtree:true,attributes:true,childList:true})});
 
- // Longest continuous route in number of train segments, using only routes owned by player.
- function longestForPlayer(pi){
+ // Longest continuous route in number of train segments, including its exact map pieces.
+ function longestPathForPlayer(pi){
    if(typeof ROUTES==='undefined'||typeof claimed==='undefined')return 0;
    let edges=[];
    ROUTES.forEach((r,i)=>{if(claimed[i]===pi)edges.push({a:r[0],b:r[1],w:+r[3]||1,id:i})});
-   let best=0;
+   let best=0,bestRoutes=[];
    function dfs(city,used,total){
-     if(total>best)best=total;
+     if(total>best){best=total;bestRoutes=[...used]}
      for(const e of edges){
        if(used.has(e.id))continue;
        let nxt=null;if(e.a===city)nxt=e.b;else if(e.b===city)nxt=e.a;else continue;
@@ -929,15 +932,10 @@ function showHelp(){$("help").classList.remove("hidden")}
      }
    }
    let cities=new Set(edges.flatMap(e=>[e.a,e.b]));cities.forEach(c=>dfs(c,new Set(),0));
-   return best;
+   return {length:best,routes:bestRoutes};
  }
  function ticketDone(pi,t){
-   try{
-     if(typeof isTicketComplete==='function')return !!isTicketComplete(pi,t);
-     if(typeof ticketComplete==='function')return !!ticketComplete(pi,t);
-     if(typeof connected==='function')return !!connected(pi,t[0],t[1]);
-   }catch(e){}
-   return false;
+   try{return typeof ticketCompleted==='function'?!!ticketCompleted(t,pi):false}catch(e){return false}
  }
  function ticketsOf(pi){
    let p=players&&players[pi];
@@ -946,45 +944,54 @@ function showHelp(){$("help").classList.remove("hidden")}
  function baseScore(pi){
    let p=players&&players[pi]; return +(p&&(p.routeScore??p.score??p.points) ||0);
  }
- function tVal(t){return +(t.value??t.points??t[2]??0)}
+ function tVal(t){return +(t.v??t.value??t.points??t[2]??0)}
  function tName(t){return (t.a||t.from||t[0]||'')+' – '+(t.b||t.to||t[1]||'')}
+ function showLongestOnMap(routeIds){
+   document.querySelectorAll('.routeSeg.finalLongest').forEach(x=>x.classList.remove('finalLongest'));
+   routeIds.forEach(id=>document.querySelectorAll(`.routeSeg[data-i="${id}"]`).forEach(x=>x.classList.add('finalLongest')));
+ }
  const wait=ms=>new Promise(r=>setTimeout(r,ms));
  async function animateFinalScoring(){
    if(!window.players||!players.length)return;
-   const box=document.getElementById('finalScoreShow'),rows=document.getElementById('scoreRows'),win=document.getElementById('scoreWinner');
-   rows.innerHTML='';win.textContent='';box.classList.add('on');
+   const box=document.getElementById('finalScoreShow'),rows=document.getElementById('scoreRows'),win=document.getElementById('scoreWinner'),newGame=document.getElementById('scoreNewGame');
+   rows.innerHTML='';win.textContent='';newGame.style.display='none';box.classList.add('on');
    let totals=players.map((p,i)=>baseScore(i)), rowEls=[];
    players.forEach((p,i)=>{
-     let d=document.createElement('div');d.className='scorePlayer';d.innerHTML=`<div class="scoreHead"><span>${p.name||'Player '+(i+1)}</span><span class="scoreTotal">${totals[i]}</span></div><div class="scoreTrack"><div class="scoreFill"></div></div><div class="scoreEvent">Railway points: ${totals[i]}</div>`;
+     let cards=ticketsOf(i).map((t,j)=>`<div class="scoreTicket" data-ticket="${j}"><span>🎫 ${tName(t)}</span><strong>${tVal(t)}</strong></div>`).join('');
+     let d=document.createElement('div');d.className='scorePlayer';d.innerHTML=`<div class="scoreHead"><span>${p.name||'Player '+(i+1)}</span><span class="scoreTotal">${totals[i]}</span></div><div class="scoreTrack"><div class="scoreFill"></div></div><div class="scoreEvent">Railway points <span class="scoreDelta">+${totals[i]}</span></div><div class="scoreTickets">${cards||'<span style="font-size:10px;opacity:.7">No destination tickets</span>'}</div><div class="longestReadout">Longest continuous path: waiting…</div>`;
      rows.appendChild(d);rowEls.push(d)
    });
    await wait(800);
    for(let i=0;i<players.length;i++){
-     for(const t of ticketsOf(i)){
+     for(let j=0;j<ticketsOf(i).length;j++){
+       const t=ticketsOf(i)[j];
        let ok=ticketDone(i,t),v=tVal(t),delta=ok?v:-v;totals[i]+=delta;
-       let ev=rowEls[i].querySelector('.scoreEvent');ev.innerHTML=`Destination Ticket ${ok?'completed':'incomplete'} <span class="scoreDelta">${delta>=0?'+':''}${delta}</span>`;
+       let card=rowEls[i].querySelector(`[data-ticket="${j}"]`);card.classList.add('active',ok?'complete':'incomplete');card.querySelector('strong').textContent=(delta>=0?'+':'')+delta;
+       let ev=rowEls[i].querySelector('.scoreEvent');ev.innerHTML=`${tName(t)}: ${ok?'completed':'incomplete'} <span class="scoreDelta">${delta>=0?'+':''}${delta}</span>`;
        rowEls[i].querySelector('.scoreTotal').textContent=totals[i];
        rowEls[i].querySelector('.scoreFill').style.width=Math.min(100,Math.max(4,totals[i]))+'%';
-       ok?SFX.plus():SFX.minus(); await wait(720);
+       ok?SFX.plus():SFX.minus(); await wait(800);card.classList.remove('active');
      }
    }
-   let lens=players.map((p,i)=>longestForPlayer(i)), mx=Math.max(...lens);
-   if(mx>0){
-     for(let i=0;i<players.length;i++)if(lens[i]===mx){
-       totals[i]+=10;rowEls[i].querySelector('.scoreTotal').textContent=totals[i];
-       rowEls[i].querySelector('.scoreEvent').innerHTML=`Longest continuous railway (${mx} trains) <span class="scoreDelta">+10</span>`;
-       SFX.longest();await wait(800);
-     }
+   let paths=players.map((p,i)=>longestPathForPlayer(i)),mx=Math.max(...paths.map(x=>x.length));
+   for(let i=0;i<players.length;i++){
+     showLongestOnMap(paths[i].routes);rowEls.forEach((r,j)=>r.classList.toggle('leader',j===i));
+     let wins=paths[i].length>0&&paths[i].length===mx,bonus=wins?10:0;totals[i]+=bonus;
+     rowEls[i].querySelector('.longestReadout').innerHTML=`Longest continuous path: <b>${paths[i].length} trains</b>${wins?' — longest-path bonus <span class="scoreDelta">+10</span>':''}`;
+     rowEls[i].querySelector('.scoreEvent').innerHTML=`Map: ${players[i].name}'s longest continuous path${wins?' <span class="scoreDelta">+10</span>':''}`;
+     rowEls[i].querySelector('.scoreTotal').textContent=totals[i];if(wins)SFX.longest();await wait(1200);
    }
+   showLongestOnMap(paths.flatMap((x,i)=>x.length===mx?x.routes:[]));rowEls.forEach(r=>r.classList.remove('leader'));
    let high=Math.max(...totals), winners=players.map((p,i)=>totals[i]===high?i:-1).filter(i=>i>=0);
    winners.forEach(i=>rowEls[i].classList.add('leader'));
    win.textContent=(winners.length>1?'Winners: ':'Winner: ')+winners.map(i=>players[i].name||'Player '+(i+1)).join(' & ')+' — '+high+' points';
+   newGame.style.display='block';
    SFX.complete();
  }
  window.animateFinalScoring=animateFinalScoring;
 
- // Hook common end-game functions if present, preserving existing logic.
- ['endGame','finishGame','showFinalScores','finalScoring'].forEach(name=>{
+ // Hook only optional alternate end-game entry points. finishGame calls this directly.
+ ['endGame','showFinalScores','finalScoring'].forEach(name=>{
    if(typeof window[name]==='function' && window[name]!==animateFinalScoring){
      const old=window[name];window[name]=function(){let r=old.apply(this,arguments);setTimeout(animateFinalScoring,250);return r}
    }
