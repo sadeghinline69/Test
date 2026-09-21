@@ -152,7 +152,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 #ticketModal .modalBox{max-height:calc(100dvh - 158px)!important;}
 @media(max-width:850px){.leftDestBtn{margin:5px 2px 2px!important;padding:8px 3px!important;font-size:9px!important;min-height:40px!important}#ticketModal{top:128px!important}#ticketModal .modalBox{max-height:calc(100dvh - 134px)!important}}
 
-/* Version 19 — medium-visibility slimmer empty rails; slimmer claimed wagons */
+/* Version 20 — claimed wagons approximately twice as thick as empty rails */
 .city span{display:none!important}
 /* Empty routes: midway between V17 subtle rails and V18 strong rails. */
 .routePiece{opacity:.76!important;filter:saturate(.82) brightness(1.06) drop-shadow(0 .35px .28px #0006)!important;stroke:#4b4034!important;stroke-width:.27!important;transition:filter .18s ease,stroke .18s ease,stroke-width .18s ease,opacity .18s ease}
@@ -170,6 +170,10 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 #ticketModal .ticketChoice .value{float:none!important;display:block!important;text-align:center!important;font-size:18px!important}
 .mapSavedTickets .ticket.ticketTop{width:48px!important;min-width:48px!important;max-width:48px!important}
 .mapSavedTickets .ticket.ticketTop .value{float:none!important;display:block!important;text-align:center!important;font-size:18px!important;line-height:37px!important}
+
+/* Version 20 — strong size hierarchy: occupied trains are ~2x the thickness of empty rails. */
+.routeSeg.claimedSeg .routePiece{stroke-width:.55!important;filter:saturate(1.55) brightness(.86) contrast(1.3) drop-shadow(0 0 .65px #fff) drop-shadow(0 1.15px .85px #000)!important}
+.routeSeg.claimedSeg .routePieceInner{stroke-width:.18!important}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -180,7 +184,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 19</div>
+<div class="version">Version 20</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -288,7 +292,18 @@ function renderAll(){
    let tc=ticketColor(t);
    return `<div class="ticket ${top?"ticketTop":"ticketUnder"}" style="--ticket-color:${tc}"><span class="value">${t.v}</span></div>`;
  }).join("");
- document.querySelectorAll(".routeSeg").forEach(g=>{let i=+g.dataset.i,rect=g.querySelector(".routePiece"),owner=claimed[i];g.classList.toggle("claimedSeg",owner!=null);rect.setAttribute("fill",owner!=null?players[owner].color:TRAINCOL[ROUTES[i][2]])})
+ document.querySelectorAll(".routeSeg").forEach(g=>{
+   let i=+g.dataset.i,rect=g.querySelector(".routePiece"),owner=claimed[i],isClaimed=owner!=null;
+   g.classList.toggle("claimedSeg",isClaimed);
+   rect.setAttribute("fill",isClaimed?players[owner].color:TRAINCOL[ROUTES[i][2]]);
+   // Claimed wagons are deliberately about twice as thick as empty railway pieces.
+   rect.setAttribute("y",isClaimed?-1.18:-.62);
+   rect.setAttribute("height",isClaimed?2.36:1.24);
+   rect.setAttribute("rx",isClaimed?.46:.32);
+   let inner=g.querySelector(".routePieceInner");
+   if(inner) inner.setAttribute("y1",isClaimed?-.34:-.18),inner.setAttribute("y2",isClaimed?-.34:-.18);
+   g.querySelectorAll(".routeWheel").forEach(wh=>{wh.setAttribute("cy",isClaimed?1.18:.62);wh.setAttribute("r",isClaimed?.27:.20)});
+ })
  if($("ticketModal").classList.contains("hidden")) paintTicketSet(ownedActiveTickets());
 }
 function beginTurn(){drawCount=0;turnAction=null;renderAll()}
