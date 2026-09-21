@@ -558,22 +558,30 @@ body.finalScoringMode #game::after{display:none!important}
 .scoreNumberLine{display:flex;align-items:center;justify-content:center;gap:5px;min-height:43px}.scoreChange{display:inline-block;min-width:31px;font:1000 17px/1 system-ui;color:#75f69a;opacity:0;transform:translateY(6px) scale(.7)}.scoreChange.minus{color:#ff8585}.scoreChange.show{animation:scoreChangePop 1.25s ease both}
 @keyframes scoreChangePop{0%{opacity:0;transform:translateY(7px) scale(.6)}18%,72%{opacity:1;transform:translateY(0) scale(1.15)}100%{opacity:0;transform:translateY(-7px) scale(.9)}}
 @media(max-width:850px){.gameVersion{right:3px;bottom:2px;font-size:8px;padding:2px 5px}.scoreNumberLine{gap:2px;min-height:31px}.scoreChange{font-size:12px;min-width:22px}}
+
+/* Version 54 — internet room-code lobby. */
+#onlinePanel{margin-top:8px;padding:12px;border:2px solid #a67b3d;border-radius:13px;background:#fff7e0aa}#onlinePanel .primary{margin-top:8px}.onlineStatus{margin-top:9px;padding:8px;border-radius:8px;background:#211a14;color:#f8e8bd;font:700 12px/1.3 Arial}.roomCodeBox{margin:10px auto;padding:10px;border:3px dashed #8b281f;border-radius:10px;text-align:center;font:1000 30px/1 Arial;letter-spacing:5px;color:#7f1f1d;background:#fff}.onlineReady{color:#76ef9a}.onlineWaiting{color:#ffe37b}
+/* Version 55 — centered, wider train-card hand without extra height. */
+.bottom{left:0!important;right:0!important}.bottom>div:nth-child(2){width:100%!important;justify-content:center!important}.hand{max-width:min(760px,76vw)!important;justify-content:center!important}
+.handCard{width:72px!important;height:37px!important;min-height:37px!important;padding-left:6px!important;padding-right:6px!important}.handCard .swatch{width:36px!important;min-width:36px!important}
+@media(max-width:850px){.bottom{left:0!important;right:0!important}.hand{max-width:78vw!important}.handCard{width:56px!important;height:32px!important;min-height:32px!important}.handCard .swatch{width:28px!important;min-width:28px!important}}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
 <div class="panel">
 <div class="logo">RAILWAY<br>RIVALS</div><div class="subtitle">A CROSS-COUNTRY RAIL ADVENTURE</div>
 <div class="row"><div class="field"><label id="countLabel">Bots</label><select id="numPlayers"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
-<div class="field"><label>Game Mode</label><select id="gameMode"><option value="bot">Bot Match</option><option value="mixed">Multiplayer / Mixed</option></select></div>
+<div class="field"><label>Game Mode</label><select id="gameMode"><option value="bot">Bot Match</option><option value="online">Online Room</option></select></div>
 <div class="field" id="difficultyField"><label>Bot Difficulty</label><select id="botDifficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard" selected>Hard</option></select></div></div>
 <div id="names"></div>
-<button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
+<div id="onlinePanel" class="hidden"><div class="row"><div class="field"><label>Room Action</label><select id="onlineAction"><option value="create">Create Room</option><option value="join">Join Room</option></select></div><div class="field" id="onlineBotsField"><label>Bots in Room</label><select id="onlineBots"><option>0</option><option>1</option><option>2</option><option>3</option></select></div><div class="field hidden" id="joinCodeField"><label>Room Code</label><input id="joinCode" maxlength="6" placeholder="ABC123"></div></div><button id="onlineConnectBtn" class="btn" type="button" onclick="onlineConnect()">Create Room</button><div id="onlineStatus" class="onlineStatus">Choose Create Room or Join Room.</div><div id="roomCodeBox" class="roomCodeBox hidden"></div><button id="onlineStartBtn" class="btn primary hidden" type="button" onclick="startOnlineHostedGame()">Start Online Game</button></div>
+<button id="startJourneyBtn" class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 53</div>
+<div class="version">Version 55</div>
 </div></section>
 
 <section id="game" class="screen hidden">
-<div class="gameVersion">Version 53</div>
+<div class="gameVersion">Version 55</div>
 <div id="finalRoundAlert" role="alert" aria-live="assertive">⚠ FINAL ROUND — ONE LAST TURN FOR EVERY PLAYER ⚠</div>
 <aside class="sidebar"><div id="players"></div><button id="leftDestBtn" class="btn leftDestBtn" onclick="drawTickets()">🎫 Destination Tickets</button><div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div><div class="leftTools"><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <main class="mapWrap"><div id="map"></div><div id="mapSavedTickets" class="mapSavedTickets"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
@@ -583,7 +591,7 @@ body.finalScoringMode #game::after{display:none!important}
 </section>
 
 <div id="finalModal" class="modal hidden"><div id="finalResults" class="modalBox"></div></div>
-<div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a route, first tap a Train Card color in your hand, then tap the railway you want. If that railway cannot be claimed with the selected color, the game will warn you. Gray routes may use any single color. Locomotives are wild. With 2–3 players, only one route of a parallel pair may be claimed; with 4–5 players, both may be claimed, but by different players.</p><p><b>Game modes:</b> Bot Match supports one human against 1–4 bots. Multiplayer / Mixed supports 2–4 seats, and every seat can be a human or a bot. Easy makes casual choices; Medium considers route value and destinations; Hard plans useful long paths and targets the cards it needs. Bot cards and tickets remain hidden.</p><p>When any player ends a turn with 2 or fewer trains, every player (including that player) gets exactly one final turn. Completed Destination Tickets add their printed value, incomplete tickets subtract it, and the player with the longest continuous railway receives 10 bonus points. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
+<div id="help" class="modal hidden"><div class="modalBox"><h2>How to Play</h2><p>On your turn, do exactly one action: draw Train Car cards, claim one route, or draw Destination Tickets.</p><p>To claim a route, first tap a Train Card color in your hand, then tap the railway you want. If that railway cannot be claimed with the selected color, the game will warn you. Gray routes may use any single color. Locomotives are wild. With 2–3 players, only one route of a parallel pair may be claimed; with 4–5 players, both may be claimed, but by different players.</p><p><b>Game modes:</b> Bot Match supports one human against 1–4 bots. Online Room supports 2–4 phones with optional bots: one phone creates the room, shares its six-character code, and remains connected as host. Easy makes casual choices; Medium considers route value and destinations; Hard plans useful long paths and targets the cards it needs. Every remote player receives only their own private hand and destination cards.</p><p>When any player ends a turn with 2 or fewer trains, every player (including that player) gets exactly one final turn. Completed Destination Tickets add their printed value, incomplete tickets subtract it, and the player with the longest continuous railway receives 10 bonus points. Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15.</p><button class="btn primary" onclick="document.getElementById('help').classList.add('hidden')">Back to Game</button></div></div>
 <script>
 const CITIES={"Vancouver":[8,8],"Seattle":[8,18],"Portland":[7,32],"San Francisco":[9,60],"Los Angeles":[14,79],"Calgary":[27,7],"Helena":[32,30],"Salt Lake City":[27,53],"Las Vegas":[23,68],"Phoenix":[31,80],"Winnipeg":[51,8],"Duluth":[58,27],"Denver":[44,50],"Santa Fe":[43,69],"El Paso":[48,84],"Omaha":[58,45],"Kansas City":[62,57],"Oklahoma City":[60,69],"Dallas":[61,81],"Houston":[65,91],"Sault Ste. Marie":[72,15],"Chicago":[70,42],"Saint Louis":[70,58],"Little Rock":[70,72],"New Orleans":[75,88],"Toronto":[81,28],"Pittsburgh":[82,46],"Nashville":[80,64],"Atlanta":[85,74],"Miami":[94,93],"Montreal":[91,14],"Boston":[96,27],"New York":[92,42],"Washington":[91,56],"Raleigh":[91,66],"Charleston":[93,75]}, ROUTES=[["Vancouver","Seattle","gray",1],["Vancouver","Calgary","gray",3],["Seattle","Portland","gray",1],["Seattle","Portland","gray",1],["Seattle","Helena","yellow",6],["Seattle","Helena","blue",6],["Portland","San Francisco","green",5],["Portland","San Francisco","purple",5],["Portland","Salt Lake City","blue",6],["San Francisco","Los Angeles","yellow",3],["San Francisco","Los Angeles","purple",3],["San Francisco","Salt Lake City","orange",5],["Los Angeles","Las Vegas","gray",2],["Los Angeles","Phoenix","gray",3],["Los Angeles","El Paso","black",6],["Calgary","Helena","gray",4],["Calgary","Winnipeg","#00b8d4",6],["Helena","Winnipeg","blue",4],["Helena","Duluth","orange",6],["Helena","Denver","green",4],["Helena","Salt Lake City","purple",3],["Salt Lake City","Denver","red",3],["Salt Lake City","Denver","yellow",3],["Salt Lake City","Las Vegas","orange",3],["Phoenix","Santa Fe","gray",3],["Phoenix","El Paso","gray",3],["Denver","Santa Fe","gray",2],["Denver","Omaha","purple",4],["Denver","Kansas City","black",4],["Denver","Kansas City","orange",4],["Denver","Oklahoma City","red",4],["Winnipeg","Duluth","black",4],["Winnipeg","Sault Ste. Marie","gray",6],["Duluth","Omaha","gray",2],["Duluth","Chicago","red",3],["Duluth","Sault Ste. Marie","gray",3],["Omaha","Chicago","blue",4],["Omaha","Kansas City","gray",1],["Kansas City","Saint Louis","blue",2],["Kansas City","Saint Louis","purple",2],["Kansas City","Oklahoma City","gray",2],["Oklahoma City","Dallas","gray",2],["Oklahoma City","Little Rock","gray",2],["Santa Fe","El Paso","gray",2],["Santa Fe","Oklahoma City","blue",3],["El Paso","Dallas","red",4],["El Paso","Houston","green",6],["Dallas","Houston","gray",1],["Dallas","Little Rock","gray",2],["Houston","New Orleans","gray",2],["Sault Ste. Marie","Toronto","gray",2],["Sault Ste. Marie","Montreal","black",5],["Chicago","Toronto","#00b8d4",4],["Chicago","Pittsburgh","orange",3],["Chicago","Pittsburgh","black",3],["Chicago","Saint Louis","green",2],["Chicago","Saint Louis","#00b8d4",2],["Saint Louis","Pittsburgh","green",5],["Saint Louis","Nashville","gray",2],["Saint Louis","Little Rock","gray",2],["Little Rock","Nashville","#00b8d4",3],["Little Rock","New Orleans","green",3],["New Orleans","Atlanta","yellow",4],["New Orleans","Atlanta","orange",4],["New Orleans","Miami","red",6],["Nashville","Atlanta","gray",1],["Nashville","Raleigh","black",3],["Atlanta","Raleigh","gray",2],["Atlanta","Charleston","gray",2],["Atlanta","Miami","blue",5],["Atlanta","Miami","purple",5],["Toronto","Montreal","gray",3],["Toronto","Pittsburgh","gray",2],["Montreal","Boston","gray",2],["Montreal","New York","blue",3],["Boston","New York","yellow",2],["Boston","New York","red",2],["Pittsburgh","New York","green",2],["Pittsburgh","Washington","gray",2],["Pittsburgh","Raleigh","gray",2],["New York","Washington","orange",2],["New York","Washington","black",2],["Washington","Raleigh","gray",2],["Raleigh","Charleston","gray",2],["Charleston","Miami","purple",4]], TICKETS=[["Los Angeles", "New York", 21], ["Duluth", "Houston", 8], ["Sault Ste. Marie", "Nashville", 8], ["New York", "Atlanta", 6], ["Portland", "Nashville", 17], ["Vancouver", "Montreal", 20], ["Duluth", "El Paso", 10], ["Toronto", "Miami", 10], ["Portland", "Phoenix", 11], ["Dallas", "New York", 11], ["Calgary", "Salt Lake City", 7], ["Calgary", "Phoenix", 13], ["Los Angeles", "Miami", 20], ["Winnipeg", "Little Rock", 11], ["San Francisco", "Atlanta", 17], ["Kansas City", "Houston", 5], ["Los Angeles", "Chicago", 16], ["Denver", "Pittsburgh", 11], ["Helena", "Los Angeles", 8], ["Winnipeg", "Houston", 12], ["Montreal", "Atlanta", 9], ["Seattle", "New York", 22], ["Denver", "El Paso", 4], ["Vancouver", "Santa Fe", 13], ["Boston", "Miami", 12], ["Chicago", "New Orleans", 7], ["Montreal", "New Orleans", 13], ["Seattle", "Los Angeles", 9], ["Dallas", "Chicago", 9], ["San Francisco", "New York", 21]];
 const COLORS=["blue","red","green","goldenrod","black"];
@@ -635,18 +643,20 @@ let players=[],turn=0,deck=[],market=[],destDeck=[],claimed={},drawCount=0,turnA
 let selectedClaimColor=null;
 let finalRound=false,finalTurnsRemaining=0,gameFinished=false,finalRoundWarningTimer=null;
 let gameMode="bot",botDifficulty="hard",botTimer=null,lastTicketSoundAt=0;
+let onlineRole=null,onlineSeat=null,onlinePeer=null,onlineHostConn=null,onlineConnections=[],onlineMembers=[],onlineSyncQueued=false;
 const $=id=>document.getElementById(id);
 function shuffle(a){a=[...a];for(let i=a.length-1;i;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function setupNames(){
  let mode=$("gameMode").value,count=$("numPlayers"),previousMode=count.dataset.mode;
  if(previousMode!==mode){count.innerHTML=mode==="bot"?'<option>1</option><option>2</option><option>3</option><option>4</option>':'<option>2</option><option>3</option><option>4</option>';count.dataset.mode=mode}
- let n=+count.value,s="";$("countLabel").textContent=mode==="bot"?"Bots":"Seats";$("difficultyField").classList.remove("hidden");
+ let n=+count.value,s="";$("countLabel").textContent=mode==="bot"?"Bots":"Total Seats";$("difficultyField").classList.remove("hidden");
  if(mode==="bot")s=`<div class="field seatSetup" data-seat="0"><label>Your Name</label><input class="nm" value="${localStorage.getItem("railName0")||"Player 1"}"></div>`;
- else for(let i=0;i<n;i++){let type=localStorage.getItem("railSeatType"+i)||"human",saved=localStorage.getItem("railName"+i)||(type==="bot"?`Conductor Bot ${i+1}`:`Player ${i+1}`);s+=`<div class="seatSetup" data-seat="${i}"><div class="field"><label>Seat ${i+1}</label><select class="seatType"><option value="human" ${type==="human"?"selected":""}>Human</option><option value="bot" ${type==="bot"?"selected":""}>Bot</option></select></div><div class="field"><label>Name</label><input class="nm" value="${saved}"></div></div>`}
- $("names").innerHTML=s
+ else s=`<div class="field seatSetup" data-seat="0"><label>Your Name</label><input class="nm" value="${localStorage.getItem("railName0")||"Player 1"}"></div>`;
+ $("names").innerHTML=s;$("onlinePanel").classList.toggle("hidden",mode!=="online");$("startJourneyBtn").classList.toggle("hidden",mode==="online");
 }
 $("numPlayers").onchange=setupNames;setupNames();
 $("gameMode").onchange=setupNames;
+$("onlineAction").onchange=()=>{let join=$("onlineAction").value==="join";$("joinCodeField").classList.toggle("hidden",!join);$("onlineBotsField").classList.toggle("hidden",join);$("onlineConnectBtn").textContent=join?"Join Room":"Create Room";$("onlineStartBtn").classList.add("hidden");$("roomCodeBox").classList.add("hidden")};
 function startGame(){
  clearTimeout(finalRoundWarningTimer);finalRoundWarningTimer=null;finalRound=false;finalTurnsRemaining=0;gameFinished=false;claimed={};nextTicketColorIndex=0;market=[];
  gameMode=$("gameMode").value;botDifficulty=$("botDifficulty").value;
@@ -654,8 +664,9 @@ function startGame(){
  if(gameMode==="bot"){
   let humanName=document.querySelector(".nm")?.value.trim()||"Player 1";players.push({name:humanName,color:COLORS[0],score:0,trains:45,hand:[],tickets:[],isBot:false});localStorage.setItem("railName0",humanName);
   for(let i=1;i<=+$("numPlayers").value;i++)players.push({name:`Conductor AI ${i} (${botDifficulty[0].toUpperCase()+botDifficulty.slice(1)})`,color:COLORS[i],score:0,trains:45,hand:[],tickets:[],isBot:true,difficulty:botDifficulty});
- }else{
-  [...document.querySelectorAll(".seatSetup")].forEach((row,i)=>{let type=row.querySelector(".seatType").value,isBot=type==="bot",name=row.querySelector(".nm").value.trim()||(isBot?`Conductor Bot ${i+1}`:`Player ${i+1}`);players.push({name,color:COLORS[i],score:0,trains:45,hand:[],tickets:[],isBot,difficulty:isBot?botDifficulty:null});localStorage.setItem("railSeatType"+i,type);localStorage.setItem("railName"+i,name)})
+ }else if(gameMode==="online"){
+  if(onlineRole!=="host"||!onlineMembers.length){$("onlineStatus").textContent="Create the room before starting.";return}
+  players=onlineMembers.map((m,i)=>({name:m.name,color:COLORS[i],score:0,trains:45,hand:[],tickets:[],isBot:!!m.isBot,remote:!!m.remote,difficulty:m.isBot?botDifficulty:null,connectionIndex:m.connectionIndex??null}));onlineSeat=0;
  }
  let types=["blue","red","green","yellow","orange","white","black","purple"]; deck=[];types.forEach(c=>{for(let i=0;i<12;i++)deck.push(c)});for(let i=0;i<14;i++)deck.push("wild");deck=shuffle(deck);
  destDeck=shuffle(TICKETS.map((t,i)=>({a:t[0],b:t[1],v:t[2],id:i})));
@@ -664,7 +675,7 @@ function startGame(){
  initialSetup=true;turn=0;offerInitialTickets(0)
 }
 function refillMarket(){while(market.length<5&&deck.length)market.push(deck.pop());let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5)market.push(deck.pop())}}
-function offerInitialTickets(pi){turn=pi;pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=2;if(players[pi].isBot){renderAll();setBotTicketGlow(true);botTimer=setTimeout(()=>botConfirmTickets(),900)}else showTicketModal(`Choose ${players[pi].name}'s starting tickets`,`Keep at least 2. Tap a ticket to show its cities on the map.`)}
+function offerInitialTickets(pi){turn=pi;pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=2;if(players[pi].isBot){renderAll();setBotTicketGlow(true);botTimer=setTimeout(()=>botConfirmTickets(),900)}else if(gameMode==="online"&&onlineRole==="host"&&players[pi].remote){$("ticketModal").classList.add("hidden");renderAll()}else showTicketModal(`Choose ${players[pi].name}'s starting tickets`,`Keep at least 2. Tap a ticket to show its cities on the map.`)}
 function showTicketModal(title,instruction){$("ticketModal").classList.remove("hidden");renderTicketChoices()}
 function renderTicketChoices(){ $("ticketChoices").innerHTML=pendingTickets.map((t,i)=>{let tc=ticketColor(t);return `<div class="ticketChoice" data-i="${i}" data-tc="${tc}" style="--tc:${tc}" onmouseenter="previewPendingTicket(${i},this)" onmouseleave="restorePendingTicketGlow()" ontouchstart="previewPendingTicket(${i},this)" onclick="toggleTicket(${i},this)"><span class="value">${t.v}</span><div style="height:3px;background:${tc};margin:8px 20px;position:relative"><i style="position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i><i style="position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i></div></div>`}).join("")}
 let pendingGlowTimer=null,pendingGlowStep=0;
@@ -742,7 +753,7 @@ function renderAll(){
  $("players").innerHTML=players.map((p,i)=>`<div class="playerCard ${i===turn&&!initialSetup?"active":""} ${p.isBot?"botCard":""} ${p.isBot&&i===turn&&!initialSetup?"botThinking":""}" style="border-left:8px solid ${p.color}"><div class="pname">${p.name}</div><div class="stats"><span>★ ${p.score}</span><span>🚂 ${p.trains}</span><span>🎴 ${p.hand.length}</span></div></div>`).join("");
  if(players[turn])$("turnBanner").textContent=`${players[turn].name}'s turn`;
  $("market").innerHTML=market.map((c,i)=>`<div class="card ${c==="wild"?"wild":""}" onclick="drawFace(${i})"><div class="train" style="background:${c==="wild"?"var(--loco-rainbow)":TRAINCOL[c]}"></div></div>`).join("");
- let p=players[turn]||players[0]; if(!p)return;
+ let p=(gameMode==="online"&&onlineSeat!=null?players[onlineSeat]:players[turn])||players[0]; if(!p)return;
  let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=p.isBot?"":Object.entries(counts).map(([c,n])=>`<div class="handCard ${c==="wild"?"wildHand":""} ${selectedClaimColor===c?"claimColorSelected":""}" onclick="selectClaimColor('${c}')"><b>${n}×</b><div class="swatch" style="background:${c==="wild"?"var(--loco-rainbow)":TRAINCOL[c]}"></div></div>`).join("");
  $("myTickets").innerHTML=p.isBot?"":p.tickets.map(t=>`<div class="ticket" style="--ticket-color:${ticketColor(t)}"><span class="value">${t.v}</span></div>`).join("");
  $("sideTickets").innerHTML="";
@@ -894,8 +905,8 @@ function highlightDrawnHandColor(c){
    if(isDrawnCard){el.classList.add("drawHighlight");setTimeout(()=>el.classList.remove("drawHighlight"),700)}
  });
 }
-function drawFace(i){if(gameFinished||initialSetup||players[turn]?.isBot||turnAction==="route"||turnAction==="ticket")return;let c=market[i];if(c==null)return;if(drawCount===1&&c==="wild"){toast("A face-up Locomotive cannot be your second draw.");return}turnAction="cards";players[turn].hand.push(c);market[i]=deck.length?deck.pop():null;if(market[i]===null)market.splice(i,1);let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5&&deck.length)market.push(deck.pop())}drawCount++;renderAll();if(window.gameSFX)window.gameSFX.draw();highlightDrawnHandColor(c);if(c==="wild"||drawCount>=2)setTimeout(endTurn,720)}
-function drawBlind(){if(gameFinished||initialSetup||players[turn]?.isBot||turnAction==="route"||turnAction==="ticket"||!deck.length)return;turnAction="cards";let c=deck.pop();players[turn].hand.push(c);drawCount++;renderAll();highlightDrawnHandColor(c);if(drawCount>=2)setTimeout(endTurn,720)}
+function drawFace(i){if(gameFinished||initialSetup||players[turn]?.isBot||turnAction==="route"||turnAction==="ticket"||drawCount>=2)return;let c=market[i];if(c==null)return;if(drawCount===1&&c==="wild"){toast("A face-up Locomotive cannot be your second draw.");return}turnAction="cards";players[turn].hand.push(c);market[i]=deck.length?deck.pop():null;if(market[i]===null)market.splice(i,1);let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5&&deck.length)market.push(deck.pop())}drawCount++;if(c==="wild")drawCount=2;renderAll();if(window.gameSFX)window.gameSFX.draw();highlightDrawnHandColor(c);if(c==="wild"||drawCount>=2)setTimeout(endTurn,720)}
+function drawBlind(){if(gameFinished||initialSetup||players[turn]?.isBot||turnAction==="route"||turnAction==="ticket"||drawCount>=2||!deck.length)return;turnAction="cards";let c=deck.pop();players[turn].hand.push(c);drawCount++;renderAll();highlightDrawnHandColor(c);if(drawCount>=2)setTimeout(endTurn,720)}
 function selectClaimColor(c){
  if(gameFinished||initialSetup||players[turn]?.isBot||turnAction)return;
  selectedClaimColor=(selectedClaimColor===c?null:c);
@@ -943,7 +954,7 @@ function claimRoute(i){
  }
  p.hand=newHand;claimed[i]=turn;p.trains-=l;p.score+=SCORE[l]||0;turnAction="route";selectedClaimColor=null;renderAll();setTimeout(endTurn,700)
 }
-function drawTickets(){if(gameFinished||initialSetup||players[turn]?.isBot||turnAction)return;turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);if(!pendingTickets.length){turnAction=null;toast("No Destination Tickets left.");return}pendingMin=1;showTicketModal("Draw Destination Tickets","Keep at least 1. Tap a ticket to show its cities on the map.")}
+function drawTickets(){if(gameFinished||initialSetup||players[turn]?.isBot||turnAction)return;turnAction="ticket";pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);if(!pendingTickets.length){turnAction=null;toast("No Destination Tickets left.");return}pendingMin=1;if(gameMode==="online"&&onlineRole==="host"&&players[turn].remote){$("ticketModal").classList.add("hidden");renderAll()}else showTicketModal("Draw Destination Tickets","Keep at least 1. Tap a ticket to show its cities on the map.")}
 function highlightTicket(a,b,color="#5dff45"){clearGlow();glowCity(a,color);glowCity(b,color)}
 function glowCity(n,color){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e){e.classList.add("glow");let d=e.querySelector(".dot");if(d){d.style.background=color;d.style.boxShadow=`0 0 7px 4px #fff,0 0 20px 8px ${color}`}}}
 function clearGlow(){document.querySelectorAll(".city").forEach(x=>{x.classList.remove("glow");let d=x.querySelector(".dot");if(d){d.style.background="";d.style.boxShadow=""}})}
@@ -1070,7 +1081,7 @@ function showHelp(){$("help").classList.remove("hidden")}
  // Semantic click cues for existing controls/cards.
  document.addEventListener('click',e=>{
    // Human taps during an AI turn are ignored silently.
-   if(window.players&&players[turn]?.isBot)return;
+   if(players[turn]?.isBot||(gameMode==='online'&&onlineSeat!=null&&turn!==onlineSeat))return;
    let el=e.target.closest('button,.ticketCard,.destCard,.destinationCard,.marketCard,.trainCard,.deck,.trainDeck,.routeHit');
    if(!el)return;
    let t=(el.textContent||'').toLowerCase(), c=el.className||'';
@@ -1158,7 +1169,7 @@ function showHelp(){$("help").classList.remove("hidden")}
  }
  const wait=ms=>new Promise(r=>setTimeout(r,ms));
  async function animateFinalScoring(){
-   if(!window.players||!players.length)return;
+   if(!players||!players.length)return;
    const box=document.getElementById('finalScoreShow'),rows=document.getElementById('scoreRows'),win=document.getElementById('scoreWinner'),newGame=document.getElementById('scoreNewGame');
    rows.innerHTML='';win.textContent='';newGame.style.display='none';box.classList.add('on');document.body.classList.add('finalScoringMode');
    let railTotals=players.map((p,i)=>baseScore(i)),destinationTotals=players.map(()=>0),longestBonuses=players.map(()=>0),totals=[...railTotals],rowEls=[];
@@ -1206,4 +1217,59 @@ function showHelp(){$("help").classList.remove("hidden")}
 })();
 </script>
 
+<script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<script>
+/* Version 54: host-authoritative peer-to-peer online rooms. */
+function onlineName(){return document.querySelector('.nm')?.value.trim()||'Player'}
+function roomStatus(text,ready=false){let e=$("onlineStatus");e.textContent=text;e.className='onlineStatus '+(ready?'onlineReady':'onlineWaiting')}
+function makeRoomCode(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=chars[Math.floor(Math.random()*chars.length)];return s}
+function onlineConnect(){
+ if(typeof Peer==='undefined'){roomStatus('Online library could not load. Check the internet connection.');return}
+ let action=$("onlineAction").value;$("onlineConnectBtn").disabled=true;
+ if(action==='create'){
+  let code=makeRoomCode();onlineRole='host';onlineSeat=0;onlineConnections=[];onlinePeer=new Peer('railway-rivals-'+code);
+  onlinePeer.on('open',()=>{$("roomCodeBox").textContent=code;$("roomCodeBox").classList.remove('hidden');$("onlineStartBtn").classList.remove('hidden');roomStatus('Room created. Share this code and wait for friends.',true)});
+  onlinePeer.on('connection',conn=>{conn.on('data',msg=>hostOnlineMessage(conn,msg));conn.on('close',()=>{onlineConnections=onlineConnections.filter(x=>x.conn!==conn);updateOnlineLobby()})});
+  onlinePeer.on('error',e=>{roomStatus('Room connection error: '+e.type);$("onlineConnectBtn").disabled=false});
+ }else{
+  let code=$("joinCode").value.trim().toUpperCase();if(code.length!==6){roomStatus('Enter the six-character room code.');$("onlineConnectBtn").disabled=false;return}
+  onlineRole='guest';onlinePeer=new Peer();onlinePeer.on('open',()=>{onlineHostConn=onlinePeer.connect('railway-rivals-'+code,{reliable:true});onlineHostConn.on('open',()=>{onlineHostConn.send({type:'join',name:onlineName()});roomStatus('Connected. Waiting for the host to start.',true)});onlineHostConn.on('data',guestOnlineMessage);onlineHostConn.on('close',()=>roomStatus('The host disconnected. The room has ended.'));});onlinePeer.on('error',e=>{roomStatus('Could not join room: '+e.type);$("onlineConnectBtn").disabled=false});
+ }
+}
+function hostOnlineMessage(conn,msg){
+ if(!msg||typeof msg!=='object')return;
+ if(msg.type==='join'){
+  let total=+$('numPlayers').value,bots=Math.min(+$('onlineBots').value,total-1),needed=total-bots-1;if(onlineConnections.length>=needed){conn.send({type:'reject',reason:'Room is full.'});setTimeout(()=>conn.close(),300);return}
+  onlineConnections.push({conn,name:String(msg.name||'Friend').slice(0,24),seat:null});updateOnlineLobby();return;
+ }
+ if(msg.type==='action'){let member=onlineConnections.find(x=>x.conn===conn);if(!member||member.seat!==turn||gameFinished||players[turn]?.isBot)return;let a=msg.action;
+  if(a==='drawFace')_onlineOriginals.drawFace(+msg.i);else if(a==='drawBlind')_onlineOriginals.drawBlind();else if(a==='claimRoute'){selectedClaimColor=msg.color;_onlineOriginals.claimRoute(+msg.i)}else if(a==='drawTickets')_onlineOriginals.drawTickets();else if(a==='confirmTickets'&&Array.isArray(msg.selection))finishTicketChoice(msg.selection.map(Number).filter(i=>i>=0&&i<pendingTickets.length));
+ }
+}
+function updateOnlineLobby(){let total=+$('numPlayers').value,bots=Math.min(+$('onlineBots').value,total-1),needed=total-bots-1,joined=onlineConnections.length;roomStatus(`Friends connected: ${joined}/${needed} · Bots: ${bots}`,joined===needed);$('onlineStartBtn').disabled=joined!==needed}
+function startOnlineHostedGame(){
+ if(onlineRole!=='host')return;let total=+$('numPlayers').value,bots=Math.min(+$('onlineBots').value,total-1),needed=total-bots-1;if(onlineConnections.length!==needed){updateOnlineLobby();return}
+ onlineMembers=[{name:onlineName(),isBot:false,remote:false}];onlineConnections.slice(0,needed).forEach((x,j)=>{x.seat=j+1;onlineMembers.push({name:x.name,isBot:false,remote:true,connectionIndex:j});x.conn.send({type:'assigned',seat:x.seat})});for(let i=0;i<bots;i++)onlineMembers.push({name:`Conductor AI ${i+1}`,isBot:true,remote:false});gameMode='online';startGame()
+}
+function guestOnlineMessage(msg){
+ if(!msg)return;if(msg.type==='reject'){roomStatus(msg.reason||'Unable to join.');return}if(msg.type==='assigned'){onlineSeat=+msg.seat;roomStatus(`Seat ${onlineSeat+1} assigned. Waiting for the host.`,true);return}if(msg.type==='state')applyOnlineState(msg.state)
+}
+function onlineStateFor(seat){return {players:players.map((p,i)=>({name:p.name,color:p.color,score:p.score,trains:p.trains,hand:(i===seat||gameFinished)?p.hand:Array(p.hand.length).fill(null),tickets:(i===seat||gameFinished)?p.tickets:[],isBot:p.isBot,remote:p.remote})),turn,market,claimed,drawCount,turnAction,pendingTickets:turn===seat?pendingTickets:[],pendingMin,initialSetup,finalRound,finalTurnsRemaining,gameFinished}}
+function syncOnline(){if(gameMode!=='online'||onlineRole!=='host'||!players.length)return;onlineConnections.forEach(x=>{if(x.seat!=null&&x.conn.open)x.conn.send({type:'state',state:onlineStateFor(x.seat)})})}
+function applyOnlineState(s){
+ gameMode='online';players=s.players;turn=s.turn;market=s.market||[];claimed=s.claimed||{};drawCount=s.drawCount||0;turnAction=s.turnAction;pendingTickets=s.pendingTickets||[];pendingMin=s.pendingMin||1;initialSetup=!!s.initialSetup;finalRound=!!s.finalRound;finalTurnsRemaining=s.finalTurnsRemaining||0;gameFinished=!!s.gameFinished;
+ $('menu').classList.add('hidden');$('game').classList.remove('hidden');if(!$('mapSvg'))renderMap();_onlineOriginals.renderAll();
+ let mine=turn===onlineSeat&&!players[turn]?.isBot,picking=mine&&pendingTickets.length&&(initialSetup||turnAction==='ticket');if(picking){$('ticketModal').classList.remove('hidden');renderTicketChoices()}else $('ticketModal').classList.add('hidden');
+ if(gameFinished&&!document.body.classList.contains('finalScoringMode'))setTimeout(()=>window.animateFinalScoring&&window.animateFinalScoring(),250)
+}
+function sendOnlineAction(action,data={}){if(onlineRole==='guest'&&onlineHostConn?.open)onlineHostConn.send({type:'action',action,...data})}
+const _onlineOriginals={renderAll,drawFace,drawBlind,claimRoute,drawTickets,confirmTickets,selectClaimColor};
+renderAll=function(){_onlineOriginals.renderAll();if(gameMode==='online'&&onlineRole==='host'&&!onlineSyncQueued){onlineSyncQueued=true;setTimeout(()=>{onlineSyncQueued=false;syncOnline()},0)}};
+drawFace=function(i){if(gameMode==='online'&&onlineRole==='guest'){if(turn===onlineSeat&&drawCount<2)sendOnlineAction('drawFace',{i});return}if(gameMode==='online'&&onlineRole==='host'&&turn!==onlineSeat)return;_onlineOriginals.drawFace(i)};
+drawBlind=function(){if(gameMode==='online'&&onlineRole==='guest'){if(turn===onlineSeat&&drawCount<2)sendOnlineAction('drawBlind');return}if(gameMode==='online'&&onlineRole==='host'&&turn!==onlineSeat)return;_onlineOriginals.drawBlind()};
+claimRoute=function(i){if(gameMode==='online'&&onlineRole==='guest'){if(turn===onlineSeat&&selectedClaimColor)sendOnlineAction('claimRoute',{i,color:selectedClaimColor});return}if(gameMode==='online'&&onlineRole==='host'&&turn!==onlineSeat)return;_onlineOriginals.claimRoute(i)};
+drawTickets=function(){if(gameMode==='online'&&onlineRole==='guest'){if(turn===onlineSeat)sendOnlineAction('drawTickets');return}if(gameMode==='online'&&onlineRole==='host'&&turn!==onlineSeat)return;_onlineOriginals.drawTickets()};
+confirmTickets=function(){if(gameMode==='online'&&onlineRole==='guest'){let selection=[...document.querySelectorAll('.ticketChoice.selected')].map(x=>+x.dataset.i);if(selection.length<pendingMin){toast(`Keep at least ${pendingMin} ticket${pendingMin>1?'s':''}.`);return}sendOnlineAction('confirmTickets',{selection});return}_onlineOriginals.confirmTickets()};
+selectClaimColor=function(c){if(gameMode==='online'&&onlineRole==='guest'){if(turn!==onlineSeat||turnAction)return;selectedClaimColor=selectedClaimColor===c?null:c;_onlineOriginals.renderAll();return}_onlineOriginals.selectClaimColor(c)};
+</script>
 </body></html>
