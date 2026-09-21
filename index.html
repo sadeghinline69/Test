@@ -111,6 +111,21 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 #ticketModal .ticketChoice div[style*="height:3px"]{height:2px!important;margin:3px 8px!important}
 #ticketModal .primary{position:static!important;width:100%!important;margin:5px 0 0!important;padding:5px!important;font-size:10px!important}
 @media(max-width:850px){#ticketModal{width:84px!important;left:4px!important;bottom:4px!important}#ticketModal .modalBox{width:84px!important;max-height:calc(100dvh - 105px)!important;padding:3px!important}#ticketModal h2{font-size:8px!important}#ticketModal p{font-size:6px!important}#ticketModal .ticketChoice{padding:2px!important;margin:2px 0!important}#ticketModal .ticketChoice h3{font-size:6px!important;padding-right:12px}#ticketModal .ticketChoice .value{font-size:11px!important}#ticketModal .primary{font-size:8px!important;padding:3px!important}}
+
+/* Version 6 — destination tickets only: chooser stays left; kept tickets move onto map */
+#leftTickets{display:none!important}
+#ticketModal h2,#ticketModal p{display:none!important}
+#ticketModal .modalBox{padding-top:4px!important}
+.mapSavedTickets{position:absolute;left:7px;bottom:5px;z-index:26;display:flex;gap:4px;max-width:38%;overflow-x:auto;overflow-y:hidden;padding:2px;pointer-events:auto}
+.mapSavedTickets .ticket{min-width:92px;max-width:108px;margin:0;padding:4px 5px;font-size:7px;line-height:1.15;background:#f4ead0eF;border:2px solid #b89055;border-radius:7px;box-shadow:0 3px 7px #0008;cursor:pointer}
+.mapSavedTickets .ticket b{font-size:8px}.mapSavedTickets .ticket .value{font-size:14px}
+/* Keep the train-card hand to the right of the saved destination tickets. */
+.bottom{left:38%!important;right:146px!important}
+.hand{max-width:100%!important}
+/* During ticket choice, the left-side chooser is the only content below player cards. */
+#ticketModal{top:112px!important;bottom:auto!important}
+#ticketModal .modalBox{max-height:calc(100dvh - 120px)!important}
+@media(max-width:850px){.mapSavedTickets{left:4px;bottom:3px;max-width:40%}.mapSavedTickets .ticket{min-width:66px;max-width:78px;font-size:5px;padding:2px}.mapSavedTickets .ticket b{font-size:6px}.mapSavedTickets .ticket .value{font-size:10px}.bottom{left:40%!important;right:104px!important}#ticketModal{top:82px!important;bottom:auto!important}#ticketModal .modalBox{max-height:calc(100dvh - 88px)!important}}
 </style></head>
 <body>
 <section id="menu" class="screen menu">
@@ -121,13 +136,13 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 5</div>
+<div class="version">Version 6</div>
 </div></section>
 
 <section id="game" class="screen hidden">
-<aside class="sidebar"><div style="text-align:center;font-weight:bold;color:#e9c26a;margin:5px">PLAYERS</div><div id="players"></div><div id="leftTickets"><h3>DESTINATIONS</h3><div id="savedTickets"></div></div></aside>
-<div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><h2 id="ticketTitle">Choose Destination Tickets</h2><p id="ticketInstruction"></p><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div>
-<main class="mapWrap"><div id="map"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
+<aside class="sidebar"><div style="text-align:center;font-weight:bold;color:#e9c26a;margin:5px">PLAYERS</div><div id="players"></div></aside>
+<div id="ticketModal" class="modal ticketModalMap hidden"><div class="modalBox"><div id="ticketChoices" class="ticketChoices"></div><button class="btn primary" onclick="confirmTickets()">Choose</button></div></div>
+<main class="mapWrap"><div id="map"></div><div id="mapSavedTickets" class="mapSavedTickets"></div><div id="turnBanner" class="turnBanner"></div><div id="toast" class="toast hidden"></div></main>
 <aside class="market"><h3>TRAIN CARDS</h3><div id="market"></div><div class="card deck" onclick="drawBlind()">🎴 BLIND DRAW</div><div class="destSide"><h3>DESTINATIONS</h3><div id="sideTickets"></div></div><div class="mapTools"><button class="btn" onclick="drawTickets()">🎫 +</button><button class="btn" onclick="showHelp()">?</button><button class="btn" onclick="location.reload()">⌂</button></div></aside>
 <footer class="bottom"><div><b>DESTINATIONS</b><div id="myTickets" class="ticketsMini"></div></div><div><b>YOUR HAND</b><div id="hand" class="hand"></div></div>
 <div class="actions"><button class="btn" onclick="drawTickets()">🎫 Destination Tickets</button><button class="btn" onclick="showHelp()">? Rules</button><button class="btn" onclick="location.reload()">Main Menu</button></div></footer>
@@ -155,7 +170,7 @@ function startGame(){
 }
 function refillMarket(){while(market.length<5&&deck.length)market.push(deck.pop());let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5)market.push(deck.pop())}}
 function offerInitialTickets(pi){turn=pi;pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=2;showTicketModal(`Choose ${players[pi].name}'s starting tickets`,`Keep at least 2. Tap a ticket to show its cities on the map.`)}
-function showTicketModal(title,instruction){$("ticketTitle").textContent=title;$("ticketInstruction").textContent=instruction;$("ticketModal").classList.remove("hidden");renderTicketChoices()}
+function showTicketModal(title,instruction){$("ticketModal").classList.remove("hidden");renderTicketChoices()}
 function renderTicketChoices(){ $("ticketChoices").innerHTML=pendingTickets.map((t,i)=>`<div class="ticketChoice" data-i="${i}" onclick="toggleTicket(${i},this)"><span class="value">${t.v}</span><div style="font-size:24px">🎫</div><h3>${t.a}</h3><div style="height:3px;background:#9b3d2e;margin:8px 20px;position:relative"><i style="position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:#2d5d7c"></i><i style="position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:#2d5d7c"></i></div><h3>${t.b}</h3></div>`).join("")}
 function toggleTicket(i,el){el.classList.toggle("selected");document.querySelectorAll(".city").forEach(x=>x.classList.remove("glow"));document.querySelectorAll(".ticketChoice.selected").forEach(x=>{let t=pendingTickets[+x.dataset.i];glowCity(t.a);glowCity(t.b)})}
 function glowCity(n){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e)e.classList.add("glow")}
@@ -191,7 +206,7 @@ function renderAll(){
  let p=players[turn]||players[0]; if(!p)return;
  let counts={};p.hand.forEach(c=>counts[c]=(counts[c]||0)+1);$("hand").innerHTML=Object.entries(counts).map(([c,n])=>`<div class="handCard"><b>${n}×</b><div class="swatch" style="background:${TRAINCOL[c]}"></div>${c==="wild"?"★":(c==="blue"?"LIGHT BLUE":c==="purple"?"NAVY":c.toUpperCase())}</div>`).join("");
  $("myTickets").innerHTML=p.tickets.map(t=>`<div class="ticket" onmouseenter="highlightTicket('${t.a.replaceAll("'","\\'")}','${t.b.replaceAll("'","\\'")}')" onmouseleave="clearGlow()"><span class="value">${t.v}</span><b>${t.a}</b><br>→ ${t.b}</div>`).join("");
- $("sideTickets").innerHTML=$("myTickets").innerHTML; $("savedTickets").innerHTML=$("myTickets").innerHTML;
+ $("sideTickets").innerHTML=""; $("mapSavedTickets").innerHTML=$("myTickets").innerHTML;
  document.querySelectorAll(".routeSeg").forEach(g=>{let i=+g.dataset.i,rect=g.querySelector(".routePiece");rect.setAttribute("fill",claimed[i]!=null?players[claimed[i]].color:TRAINCOL[ROUTES[i][2]])})
 }
 function beginTurn(){drawCount=0;turnAction=null;renderAll()}
