@@ -127,7 +127,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 #ticketModal .modalBox{max-height:calc(100dvh - 120px)!important}
 @media(max-width:850px){.mapSavedTickets{left:4px;bottom:3px;max-width:40%}.mapSavedTickets .ticket{min-width:66px;max-width:78px;font-size:5px;padding:2px}.mapSavedTickets .ticket b{font-size:6px}.mapSavedTickets .ticket .value{font-size:10px}.bottom{left:40%!important;right:104px!important}#ticketModal{top:82px!important;bottom:auto!important}#ticketModal .modalBox{max-height:calc(100dvh - 88px)!important}}
 
-/* Version 9 — each kept Destination Ticket has its own persistent map-marker color */
+/* Version 10 — each kept Destination Ticket has its own persistent map-marker color */
 .mapSavedTickets .ticket{border-color:var(--ticket-color,#2f9e44)!important}
 .mapSavedTickets .ticket .value{color:var(--ticket-color,#2f9e44)!important;text-shadow:0 1px #fff}
 .mapSavedTickets .ticket.ticketTop{box-shadow:0 0 0 1px #fff7 inset,0 3px 7px #0008!important}
@@ -154,7 +154,7 @@ linear-gradient(120deg,#d7d1bc,#b9b29d);touch-action:none}
 <div id="names"></div>
 <button class="btn primary" onclick="startGame()">🚂 Start Journey</button>
 <p class="note">Original browser implementation based on the supplied gameplay rules. Artwork and interface are newly created.</p>
-<div class="version">Version 9</div>
+<div class="version">Version 10</div>
 </div></section>
 
 <section id="game" class="screen hidden">
@@ -190,8 +190,10 @@ function startGame(){
 function refillMarket(){while(market.length<5&&deck.length)market.push(deck.pop());let wilds=market.filter(x=>x==="wild").length;if(wilds>=3&&deck.length>=5){deck.push(...market);deck=shuffle(deck);market=[];while(market.length<5)market.push(deck.pop())}}
 function offerInitialTickets(pi){turn=pi;pendingTickets=[destDeck.pop(),destDeck.pop(),destDeck.pop()].filter(Boolean);pendingMin=2;showTicketModal(`Choose ${players[pi].name}'s starting tickets`,`Keep at least 2. Tap a ticket to show its cities on the map.`)}
 function showTicketModal(title,instruction){$("ticketModal").classList.remove("hidden");renderTicketChoices()}
-function renderTicketChoices(){ $("ticketChoices").innerHTML=pendingTickets.map((t,i)=>{let tc=TICKET_COLORS[i%TICKET_COLORS.length];return `<div class="ticketChoice" data-i="${i}" data-tc="${tc}" style="--tc:${tc}" onclick="toggleTicket(${i},this)"><span class="value">${t.v}</span><div style="font-size:24px">🎫</div><h3>${t.a}</h3><div style="height:3px;background:${tc};margin:8px 20px;position:relative"><i style="position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i><i style="position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i></div><h3>${t.b}</h3></div>`}).join("")}
+function renderTicketChoices(){ $("ticketChoices").innerHTML=pendingTickets.map((t,i)=>{let tc=TICKET_COLORS[i%TICKET_COLORS.length];return `<div class="ticketChoice" data-i="${i}" data-tc="${tc}" style="--tc:${tc}" onmouseenter="previewPendingTicket(${i},this)" onmouseleave="restorePendingTicketGlow()" ontouchstart="previewPendingTicket(${i},this)" onclick="toggleTicket(${i},this)"><span class="value">${t.v}</span><div style="font-size:24px">🎫</div><h3>${t.a}</h3><div style="height:3px;background:${tc};margin:8px 20px;position:relative"><i style="position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i><i style="position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:${tc}"></i></div><h3>${t.b}</h3></div>`}).join("")}
 function toggleTicket(i,el){el.classList.toggle("selected");clearGlow();document.querySelectorAll(".ticketChoice.selected").forEach(x=>{let t=pendingTickets[+x.dataset.i],tc=x.dataset.tc||TICKET_COLORS[(+x.dataset.i)%TICKET_COLORS.length];glowCityColor(t.a,tc);glowCityColor(t.b,tc)})}
+function previewPendingTicket(i,el){clearGlow();let t=pendingTickets[i],tc=el.dataset.tc||TICKET_COLORS[i%TICKET_COLORS.length];if(t){glowCityColor(t.a,tc);glowCityColor(t.b,tc)}}
+function restorePendingTicketGlow(){clearGlow();document.querySelectorAll(".ticketChoice.selected").forEach(x=>{let i=+x.dataset.i,t=pendingTickets[i],tc=x.dataset.tc||TICKET_COLORS[i%TICKET_COLORS.length];if(t){glowCityColor(t.a,tc);glowCityColor(t.b,tc)}})}
 function glowCity(n,color="#5dff45"){let e=document.querySelector(`.city[data-name="${CSS.escape(n)}"]`);if(e){e.classList.add("glow");let d=e.querySelector(".dot");if(d){d.style.background=color;d.style.boxShadow=`0 0 7px 4px #fff,0 0 20px 8px ${color}`}}}
 function confirmTickets(){let sel=[...document.querySelectorAll(".ticketChoice.selected")].map(x=>+x.dataset.i);if(sel.length<pendingMin){toast(`Keep at least ${pendingMin} ticket${pendingMin>1?"s":""}.`);return}
  let keep=[],back=[];pendingTickets.forEach((t,i)=>{if(sel.includes(i)){if(!t.tc)t.tc=TICKET_COLORS[i%TICKET_COLORS.length];keep.push(t)}else back.push(t)}); players[turn].tickets.push(...keep);destDeck.unshift(...back);
