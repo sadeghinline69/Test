@@ -812,7 +812,7 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
     <button type="button" class="secondary botDifficultyBtn" data-bot-difficulty="medium">Medium</button>
     <button type="button" class="primary botDifficultyBtn selectedBotDifficulty" data-bot-difficulty="hard">Hard</button>
    </div>
-   <div style="font-size:11px;font-weight:750;color:#506078;margin-top:7px">Hard uses perfect memory of cards that have already been revealed, but never sees hidden cards.</div>
+   <div style="font-size:11px;font-weight:750;color:#506078;margin-top:7px">Hard perfectly remembers cards revealed during its own private turns, but never sees your private reveals or any hidden card.</div>
   </div>
   <div id="onlineLobby" style="display:none;border:2px solid #d9e2f3;border-radius:14px;padding:10px;margin:8px 0;background:#f8fbff">
    <input id="onlineName" class="setupSelect" maxlength="20" placeholder="Your name" aria-label="Your online player name" style="box-sizing:border-box;margin-bottom:7px">
@@ -888,13 +888,13 @@ button,input{font:inherit}.screen{position:fixed;inset:0;background:linear-gradi
   </div>
   <div class="creatorCredit">
    Designed &amp; Created by <strong>Sadegh Mosleh</strong><br>
-   <span>© 2026 Sadegh Mosleh. All rights reserved. · Version 7</span>
+   <span>© 2026 Sadegh Mosleh. All rights reserved. · Version 8</span>
   </div>
  </div>
 </div>
 
 <div id="app">
- <div style="position:fixed;right:6px;top:5px;z-index:80;background:#172033;color:white;border-radius:8px;padding:3px 7px;font:800 10px Arial;pointer-events:none">Version 7</div>
+ <div style="position:fixed;right:6px;top:5px;z-index:80;background:#172033;color:white;border-radius:8px;padding:3px 7px;font:800 10px Arial;pointer-events:none">Version 8</div>
  <div class="top"><h2 style="margin:5px">🐾 English Memory Match</h2>
   <div class="stats"><div class="pill">Pairs <span id="pairs">0</span>/<span id="pairTotal">6</span></div></div>
  </div>
@@ -1498,7 +1498,8 @@ function renderBoard(){
  const cfg=boardSizes[selectedSize];
  $("board").style.gridTemplateColumns=`repeat(${cfg.cols}, minmax(0,1fr))`;
  $("board").innerHTML=deck.map(c=>{
-  const isOpen=c.matched || (first&&c.id===first.id) || (second&&c.id===second.id);
+  const privateBotTurn=typeof botMode!=="undefined"&&botMode&&player===2;
+  const isOpen=c.matched || (!privateBotTurn&&((first&&c.id===first.id)||(second&&c.id===second.id)));
   const cls=c.matched?"matched":(isOpen?"revealed":"");
   return `<button class="card ${cls}" data-id="${c.id}">${isOpen?`<span class="animal">${c.icon}</span>`:c.id}</button>`;
  }).join("");
@@ -1509,7 +1510,7 @@ function hide(c){if(c.matched)return;let b=document.querySelector(`.card[data-id
 function setMessage(x){$("message").textContent=x}
 function chooseCard(n){
  if(!gameStarted||locked||awaitingName)return;let c=deck[n-startingNumber];if(!c||c.matched||c===first)return;
- reveal(c);if(typeof botMode!=="undefined"&&botMode)botRemember(c);speak(c.name); if(!first){first=c;setMessage(`Card ${n} revealed. Choose another card.`);return}
+ reveal(c);speak(c.name); if(!first){first=c;setMessage(`Card ${n} revealed. Choose another card.`);return}
  second=c;locked=true;
  if(first.pair===second.pair){matchedAnimal=first;setTimeout(beginNameChallenge,1500)}
  else{
@@ -2563,7 +2564,7 @@ applyNameResult=function(ok){
  originalApplyNameResult(ok);
 };
 
-// Version 7: fair one-player-versus-bot mode with difficulty-based memory.
+// Version 8: private bot turns plus difficulty-based memory of the bot's own reveals only.
 let botMode=false,botDifficulty="hard",botMemory=new Map(),botTimer=null,botPlannedSecondId=null;
 function botRemember(card){
  if(!botMode||!card)return;
@@ -2607,12 +2608,15 @@ function startBotTurn(){
 function botTakeTurn(){
  if(!botMode||!gameStarted||player!==2)return;
  const a=botFirstChoice();if(!a){finishBotGame();return}
- first=a;reveal(a);botRemember(a);setMessage(`Bot revealed card ${a.id}.`);
+ first=a;markPrivateBotCard(a);botRemember(a);setMessage(`Bot selected card ${a.id}. Its face is private.`);
  botTimer=setTimeout(()=>{
   const b=botSecondChoice(a);if(!b){finishBotGame();return}
-  second=b;reveal(b);botRemember(b);setMessage(`Bot revealed card ${b.id}.`);
+  second=b;markPrivateBotCard(b);botRemember(b);setMessage(`Bot selected card ${b.id}. Its face is private.`);
   botTimer=setTimeout(()=>resolveBotPair(a,b),1050);
  },900);
+}
+function markPrivateBotCard(c){
+ const b=document.querySelector(`.card[data-id="${c.id}"]`);if(b)b.classList.add("botPrivatePick");
 }
 function resolveBotPair(a,b){
  if(!botMode||!gameStarted)return;
@@ -2624,7 +2628,7 @@ function resolveBotPair(a,b){
   botTimer=setTimeout(botTakeTurn,950);
  }else{
   setMessage("Bot did not find a match.");
-  botTimer=setTimeout(()=>{hide(a);hide(b);first=second=null;player=1;locked=false;renderPlayers();setMessage("Your turn. Choose a card.");voiceOn();},1050);
+  botTimer=setTimeout(()=>{first=second=null;player=1;locked=false;renderBoard();renderPlayers();setMessage("Your turn. Choose a card.");voiceOn();},1050);
  }
 }
 function finishBotGame(){
@@ -2682,4 +2686,6 @@ setInterval(()=>{if(onlineMode&&gameStarted)renderOnlineLiveScoreboard();},250);
 #players .playerBox.active::before,
 #players .playerBox.active::after{content:none;display:none}
 @media(max-width:380px){#players .playerBox{font-size:14px;padding:5px 8px}}
+/* Bot choices are indicated without exposing their private card faces. */
+.card.botPrivatePick{outline:5px solid #f2a31b;outline-offset:-5px;box-shadow:0 0 0 4px #fff7,0 0 20px #f2a31bbb,0 7px 0 #9a5b00;transform:scale(.97)}
 </style>
