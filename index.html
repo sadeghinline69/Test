@@ -1,354 +1,68 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Color Detective</title>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Memory Map</title><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
-:root{--bg:#eef7ff;--ink:#16324a;--card:#fff;--blue:#2878ff;--red:#ef476f;--green:#24b47e;--shadow:0 10px 28px #16324a20}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(160deg,#dff3ff,#fff4df);color:var(--ink);min-height:100vh}.ver{position:fixed;z-index:99;right:10px;top:10px;background:#17324d;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}.screen{display:none;min-height:100vh;padding:54px 16px 24px}.screen.active{display:flex;flex-direction:column;align-items:center}.panel{width:min(720px,100%);background:#ffffffdd;border-radius:24px;padding:22px;box-shadow:var(--shadow);backdrop-filter:blur(8px)}h1{font-size:clamp(30px,8vw,54px);margin:8px 0;text-align:center}h2{text-align:center}.sub{text-align:center;opacity:.75;margin-bottom:20px}.row{display:flex;gap:10px;flex-wrap:wrap}.btn,button,select,input{font:inherit}.btn,button{border:0;border-radius:16px;padding:14px 18px;font-weight:800;cursor:pointer}.primary{background:var(--blue);color:white}.secondary{background:#e9f1ff;color:#19436d}.danger{background:var(--red);color:white}.wide{width:100%;margin-top:10px}.field{margin:13px 0}.field label{display:block;font-weight:800;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:2px solid #d9e6f2;border-radius:12px;background:#fff}.topbar{width:min(850px,100%);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:12px}.pill{background:#fff;padding:10px 14px;border-radius:16px;box-shadow:var(--shadow);font-weight:900}.timer{font-size:24px;text-align:center}.score{text-align:right}.board{width:min(850px,100%);display:grid;gap:18px 14px;grid-template-columns:repeat(2,1fr);justify-items:center;align-items:center;padding:10px}.color-card{width:min(132px,30vw);aspect-ratio:1/1;min-height:0;border-radius:50%;border:6px solid rgba(255,255,255,.9);cursor:pointer;position:relative;transition:.22s transform,.22s filter,.22s box-shadow,.22s border;box-shadow:inset 0 10px 18px rgba(255,255,255,.28),inset 0 -10px 18px rgba(0,0,0,.16),0 10px 18px rgba(22,50,74,.22),0 3px 0 rgba(22,50,74,.12)}.color-card::after{content:'';position:absolute;left:22%;top:13%;width:34%;height:18%;border-radius:50%;background:rgba(255,255,255,.34);transform:rotate(-20deg);pointer-events:none}.color-card.locked{cursor:default;filter:saturate(.92)}.color-card.ready{cursor:pointer}.color-card.ready:active{transform:scale(.94)}.color-card.speaking{transform:scale(1.15);filter:brightness(1.16) saturate(1.08);border-color:#fff;box-shadow:inset 0 10px 20px rgba(255,255,255,.36),inset 0 -10px 20px rgba(0,0,0,.12),0 0 0 6px rgba(40,120,255,.24),0 0 28px rgba(40,120,255,.48),0 15px 28px rgba(22,50,74,.28)}.status{width:min(850px,100%);margin:14px 0;background:#fff;border-radius:18px;padding:13px;text-align:center;font-weight:800;min-height:50px;box-shadow:var(--shadow)}.overlay{position:fixed;inset:0;background:#10273dcc;display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.overlay.show{display:flex}.dialog{width:min(460px,100%);background:#fff;border-radius:26px;padding:24px;text-align:center}.swatch{height:130px;border-radius:20px;margin:14px 0}.mic{font-size:46px}.feedback{font-size:22px;font-weight:900;min-height:32px}.question-box{background:#ffe2e2;border:2px solid #ef5350;color:#a51f1f;border-radius:16px;padding:10px 12px;margin:0 0 12px;font-weight:900}.listening-box{background:#dcf7e5;border:2px solid #36a765;color:#176b3a;border-radius:14px;padding:9px 12px;font-weight:900;display:inline-block;min-width:180px}.tutorial-demo{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;justify-items:center;align-items:center;padding:14px;background:#eef7ff;border-radius:22px}.mini{width:82px;height:82px;border-radius:50%;border:5px solid #fff!important;box-shadow:inset 0 8px 14px #ffffff55,inset 0 -8px 14px #00000022,0 8px 16px #16324a2a;transition:.22s transform,.22s box-shadow,.22s filter}.mini.demo-speaking{transform:scale(1.16);filter:brightness(1.15);box-shadow:0 0 0 6px #2878ff33,0 0 26px #2878ff77}.mini.demo-picked{border-color:#fff!important;outline:7px solid #ef233c!important;outline-offset:5px;box-shadow:0 0 0 11px rgba(239,35,60,.18)!important;position:relative;z-index:2;transform:scale(1.08)}.mini.demo-picked::before{content:'↓';display:block!important;position:absolute;left:50%;top:-55px;transform:translateX(-50%);font-size:42px;line-height:1;color:#ef233c;font-weight:1000;text-shadow:0 2px 0 #fff;pointer-events:none}.demo-caption{text-align:center;font-weight:900;min-height:48px;margin:12px 0}.demo-dialog{margin:12px auto;padding:14px;border-radius:18px;background:#fff;box-shadow:var(--shadow);text-align:center;max-width:330px}.demo-swatch{width:82px;height:82px;border-radius:50%;margin:10px auto;border:5px solid #fff;box-shadow:inset 0 8px 14px #ffffff55,inset 0 -8px 14px #00000022,0 8px 16px #16324a2a}.colors-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.learn{height:80px;border-radius:16px;color:#fff;text-shadow:0 1px 3px #000;font-weight:900;transition:.18s transform,.18s box-shadow,.18s filter}.learn.tut-speaking{transform:scale(1.08);filter:brightness(1.16);box-shadow:0 0 0 5px #2878ff44,0 0 24px #2878ff88}.scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:10px;border-bottom:1px solid #dce7ef;text-align:center}.winner{font-size:28px;font-weight:1000;text-align:center;margin:14px}.hidden{display:none!important}@media(min-width:650px){.board{grid-template-columns:repeat(4,1fr)}.color-card{width:142px}.colors-list{grid-template-columns:repeat(3,1fr)}}
-
-/* V16 compact game layout: fit large boards on one phone screen */
-#game.screen{padding:44px 10px 10px;min-height:100dvh;height:100dvh;overflow:hidden;justify-content:flex-start}
-#game .topbar{margin-bottom:5px}.topbar .pill{padding:7px 10px}.topbar .timer{font-size:19px}
-#game .status{display:none}
-#game .board{flex:1;min-height:0;padding:3px 5px;gap:7px;align-content:center}
-#game .game-actions{margin-top:5px!important;gap:6px!important}
-#game .game-actions .btn{padding:9px 10px;border-radius:12px;font-size:13px}
-#game .color-card{width:min(108px,25vw);border-width:4px}
-#game .board.many{grid-template-columns:repeat(3,1fr);gap:6px}
-#game .board.many .color-card{width:min(82px,20vw)}
-#game .board.very-many{grid-template-columns:repeat(4,1fr);gap:5px}
-#game .board.very-many .color-card{width:min(68px,17vw)}
-@media(max-height:700px){#game .color-card{width:min(88px,21vw)}#game .board.many .color-card{width:min(68px,17vw)}#game .board.very-many .color-card{width:min(58px,14vw)}#game .game-actions .btn{padding:7px 8px;font-size:12px}}
-
-/* V21: larger adaptive game circles while preserving one-screen layout */
-#game .color-card{width:min(132px,29vw)}
-#game .board.many .color-card{width:min(104px,25vw)}
-#game .board.very-many .color-card{width:min(86px,21vw)}
-@media(max-height:760px){#game .color-card{width:min(116px,27vw)}#game .board.many .color-card{width:min(94px,23vw)}#game .board.very-many .color-card{width:min(78px,19vw)}}
-@media(max-height:650px){#game .color-card{width:min(102px,24vw)}#game .board.many .color-card{width:min(82px,20vw)}#game .board.very-many .color-card{width:min(68px,16.5vw)}}
-
-/* V24: slightly larger gameplay controls */
-#game .game-actions .btn{padding:11px 13px;font-size:14px;min-height:42px}
-@media(max-height:700px){#game .game-actions .btn{padding:9px 10px;font-size:13px;min-height:38px}}
-
-/* V28: written-name detective mode */
-.color-card .card-name{position:relative;z-index:2;display:inline-block;max-width:88%;padding:5px 8px;border-radius:10px;background:rgba(255,255,255,.88);color:#17324d;font-size:clamp(12px,3.4vw,18px);font-weight:1000;line-height:1.05;text-align:center;box-shadow:0 2px 7px rgba(0,0,0,.18);pointer-events:none}
-.color-card{display:flex;align-items:center;justify-content:center}
-
-/* V34: fixed color-count layouts for vertical phone screens */
-#game .board{grid-template-columns:repeat(2,1fr)!important}
-#game .board.many,#game .board.very-many{grid-template-columns:repeat(3,1fr)!important}
-
-.manual-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:12px!important;width:100%!important}
-.manual-actions .primary{grid-column:1!important}
-.manual-actions .danger{grid-column:2!important}
-</style></head><body>
-<section id="home" class="screen active"><div class="panel"><h1>🎨 Color Detective</h1><div class="sub">Listen. Detect. Speak.</div><button class="btn primary wide" onclick="chooseMode('local')">📱 Local Game</button><button class="btn primary wide" onclick="chooseMode('online')">🌐 Online Game</button><p class="sub" style="margin-top:20px">Designed &amp; Created by Sadegh Mosleh · © 2026</p></div></section>
-<section id="setup" class="screen"><div class="panel"><h2 id="setupTitle">Game Setup</h2><div id="localFields"><div class="field"><label>Number of Players</label><select id="playerCount"><option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div><div id="names"></div></div><div id="onlineFields" class="hidden"><div class="field"><label>Your name</label><input id="onlineName" placeholder="Player name"></div><button class="btn secondary wide" onclick="createRoom()">Create Room</button><div class="field"><label>Room code</label><input id="roomCode" maxlength="6" placeholder="ABC123"></div><button class="btn secondary wide" onclick="joinRoom()">Join Room</button><div id="roomInfo" class="sub"></div></div>
-<div class="field"><label>Difficulty</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div><div class="field"><label>Game Size</label><select id="size"><option value="4">Very Small — 4 colors</option><option value="6" selected>Small — 6 colors</option><option value="9">Medium — 9 colors</option><option value="12">Very Large — 12 colors</option></select></div><div class="field"><label>Game Time</label><select id="duration"><option value="30" selected>30 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option></select></div><button id="startBtn" class="btn primary wide" onclick="startConfiguredGame()">Start Game</button><button class="btn secondary wide" onclick="show('home')">Back</button></div></section>
-<section id="transition" class="screen"><div class="panel"><h1 id="turnTitle">Ready?</h1><p class="sub">Your timer begins when you press Start.</p><button class="btn primary wide" onclick="beginPlayer()">▶ Start</button></div></section>
-<section id="game" class="screen"><div class="topbar"><div class="pill" id="who">Player</div><div class="pill timer">⏱ <span id="time">60</span></div><div class="pill score">⭐ <span id="score">0</span></div></div><div style="width:min(850px,100%);text-align:center;margin:2px 0 8px;font-size:clamp(13px,3.5vw,18px);font-weight:900;line-height:1.3">👀 Find the color whose written name is wrong.</div><div class="status" id="status"></div><div id="board" class="board"></div><div class="game-actions" style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button id="gameMenu" class="btn secondary" onclick="returnToMainMenu()">⌂ Main Menu</button><button id="gameTutorial" class="btn secondary" onclick="openTutorialFromGame()">📘 Tutorial</button><button id="restartGame" class="btn secondary" onclick="restartGameSameSettings()">↻ Restart</button><button id="skipRound" class="btn secondary" onclick="skipRound()">Next ⏭</button></div></section>
-<section id="results" class="screen"><div class="panel"><h1>🏆 Results</h1><div id="winner" class="winner"></div><table class="scoreboard"><thead><tr><th>Player</th><th>Score</th><th>Rounds</th><th>Correct</th><th>Wrong</th></tr></thead><tbody id="resultRows"></tbody></table><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px"><button class="btn primary" onclick="playAgainSameSettings()">↻ Play Again</button><button class="btn secondary" onclick="returnToMainMenu()">⌂ Main Menu</button></div></div></section>
-<section id="tutorial" class="screen"><div class="panel"><h1>📘 Tutorial</h1><div id="tut1"><h2>1. How to Play</h2><p id="tutSummary" class="sub"></p><div id="tutorialDemo" class="tutorial-demo"></div><div id="demoCaption" class="demo-caption">Watch the example…</div><div id="demoDialog" class="demo-dialog hidden"><b>🎤 What color is this?</b><div id="demoSwatch" class="demo-swatch"></div><div id="demoAnswer"></div></div><button id="playDemoBtn" class="btn primary wide" onclick="playTutorialDemo()">▶ Play Demo Again</button><p>Find the color whose <b>written name is wrong</b>. Select it, then say its real color. A correct answer earns <b>+1</b>.</p><button class="btn primary wide" onclick="tutPage(2)">Next</button><button class="btn secondary wide" onclick="closeTutorial()">← Back</button></div><div id="tut2" class="hidden"><h2>2. Learn &amp; Practise Colors</h2><p id="tutPracticeSummary" class="sub"></p><div id="learnColors" class="colors-list"></div><p class="sub">The first color is pronounced automatically. Tap any other color to hear it again.</p><button class="btn secondary wide" onclick="tutPage(1)">Previous</button><button class="btn secondary wide" onclick="closeTutorial()">← Back</button></div></div></section>
-<div id="speakOverlay" class="overlay"><div class="dialog"><div id="answerSwatch" class="swatch"></div><div class="mic">🎙️</div><p id="listenText">Say the color name…</p><div id="feedback" class="feedback"></div><button id="retryMic" class="btn secondary wide hidden" onclick="listenForAnswer()">Try microphone again</button><div id="manualFallback" class="hidden"><p>Manual check:</p><div class="row manual-actions"><button class="btn primary" onclick="manualJudge(true)">✓ Correct</button><button class="btn danger" onclick="manualJudge(false)">✕ Wrong</button></div></div></div></div>
+:root{--ink:#18324a;--blue:#3478f6;--green:#16a36f;--red:#e83f5b;--gold:#ffbf3f;--paper:#fffdf7;--shadow:0 12px 30px #17324a24}*{box-sizing:border-box}html,body{min-height:100%;margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:radial-gradient(circle at 15% 15%,#fff8cf,transparent 30%),linear-gradient(150deg,#dff3ff,#fff2e1);overscroll-behavior-y:auto}.screen{display:none;min-height:100vh;padding:46px 12px 22px}.screen.active{display:flex;flex-direction:column;align-items:center}.panel{width:min(720px,100%);background:#fff;border-radius:26px;padding:22px;box-shadow:var(--shadow)}h1{text-align:center;color:#2453b7;font-size:clamp(34px,9vw,54px);margin:6px 0}h2{text-align:center}.sub{text-align:center;opacity:.72}.btn,button,input,select{font:inherit}.btn{border:0;border-radius:15px;padding:13px 17px;font-weight:900;cursor:pointer}.primary{background:var(--blue);color:#fff}.secondary{background:#eaf1ff;color:#24466c}.danger{background:#ffe7eb;color:#b7203d}.wide{width:100%;margin-top:10px}.field{margin:12px 0}.field label{display:block;font-weight:900;margin-bottom:5px}.field input,.field select{width:100%;padding:12px;border:2px solid #d8e4ef;border-radius:12px;background:#fff}.hidden{display:none!important}.version{position:fixed;right:9px;top:9px;background:#17324d;color:#fff;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:900;z-index:20}.topbar{width:min(780px,100%);display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-bottom:8px}.pill{background:#fff;border-radius:14px;padding:8px 11px;box-shadow:var(--shadow);font-weight:900;min-width:82px;text-align:center}.stage{width:min(780px,100%);background:#ffffffb8;border-radius:26px;padding:14px;box-shadow:var(--shadow);text-align:center}.prompt{min-height:56px;font-size:clamp(20px,5vw,30px);font-weight:1000;display:flex;align-items:center;justify-content:center}.countdown{font-weight:900;color:#a46500;min-height:26px}.grid{display:grid;gap:10px;justify-content:center;margin:10px auto;max-width:690px}.card{width:min(140px,28vw);aspect-ratio:1;border:0;border-radius:20px;background:#eee6ce;box-shadow:0 6px 12px #0002;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:.25s transform,.25s background}.card:active{transform:scale(.95)}.picture{font-size:clamp(45px,12vw,80px);filter:drop-shadow(0 3px 2px #0002)}.cover{font-size:clamp(42px,12vw,78px);font-weight:1000;color:#121212}.card.correct{outline:6px solid var(--green);background:#dbffef}.card.wrong{outline:6px solid var(--red);animation:shake .35s}.card.botpick{outline:6px solid #6d3cf5}@keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}.feedback{min-height:34px;font-size:21px;font-weight:1000}.good{color:var(--green)}.bad{color:var(--red)}.listening{display:inline-block;background:#def8e9;color:#08743e;border:2px solid #35b876;border-radius:12px;padding:5px 13px}.actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:10px}.actions .btn{padding:9px 11px}.scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:9px 5px;border-bottom:1px solid #dae4ee;text-align:center}.winner{text-align:center;font-size:25px;font-weight:1000;margin:12px}.tutorial-grid{display:grid;grid-template-columns:repeat(2,110px);gap:10px;justify-content:center}.tutorial-card{height:110px;border-radius:16px;background:#eee6ce;display:flex;align-items:center;justify-content:center;font-size:52px}.note{background:#eef7ff;border-radius:15px;padding:12px;line-height:1.45;margin:12px 0}@media(max-height:700px){.screen{padding-top:35px}.stage{padding:8px}.card{width:min(112px,25vw)}.prompt{min-height:43px}.grid{gap:7px}}
+.grid.eight .card{width:min(140px,21vw)}.grid.eight .picture{font-size:clamp(38px,9vw,70px)}.grid.eight .cover{font-size:clamp(36px,10vw,68px)}
+@media(max-height:700px){.grid.eight .card{width:min(105px,20vw)}}
+</style></head><body><div class="version">Version 1</div>
+<section id="home" class="screen active"><div class="panel"><h1>🧠 Memory Map</h1><p class="sub">Look. Remember. Find.</p><button class="btn primary wide" onclick="chooseMode('local')">📱 Local Game</button><button class="btn primary wide" onclick="chooseMode('bot')">🤖 Bot Game</button><button class="btn primary wide" onclick="chooseMode('online')">🌐 Online Game</button><button class="btn secondary wide" onclick="openTutorial('home')">📘 Tutorial</button><p class="sub" style="margin-top:18px">Version 1 · Designed &amp; Created by Sadegh Mosleh · © 2026</p></div></section>
+<section id="setup" class="screen"><div class="panel"><h2 id="setupTitle">Game Setup</h2><div id="localFields"><div id="countField" class="field"><label>Number of Players</label><select id="playerCount"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div><div id="names"></div><div id="botField" class="field hidden"><label>Bot Difficulty</label><select id="botDifficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div></div><div id="onlineFields" class="hidden"><div class="field"><label>Your name</label><input id="onlineName" placeholder="Player name"></div><button class="btn secondary wide" onclick="createRoom()">Create Room</button><div class="field"><label>Room code</label><input id="roomCode" maxlength="6" placeholder="ABC123"></div><button class="btn secondary wide" onclick="joinRoom()">Join Room</button><div id="roomInfo" class="sub"></div></div><div class="field"><label>Difficulty</label><select id="difficulty"><option value="easy">Easy — 4 pictures</option><option value="medium" selected>Medium — 6 pictures</option><option value="hard">Hard — 8 pictures</option></select></div><div class="field"><label>Game Time</label><select id="duration"><option value="60">60 seconds</option><option value="90" selected>90 seconds</option><option value="120">120 seconds</option></select></div><button id="startBtn" class="btn primary wide" onclick="startConfiguredGame()">Start Game</button><button class="btn secondary wide" onclick="show('home')">Back</button></div></section>
+<section id="transition" class="screen"><div class="panel"><h1 id="turnTitle">Ready?</h1><p class="sub">Your timer begins after you press Start.</p><button class="btn primary wide" onclick="beginPlayer()">▶ Start</button></div></section>
+<section id="game" class="screen"><div class="topbar"><div class="pill" id="who">Player</div><div class="pill">⏱ <span id="time">90</span></div><div class="pill">⭐ <span id="score">0</span></div><div class="pill">⚡ <span id="responseTime">0.0</span>s</div><div id="botPill" class="pill hidden">🤖 <span id="botScore">0</span></div></div><div class="stage"><div id="prompt" class="prompt">Memorize the pictures</div><div id="countdown" class="countdown"></div><div id="grid" class="grid"></div><div id="feedback" class="feedback"></div><div class="actions"><button class="btn secondary" onclick="repeatPrompt()">🔊 Repeat</button><button class="btn secondary" onclick="skipItem()">⏭ Skip</button><button class="btn secondary" onclick="openTutorial('game')">📘 Guide</button><button class="btn secondary" onclick="restartSame()">↻ Restart</button><button class="btn danger" onclick="returnHome()">⌂ Menu</button></div></div></section>
+<section id="results" class="screen"><div class="panel"><h1>🏆 Results</h1><div id="winner" class="winner"></div><table class="scoreboard"><thead><tr><th>Rank</th><th>Player</th><th>Score</th><th>Correct</th><th>Wrong</th><th>Time</th></tr></thead><tbody id="resultRows"></tbody></table><button class="btn primary wide" onclick="playAgain()">↻ Play Again</button><button class="btn secondary wide" onclick="returnHome()">⌂ Main Menu</button></div></section>
+<section id="tutorial" class="screen"><div class="panel"><h1>📘 How to Play</h1><div class="tutorial-grid"><div class="tutorial-card">🔭</div><div class="tutorial-card">🧭</div><div class="tutorial-card">🏮</div><div class="tutorial-card">🎻</div></div><div class="note">Memorize every picture. When the cards turn into numbers, listen to the requested item. Touch its number or say the number aloud. Each requested picture remains revealed. The positions change only after every picture has been requested.</div><div class="note"><b>Correct:</b> +1 &nbsp; <b>Wrong:</b> −1<br>If scores are equal, the player with the lower response time wins.</div><button class="btn primary wide" onclick="closeTutorial()">← Back</button></div></section>
 <script>
-const VERSION=37;
-const COLORS={easy:[['Red','#e53935'],['Blue','#1e88e5'],['Green','#43a047'],['Yellow','#fdd835'],['Black','#202124'],['White','#f7f7f7']],medium:[['Red','#e53935'],['Blue','#1e88e5'],['Green','#43a047'],['Yellow','#fdd835'],['Black','#202124'],['White','#f7f7f7'],['Orange','#fb8c00'],['Purple','#8e24aa'],['Pink','#ec407a'],['Brown','#795548'],['Gray','#80868b'],['Cyan','#00acc1']],hard:[['Turquoise','#26a69a'],['Maroon','#7b1f36'],['Navy','#152b5b'],['Teal','#008080'],['Lime','#8bc34a'],['Gold','#d4af37'],['Violet','#7e57c2'],['Coral','#ff7043'],['Beige','#d8c6a5'],['Silver','#a7a9ac'],['Indigo','#3f51b5'],['Olive','#808000']]};
-let speechAttempt=0;let mode='local',players=[],pi=0,score=0,rounds=0,correct=0,wrong=0,endAt=0,gameStartAt=0,timer=null,round=null,replayed=false,roundNo=0,seed=1,settings={},roundSerial=0,roundStartTimeout=null,roundPaceElapsed=0;let peer=null,conns=[],hostConn=null,isHost=false,roomPlayers=[],onlineFinished={};
-function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active')}
-function chooseMode(m){mode=m;show('setup');document.getElementById('setupTitle').textContent=m==='local'?'📱 Local Game':'🌐 Online Game';document.getElementById('localFields').classList.toggle('hidden',m!=='local');document.getElementById('onlineFields').classList.toggle('hidden',m!=='online');document.getElementById('startBtn').classList.toggle('hidden',m==='online');renderNames()}
-function renderNames(){let n=+document.getElementById('playerCount').value,old=[...document.querySelectorAll('.pname')].map(x=>x.value),saved=[];try{saved=JSON.parse(localStorage.getItem('colorDetectivePlayerNames')||'[]')}catch(e){}let out='';for(let i=0;i<n;i++){let v=old[i]||saved[i]||`Player ${i+1}`;out+=`<div class="field"><label>Player ${i+1}</label><input class="pname" value="${esc(v)}"></div>`}document.getElementById('names').innerHTML=out}document.getElementById('playerCount').onchange=renderNames;
-function readSettings(){return {difficulty:difficulty.value,size:+size.value,duration:+duration.value}}
-function buildSelectedColors(ts){
-  const pool=COLORS[ts.difficulty]||COLORS.medium;
-  const n=Math.min(+ts.size,pool.length);
-  // The selected game vocabulary is level-appropriate and limited to the chosen color count.
-  // Keep this palette stable for the whole game so Tutorial and gameplay teach the same colors.
-  return pool.slice(0,n).map(c=>[c[0],c[1]]);
-}
-function ensureSelectedColors(ts=settings){
-  if(!ts)return [];
-  const expected=Math.min(+ts.size,(COLORS[ts.difficulty]||[]).length);
-  if(!Array.isArray(ts.selectedColors)||ts.selectedColors.length!==expected){ts.selectedColors=buildSelectedColors(ts)}
-  return ts.selectedColors;
-}
-function startConfiguredGame(){settings=readSettings();ensureSelectedColors(settings);players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('colorDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}seed=(Date.now()>>>0);pi=0;showTransition()}
-function showTransition(){turnTitle.textContent=`${players[pi].name}, get ready!`;show('transition')}
-function beginPlayer(){score=rounds=correct=wrong=roundNo=0;seed=(settings.baseSeed??seed);document.getElementById('who').textContent=players[pi].name;scoreUI();show('game');gameStartAt=performance.now();endAt=gameStartAt+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);nextRound()}
-function tick(){let left=Math.max(0,Math.ceil((endAt-performance.now())/1000));time.textContent=left;if(performance.now()>=endAt)finishPlayer()}
-function scoreUI(){document.getElementById('score').textContent=score}
-function rng(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
-function shuffled(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function makeRound(){let pool=ensureSelectedColors(settings),n=pool.length,cards=shuffled(pool).slice(0,n),bad=Math.floor(rng()*n),wrongNames=pool.filter(x=>x[0]!==cards[bad][0]),said=wrongNames[Math.floor(rng()*wrongNames.length)][0];return {cards,bad,said,index:0,active:-1,stopped:false}}
-function nextRound(){if(performance.now()>=endAt)return finishPlayer();rounds++;roundNo++;roundSerial++;replayed=false;round=makeRound();renderBoard();status.className='status';status.textContent=`Round ${roundNo} — find the wrong written color name.`}
-function renderBoard(){board.innerHTML='';board.classList.toggle('many',round.cards.length>=8);board.classList.toggle('very-many',round.cards.length>=11);board.style.gridTemplateColumns=round.cards.length<=6?'repeat(2,1fr)':'repeat(3,1fr)';round.cards.forEach((c,i)=>{let b=document.createElement('button');b.className='color-card ready';b.style.background=c[1];let written=i===round.bad?round.said:c[0];b.setAttribute('aria-label',`${written} written on color card ${i+1}`);let label=document.createElement('span');label.className='card-name'+(written==='Turquoise'?' turquoise-name':'');label.textContent=written;if(c[0]==='Black')label.style.color='#fff';b.appendChild(label);b.onclick=()=>pick(i);board.appendChild(b)})}
-function say(text,onend){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.82;u.onend=()=>onend&&onend();u.onerror=()=>onend&&onend();speechSynthesis.speak(u)}
-// Pace is frozen at the start of each round and depends only on actual game time elapsed.
-// Skipping rounds quickly therefore cannot accelerate the voice; staying in one round also cannot change it mid-round.
-function paceProgress(){return Math.min(1,roundPaceElapsed/Math.max(1,settings.duration*1000))}
-// V27: keep the voice itself at one clear, constant rate.  The flow accelerates
-// progressively during the first half of the game by shortening only the pauses
-// between words.  From halfway onward there is no added pause.
-function roundVoiceRate(){return .82}
-function roundFlow(){
-  let q=Math.min(1,paceProgress()/0.5);
-  // Five gentle stages from spacious to continuous speech.
-  if(q<0.20)return {sep:'. ',step:1120};
-  if(q<0.40)return {sep:'; ',step:980};
-  if(q<0.60)return {sep:', ',step:850};
-  if(q<0.80)return {sep:', ',step:740};
-  if(q<1.00)return {sep:', ',step:650};
-  return {sep:' ',step:570};
-}
-function roundGap(){let q=Math.min(1,paceProgress()/0.5);return Math.round(550*(1-q))}
-function sayRoundColor(text,onend){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=roundVoiceRate();u.onend=()=>onend&&onend();u.onerror=()=>onend&&onend();speechSynthesis.speak(u)}
-function speakSequence(serial=roundSerial){
-  if(serial!==roundSerial||!round)return;
-  round.index=0;round.stopped=false;
-  let els=[...board.children];els.forEach(e=>e.classList.remove('speaking'));
-  const words=round.cards.map((c,i)=>i===round.bad?round.said:c[0]);
-  const flow=roundFlow();
-  const sentence=words.join(flow.sep);
-  let current=-1, highlightTimers=[];
-  function highlight(i){
-    if(serial!==roundSerial||!round||round.stopped||i<0||i>=els.length||i===current)return;
-    els.forEach(e=>e.classList.remove('speaking'));
-    els[i].classList.add('speaking');current=i;round.active=i;round.index=i;
-  }
-  // Android TTS often emits only the first boundary event for one utterance.
-  // Timed highlighting therefore guarantees every circle is highlighted in order.
-  highlight(0);
-  for(let i=1;i<words.length;i++) highlightTimers.push(setTimeout(()=>highlight(i),i*flow.step));
-  speechSynthesis.cancel();
-  let u=new SpeechSynthesisUtterance(sentence);u.lang='en-US';u.rate=roundVoiceRate();
-  u.onend=()=>{
-    if(serial!==roundSerial||!round||round.stopped)return;
-    highlightTimers.forEach(clearTimeout);
-    els.forEach(e=>{e.classList.remove('speaking');e.classList.add('ready')});
-    round.active=round.cards.length-1;round.index=round.cards.length;
-    status.textContent='Choose the color that was pronounced incorrectly.';
-  };
-  u.onerror=u.onend;speechSynthesis.speak(u);
-}
-function pick(i){if(!round||round.stopped||performance.now()>=endAt)return;round.stopped=true;speechSynthesis.cancel();if(i!==round.bad){score-=2;wrong++;scoreUI();flash(`❌ Wrong card. −2`,nextRound);return}status.textContent='Correct card! Now say its real color.';openSpeak(round.cards[i])}
-function flash(t,cb){status.textContent=t;setTimeout(()=>{if(performance.now()<endAt)cb();else finishPlayer()},700)}
-function openSpeak(c){speechAttempt=0;answerSwatch.style.background=c[1];speakOverlay.classList.add('show');feedback.textContent='';retryMic.classList.add('hidden');manualFallback.classList.remove('hidden');listenText.className='question-box';listenText.textContent='🎤 What color is this?';say('What color is this?',()=>{if(performance.now()<endAt)setTimeout(listenForAnswer,180);else closeSpeechAndFinish()})}
-const COLOR_ALIASES={red:['red','read','redd'],gray:['gray','grey','great','grade','grei'],cyan:['cyan','cian','sian','sigh an','sigh anne','cy an'],green:['green','grean'],blue:['blue','blew'],white:['white','wight'],black:['black'],yellow:['yellow','yello'],orange:['orange'],purple:['purple'],pink:['pink'],brown:['brown'],turquoise:['turquoise','turqoise','turkoys'],navy:['navy'],beige:['beige','bage','baysh'],maroon:['maroon'],violet:['violet'],lime:['lime'],gold:['gold'],silver:['silver'],coral:['coral']};
-function normSpeech(x){return x.toLowerCase().replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim()}
-function lev(a,b){let m=a.length,n=b.length,d=Array.from({length:m+1},()=>Array(n+1).fill(0));for(let i=0;i<=m;i++)d[i][0]=i;for(let j=0;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]}
-function colorMatch(text,color){let t=normSpeech(text),c=color.toLowerCase(),aliases=COLOR_ALIASES[c]||[c];if(aliases.some(a=>t===a||t.split(' ').includes(a)||t.includes(a)))return true;let compact=t.replace(/ /g,''),cc=c.replace(/ /g,'');let lim=cc.length<=3?1:cc.length<=5?2:3;return lev(compact,cc)<=lim}
-function listenForAnswer(){
-  if(performance.now()>=endAt)return closeSpeechAndFinish();
-  let SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){manualFallback.classList.remove('hidden');listenText.textContent='Microphone unavailable — use ✓ or ✕.';return}
-  let r=new SR(),gotResult=false,intentionallyStopped=false;
-  window._activeRecognition=r;
-  r.lang='en-US';r.interimResults=false;r.continuous=false;r.maxAlternatives=10;
-  listenText.className='listening-box';
-  listenText.textContent=speechAttempt===0?'🎙️ Listening…':'🎙️ Listening — last chance…';
-  r.onresult=e=>{
-    gotResult=true; intentionallyStopped=true; window._activeRecognition=null;
-    listenText.className='';listenText.textContent='';
-    let heard=[...e.results[0]].map(x=>x.transcript.trim().toLowerCase());judgeSpeech(heard)
-  };
-  r.onerror=e=>{
-    if(window._activeRecognition===r)window._activeRecognition=null;
-    // Browser/Android can stop listening before the player says anything.
-    // These errors are connection/session failures, not player attempts.
-    if(!gotResult && ['no-speech','aborted','audio-capture','network'].includes(e.error)){
-      intentionallyStopped=true;
-      if(performance.now()<endAt && speakOverlay.classList.contains('show')){
-        listenText.className='listening-box';listenText.textContent='🎙️ Listening…';
-        setTimeout(()=>listenForAnswer(),220)
-      }else if(performance.now()>=endAt)closeSpeechAndFinish();
-      return
-    }
-  };
-  r.onend=()=>{
-    if(window._activeRecognition===r)window._activeRecognition=null;
-    // If recognition ended with no actual speech result, automatically reopen it.
-    // This does NOT consume either of the player's two real answer attempts.
-    if(!gotResult && !intentionallyStopped && performance.now()<endAt && speakOverlay.classList.contains('show')){
-      listenText.className='listening-box';listenText.textContent='🎙️ Listening…';
-      setTimeout(()=>listenForAnswer(),220)
-    }
-  };
-  try{r.start()}catch(e){
-    window._activeRecognition=null;
-    if(performance.now()<endAt && speakOverlay.classList.contains('show'))setTimeout(()=>listenForAnswer(),300)
-  }
-}
-function judgeSpeech(heard){if(performance.now()>=endAt)return closeSpeechAndFinish();let target=round.cards[round.bad][0];let ok=heard.some(x=>colorMatch(x,target));if(ok){score+=1;correct++;listenText.className='';feedback.textContent='✅ Correct! +1';say('Correct',()=>setTimeout(closeAndNext,250));scoreUI()}else if(speechAttempt===0){speechAttempt=1;listenText.className='';listenText.textContent='I’m not sure. One more chance.';feedback.textContent='🎤 Please say the color one more time — no point lost.';setTimeout(()=>{if(performance.now()<endAt)listenForAnswer();else closeSpeechAndFinish()},350)}else{score--;wrong++;listenText.className='';feedback.textContent=`❌ The color is ${target}. −1`;scoreUI();say('Wrong',()=>setTimeout(closeAndNext,350))}}
-function manualJudge(ok){if(ok){score++;correct++;feedback.textContent='✅ Correct! +1'}else{score--;wrong++;feedback.textContent=`❌ The color is ${round.cards[round.bad][0]}. −1`}scoreUI();setTimeout(closeAndNext,650)}
-function closeAndNext(){speakOverlay.classList.remove('show');if(performance.now()<endAt)nextRound();else finishPlayer()}
-function closeSpeechAndFinish(){speakOverlay.classList.remove('show');finishPlayer()}
-function replayRound(){if(!round||round.stopped||performance.now()>=endAt)return;[...board.children].forEach(e=>{e.classList.remove('speaking');void e.offsetWidth;e.classList.add('speaking');setTimeout(()=>e.classList.remove('speaking'),260)});status.textContent=`Round ${roundNo} — look again.`}
-function skipRound(){if(!round||performance.now()>=endAt)return;roundSerial++;clearTimeout(roundStartTimeout);speechSynthesis.cancel();speakOverlay.classList.remove('show');round.stopped=true;status.textContent='Round skipped — no points changed.';setTimeout(()=>{if(performance.now()<endAt)nextRound();else finishPlayer()},180)}
-function restartGameSameSettings(){roundSerial++;clearTimeout(roundStartTimeout);speechSynthesis.cancel();if(timer){clearInterval(timer);timer=null}if(window._activeRecognition){try{window._activeRecognition.abort()}catch(e){}window._activeRecognition=null}speakOverlay.classList.remove('show');round=null;score=rounds=correct=wrong=roundNo=0;scoreUI();if(mode==='local'){pi=0;seed=(Date.now()>>>0);settings.baseSeed=seed;beginPlayer();return}if(isHost){startOnlineHost();return}status.textContent='Waiting for the host to restart the game…'}
-function finishPlayer(){if(!timer)return;clearInterval(timer);timer=null;clearTimeout(roundStartTimeout);roundSerial++;speechSynthesis.cancel();if(window._activeRecognition){try{window._activeRecognition.abort()}catch(e){}window._activeRecognition=null}speakOverlay.classList.remove('show');let res={name:players[pi].name,score,rounds,correct,wrong};players[pi]={...players[pi],...res};if(mode==='online'){sendFinish(res);return}pi++;if(pi<players.length)showTransition();else showResults(players)}
-function showResults(arr){let sorted=[...arr].sort((a,b)=>b.score-a.score||b.rounds-a.rounds);let best=sorted[0]?.score,wins=sorted.filter(x=>x.score===best);winner.textContent=wins.length===1?`🎉 ${wins[0].name} wins!`:`🤝 Tie: ${wins.map(x=>x.name).join(' & ')}`;resultRows.innerHTML=sorted.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.score}</td><td>${x.rounds}</td><td>${x.correct}</td><td>${x.wrong}</td></tr>`).join('');show('results');say(wins.length===1?`${wins[0].name} wins`:'It is a tie')}
-function playAgainSameSettings(){speechSynthesis.cancel();if(mode==='local'){startConfiguredGame();return}if(isHost){startOnlineHost();return}winner.textContent='Waiting for the host to restart the game…'}
-function returnToMainMenu(){roundSerial++;clearTimeout(roundStartTimeout);speechSynthesis.cancel();if(timer){clearInterval(timer);timer=null}if(window._activeRecognition){try{window._activeRecognition.abort()}catch(e){}window._activeRecognition=null}speakOverlay.classList.remove('show');round=null;score=rounds=correct=wrong=roundNo=0;scoreUI();show('home')}
+const VERSION=1,$=id=>document.getElementById(id);
+const BANK={easy:[['telescope','🔭'],['compass','🧭'],['key','🔑'],['bell','🔔'],['clock','⏰'],['camera','📷'],['book','📘'],['phone','📱'],['umbrella','☂️'],['lamp','🏮'],['gift','🎁'],['balloon','🎈']],medium:[['microscope','🔬'],['binoculars','🥽'],['suitcase','🧳'],['magnet','🧲'],['paintbrush','🖌️'],['hourglass','⌛'],['violin','🎻'],['helmet','⛑️'],['anchor','⚓'],['ladder','🪜'],['battery','🔋'],['scissors','✂️'],['shield','🛡️'],['satellite','🛰️']],hard:[['stethoscope','🩺'],['typewriter','⌨️'],['parachute','🪂'],['lighthouse','🗼'],['wheelbarrow','🛒'],['thermometer','🌡️'],['fire extinguisher','🧯'],['test tube','🧪'],['screwdriver','🪛'],['abacus','🧮'],['megaphone','📣'],['telescope','🔭'],['compass','🧭'],['hourglass','⌛'],['binoculars','🥽'],['paintbrush','🖌️']]};
+const CFG={easy:{n:4,reveal:6500},medium:{n:6,reveal:4500},hard:{n:8,reveal:3000}};
+let mode='local',players=[],pi=0,settings={},seed=1,timer=null,endAt=0,score=0,correct=0,wrong=0,totalResponse=0,questionStart=0,board=[],order=[],qIndex=0,phase='idle',locked=false,recognition=null,wantListening=false,boardTimer=null,countTimer=null,tutorialReturn='home',pauseState=null;
+let botScore=0,botCorrect=0,botWrong=0,botTime=0,botTimers=[];
+let peer=null,conns=[],hostConn=null,isHost=false,roomPlayers=[],onlineFinished={},onlineTotal=1;
+function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-let tutorialReturn='setup',tutorialColors=[],tutorialDemoRun=0,tutorialPageNow=1,tutorialPauseState=null;
-function tutorialPool(useGameSettings=false){let ts=useGameSettings&&settings&&settings.difficulty?settings:readSettings();let colors=useGameSettings?ensureSelectedColors(ts):buildSelectedColors(ts);return {ts,colors:colors.map(c=>[c[0],c[1]])}}
-function prepareTutorial(useGameSettings=false){
-  let x=tutorialPool(useGameSettings); tutorialColors=x.colors;
-  tutSummary.textContent=`This demonstration matches your ${x.ts.difficulty} level and ${tutorialColors.length}-color game.`;
-  tutPracticeSummary.textContent=`These are the exact ${tutorialColors.length} colors used for this ${x.ts.difficulty} game.`;
-  renderTutorialDemo(); renderTutorialPractice(); show('tutorial'); tutPage(1);
-}
-function openTutorial(){tutorialReturn='setup';prepareTutorial(false)}
-function openTutorialFromGame(){
-  tutorialReturn='game';
-  tutorialPauseState={
-    remainingMs:Math.max(0,endAt-performance.now()),
-    roundStopped:round?round.stopped:false
-  };
-  roundSerial++; clearTimeout(roundStartTimeout); speechSynthesis.cancel();
-  if(timer){clearInterval(timer);timer=null}
-  if(window._activeRecognition){try{window._activeRecognition.abort()}catch(e){}window._activeRecognition=null}
-  speakOverlay.classList.remove('show');
-  prepareTutorial(true);
-}
-function renderTutorialDemo(){
-  let demo=tutorialColors.slice(0,Math.min(4,tutorialColors.length));
-  tutorialDemo.innerHTML=demo.map((c,i)=>`<button class="mini" data-i="${i}" style="background:${c[1]}" disabled aria-label="Demo color ${i+1}"></button>`).join('');
-  demoDialog.classList.add('hidden'); demoCaption.textContent='Watch the example…';
-}
-function renderTutorialPractice(){
-  learnColors.innerHTML=tutorialColors.map((c,i)=>`<button class="learn${c[0]==='Turquoise'?' turquoise-learn':''}" data-i="${i}" style="background:${c[1]};color:${c[0]==='Black'?'#fff':'#111'};text-shadow:none" onclick="speakTutorialPracticeColor(${i})">${c[0]}</button>`).join('');
-}
-function waitDemo(ms,run){return new Promise(r=>setTimeout(()=>r(run===tutorialDemoRun),ms))}
-function speakDemo(text,rate=.72){return new Promise(resolve=>{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=rate;u.onend=resolve;u.onerror=resolve;speechSynthesis.speak(u)})}
-async function playTutorialDemo(){
-  if(tutorialPageNow!==1||!tutorialColors.length)return;
-  let run=++tutorialDemoRun; speechSynthesis.cancel(); renderTutorialDemo(); playDemoBtn.disabled=true;
-  let demo=tutorialColors.slice(0,Math.min(4,tutorialColors.length));
-  let bad=Math.min(2,demo.length-1), wrong=tutorialColors.find(c=>c[0]!==demo[bad][0])||demo[(bad+1)%demo.length];
-  let els=[...tutorialDemo.children];
-  els.forEach((el,i)=>{el.textContent=i===bad?wrong[0]:demo[i][0];el.style.color=demo[i][0]==='Black'?'#fff':'#111';el.style.fontWeight='1000';el.style.fontSize='14px';el.style.textShadow='none';});
-  demoCaption.textContent='One written color name does not match its circle. Find it!';
-  await waitDemo(900,run); if(run!==tutorialDemoRun)return;
-  els[bad].classList.add('demo-picked');
-  await waitDemo(500,run); if(run!==tutorialDemoRun)return;
-  demoDialog.classList.remove('hidden'); demoSwatch.style.background=demo[bad][1]; demoAnswer.textContent='🎙️ Say the real color name.';
-  demoCaption.textContent='This is the wrong written name. Now say the real color.'; if(run!==tutorialDemoRun)return;
-  await waitDemo(450,run); if(run!==tutorialDemoRun)return;
-  demoAnswer.textContent=`🎙️ “${demo[bad][0]}”`;
-  demoCaption.textContent=`Say: ${demo[bad][0]}`;
-  await speakDemo(demo[bad][0],.82); if(run!==tutorialDemoRun)return;
-  demoAnswer.textContent=`“${demo[bad][0]}”  ✅ +1 point`;
-  demoCaption.textContent='Correct! You found the wrong written name and said the real color.';
-  playDemoBtn.disabled=false;
-}
-function highlightTutorialColor(i,on){let els=[...learnColors.querySelectorAll('.learn')];els.forEach((e,j)=>e.classList.toggle('tut-speaking',on&&j===i))}
-function speakTutorialPracticeColor(i){tutorialDemoRun++;speechSynthesis.cancel();highlightTutorialColor(i,true);say(tutorialColors[i][0],()=>highlightTutorialColor(i,false))}
-function playTutorialColors(){
-  let run=++tutorialDemoRun,i=0;
-  function next(){
-    if(run!==tutorialDemoRun||tutorialPageNow!==2||i>=tutorialColors.length){highlightTutorialColor(-1,false);return}
-    let idx=i++,c=tutorialColors[idx];highlightTutorialColor(idx,true);
-    say(c[0],()=>{if(run!==tutorialDemoRun)return;highlightTutorialColor(idx,false);setTimeout(next,280)});
-  }
-  next();
-}
-function closeTutorial(){
-  tutorialDemoRun++;speechSynthesis.cancel();highlightTutorialColor(-1,false);
-  if(tutorialReturn==='game'){
-    const paused=tutorialPauseState;tutorialPauseState=null;
-    show('game');
-    if(paused){
-      endAt=performance.now()+paused.remainingMs;
-      if(round)round.stopped=paused.roundStopped;
-      time.textContent=Math.max(0,Math.ceil(paused.remainingMs/1000));
-      clearInterval(timer);timer=setInterval(tick,100);
-    }
-    return;
-  }
-  show(tutorialReturn)
-}
-function tutPage(n){
-  tutorialPageNow=n;tutorialDemoRun++;speechSynthesis.cancel();tut1.classList.toggle('hidden',n!==1);tut2.classList.toggle('hidden',n!==2);
-  if(n===1){renderTutorialDemo();setTimeout(playTutorialDemo,250)}
-  else if(n===2){renderTutorialPractice();setTimeout(()=>{if(tutorialPageNow===2&&tutorialColors.length)speakTutorialPracticeColor(0)},250)}
-}
-// Online: host distributes one shared seed/settings; each phone plays independently, then shares final scores.
+function chooseMode(m){mode=m;show('setup');$('setupTitle').textContent=m==='bot'?'🤖 Bot Game':m==='local'?'📱 Local Game':'🌐 Online Game';$('localFields').classList.toggle('hidden',m==='online');$('onlineFields').classList.toggle('hidden',m!=='online');$('countField').classList.toggle('hidden',m==='bot');$('botField').classList.toggle('hidden',m!=='bot');$('startBtn').classList.toggle('hidden',m==='online');renderNames()}
+function renderNames(){let n=mode==='bot'?1:+$('playerCount').value,s=[];try{s=JSON.parse(localStorage.getItem('memoryMapNames')||'[]')}catch(e){}let old=[...document.querySelectorAll('.pname')].map(x=>x.value);$('names').innerHTML=Array.from({length:n},(_,i)=>`<div class="field"><label>${mode==='bot'?'Your Name':`Player ${i+1}`}</label><input class="pname" value="${esc(old[i]||s[i]||`Player ${i+1}`)}"></div>`).join('')}
+$('playerCount').onchange=renderNames;
+function readSettings(){return {difficulty:$('difficulty').value,duration:+$('duration').value,botDifficulty:$('botDifficulty').value}}
+function startConfiguredGame(){settings=readSettings();players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('memoryMapNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}seed=Date.now()>>>0;settings.baseSeed=seed;pi=0;showTransition()}
+function showTransition(){$('turnTitle').textContent=`${players[pi].name}, get ready!`;show('transition')}
+function rng(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+function shuffle(a){a=[...a];for(let i=a.length-1;i;i--){let j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function beginPlayer(){cleanup();score=correct=wrong=totalResponse=0;botScore=botCorrect=botWrong=botTime=0;seed=((settings.baseSeed+(mode==='local'?pi*2654435761:0))>>>0);$('who').textContent=players[pi].name;$('botPill').classList.toggle('hidden',mode!=='bot');updateStats();show('game');endAt=performance.now()+settings.duration*1000;timer=setInterval(tick,100);newBoard()}
+function tick(){let left=Math.max(0,Math.ceil((endAt-performance.now())/1000));$('time').textContent=left;if(performance.now()>=endAt)finishPlayer()}
+function updateStats(){$('score').textContent=score;$('responseTime').textContent=(totalResponse/1000).toFixed(1);$('botScore').textContent=botScore}
+function newBoard(){if(performance.now()>=endAt)return finishPlayer();clearTimeout(boardTimer);clearInterval(countTimer);stopListening();phase='memorize';locked=true;let c=CFG[settings.difficulty],pool=BANK[settings.difficulty];board=shuffle(pool).slice(0,c.n).map((x,i)=>({name:x[0],icon:x[1],pos:i,revealed:false}));order=shuffle(board.map((_,i)=>i));qIndex=0;renderBoard(true);$('prompt').textContent='Memorize every picture';$('feedback').textContent='';let until=performance.now()+c.reveal;function cd(){$('countdown').textContent=`Hiding in ${Math.max(0,Math.ceil((until-performance.now())/1000))}…`}cd();countTimer=setInterval(cd,150);boardTimer=setTimeout(hideBoard,c.reveal)}
+function columns(){return board.length===4?2:board.length===6?3:4}
+function renderBoard(showPictures=false){$('grid').classList.toggle('eight',board.length===8);$('grid').style.gridTemplateColumns=`repeat(${columns()},minmax(0,1fr))`;$('grid').innerHTML=board.map((x,i)=>`<button class="card" data-i="${i}" onclick="chooseCard(${i})"><span class="${showPictures||x.revealed?'picture':'cover'}">${showPictures||x.revealed?x.icon:i+1}</span></button>`).join('')}
+function hideBoard(){clearInterval(countTimer);$('countdown').textContent='';renderBoard(false);phase='recall';locked=false;askItem()}
+function askItem(){if(qIndex>=order.length)return setTimeout(newBoard,700);if(performance.now()>=endAt)return finishPlayer();locked=false;let target=board[order[qIndex]];$('prompt').textContent=`Where was the ${target.name}?`;$('feedback').className='feedback';$('feedback').innerHTML='<span class="listening">🎙️ Listening…</span>';questionStart=performance.now();speak(`Where was the ${target.name}?`,()=>startListening());scheduleBot()}
+function repeatPrompt(){if(phase!=='recall'||locked)return;let t=board[order[qIndex]];speak(`Where was the ${t.name}?`,()=>startListening())}
+function chooseCard(i){if(phase!=='recall'||locked)return;answerNumber(i+1)}
+function answerNumber(n){if(phase!=='recall'||locked)return;locked=true;stopListening();let elapsed=performance.now()-questionStart,total=elapsed,targetIndex=order[qIndex],chosen=n-1,ok=chosen===targetIndex;totalResponse+=total;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! −1 · It was number ${targetIndex+1}`}board[targetIndex].revealed=true;renderBoard(false);let right=$('grid').children[targetIndex];if(right)right.classList.add('correct');if(!ok){let bad=$('grid').children[chosen];if(bad)bad.classList.add('wrong')}updateStats();qIndex++;setTimeout(()=>{if(performance.now()<endAt)askItem();else finishPlayer()},800)}
+function skipItem(){if(phase!=='recall'||locked)return;locked=true;stopListening();let targetIndex=order[qIndex];board[targetIndex].revealed=true;renderBoard(false);$('grid').children[targetIndex].classList.add('correct');$('feedback').className='feedback';$('feedback').textContent=`Skipped · It was number ${targetIndex+1}`;qIndex++;setTimeout(askItem,700)}
+function speak(text,done){stopListening();speechSynthesis.cancel();if(!('speechSynthesis'in window)){done&&done();return}let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.88;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
+const NUMS={one:1,won:1,two:2,to:2,too:2,three:3,tree:3,four:4,for:4,five:5,six:6,seven:7,eight:8,ate:8};
+function heardNumber(t){t=t.toLowerCase().replace(/number/g,' ');let d=t.match(/\b([1-8])\b/);if(d)return +d[1];for(let [w,n]of Object.entries(NUMS))if(new RegExp(`\\b${w}\\b`).test(t))return n;return null}
+function startListening(){if(phase!=='recall'||locked||recognition)return;wantListening=true;let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;let r=new SR();recognition=r;r.lang='en-US';r.interimResults=false;r.continuous=false;r.maxAlternatives=7;r.onresult=e=>{recognition=null;let n=[...e.results[0]].map(x=>heardNumber(x.transcript)).find(Boolean);if(n&&n<=board.length)answerNumber(n);else if(!locked){$('feedback').className='feedback bad';$('feedback').textContent='Please say a number.';setTimeout(startListening,220)}};r.onerror=()=>{};r.onend=()=>{if(recognition===r)recognition=null;if(wantListening&&!locked&&phase==='recall')setTimeout(startListening,220)};try{r.start()}catch(e){recognition=null}}
+function stopListening(){wantListening=false;if(recognition){try{recognition.abort()}catch(e){}recognition=null}}
+function botProfile(){return {easy:{delay:[2500,4500],accuracy:.62},medium:{delay:[1400,2800],accuracy:.78},hard:{delay:[750,1550],accuracy:.91}}[settings.botDifficulty]}
+function scheduleBot(){if(mode!=='bot')return;let p=botProfile(),delay=p.delay[0]+Math.random()*(p.delay[1]-p.delay[0]);let id=setTimeout(()=>{botTimers=botTimers.filter(x=>x!==id);let ok=Math.random()<p.accuracy;botTime+=delay;if(ok){botScore++;botCorrect++}else{botScore--;botWrong++}updateStats()},delay);botTimers.push(id)}
+function cleanup(){clearInterval(timer);timer=null;clearTimeout(boardTimer);clearInterval(countTimer);botTimers.forEach(clearTimeout);botTimers=[];stopListening();speechSynthesis.cancel()}
+function finishPlayer(){if(!timer)return;cleanup();let res={name:players[pi].name,score,correct,wrong,responseTime:totalResponse};players[pi]={...players[pi],...res};if(mode==='online'){sendFinish(res);return}if(mode==='bot'){showResults([res,{name:`Bot (${settings.botDifficulty})`,score:botScore,correct:botCorrect,wrong:botWrong,responseTime:botTime}]);return}pi++;if(pi<players.length)showTransition();else showResults(players)}
+function showResults(arr){let sorted=[...arr].sort((a,b)=>b.score-a.score||a.responseTime-b.responseTime),best=sorted[0],ties=sorted.filter(x=>x.score===best.score&&x.responseTime===best.responseTime);$('winner').textContent=ties.length===1?`🎉 ${best.name} wins!`:`🤝 Tie: ${ties.map(x=>x.name).join(' & ')}`;$('resultRows').innerHTML=sorted.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}</td><td><b>${x.score}</b></td><td>${x.correct}</td><td>${x.wrong}</td><td>${(x.responseTime/1000).toFixed(1)}s</td></tr>`).join('');show('results');speak(ties.length===1?`${best.name} wins`:'It is a tie')}
+function restartSame(){cleanup();seed=Date.now()>>>0;settings.baseSeed=seed;beginPlayer()}
+function playAgain(){pi=0;seed=Date.now()>>>0;settings.baseSeed=seed;showTransition()}
+function returnHome(){cleanup();show('home')}
+function openTutorial(from){tutorialReturn=from;if(from==='game'){pauseState={remaining:Math.max(0,endAt-performance.now()),phase,boardRemaining:phase==='memorize'?CFG[settings.difficulty].reveal:0};cleanup()}show('tutorial')}
+function closeTutorial(){if(tutorialReturn==='game'&&pauseState){show('game');endAt=performance.now()+pauseState.remaining;timer=setInterval(tick,100);if(phase==='recall'&&!locked){questionStart=performance.now();repeatPrompt()}else if(phase==='memorize')newBoard();pauseState=null;return}show(tutorialReturn)}
 function code(){return Math.random().toString(36).slice(2,8).toUpperCase()}
-function createRoom(){let name=onlineName.value.trim()||'Host',c=code();roomCode.value=c;isHost=true;peer=new Peer('color-detective-'+c);peer.on('open',()=>{roomPlayers=[name];roomInfo.textContent=`Room ${c} — waiting for players…`;startBtn.classList.remove('hidden');startBtn.textContent='Start Online Game';startBtn.onclick=startOnlineHost});peer.on('connection',conn=>{conns.push(conn);conn.on('data',d=>hostData(conn,d));conn.on('open',()=>conn.send({type:'helloHost'}))});peer.on('error',e=>roomInfo.textContent='Connection error: '+e.type)}
-function joinRoom(){let name=onlineName.value.trim();let c=roomCode.value.trim().toUpperCase();if(!name||!c)return alert('Enter your name and room code.');isHost=false;peer=new Peer();peer.on('open',()=>{hostConn=peer.connect('color-detective-'+c,{reliable:true});hostConn.on('open',()=>{hostConn.send({type:'join',name});roomInfo.textContent=`Joined room ${c}. Waiting for host…`});hostConn.on('data',guestData);hostConn.on('close',()=>roomInfo.textContent='Host disconnected.');});peer.on('error',e=>roomInfo.textContent='Connection error: '+e.type)}
-function hostData(conn,d){if(d.type==='join'){if(roomPlayers.includes(d.name)){conn.send({type:'reject',msg:'That name is already used.'});return}conn.playerName=d.name;roomPlayers.push(d.name);broadcast({type:'lobby',players:roomPlayers});roomInfo.textContent=`Room ${roomCode.value}: ${roomPlayers.join(', ')}`}if(d.type==='finish'){onlineFinished[d.result.name]=d.result;checkOnlineDone()}}
-function guestData(d){if(d.type==='lobby')roomInfo.textContent='Players: '+d.players.join(', ');if(d.type==='reject')alert(d.msg);if(d.type==='start'){settings=d.settings;settings.baseSeed=d.seed;players=[{name:onlineName.value.trim()}];pi=0;show('transition');turnTitle.textContent=`${players[0].name}, get ready!`;window._onlineTotal=d.players}if(d.type==='results')showResults(d.results)}
-function broadcast(d){conns.forEach(c=>{if(c.open)c.send(d)})}
-function startOnlineHost(){settings=readSettings();ensureSelectedColors(settings);let name=onlineName.value.trim()||'Host';seed=(Date.now()>>>0);settings.baseSeed=seed;onlineFinished={};broadcast({type:'start',settings,seed,players:roomPlayers.length});players=[{name}];pi=0;window._onlineTotal=roomPlayers.length;show('transition');turnTitle.textContent=`${name}, get ready!`}
-function sendFinish(res){if(isHost){onlineFinished[res.name]=res;checkOnlineDone()}else{hostConn.send({type:'finish',result:res});status.textContent='Finished! Waiting for other players…';show('game')}}
-function checkOnlineDone(){if(Object.keys(onlineFinished).length>=window._onlineTotal){let results=Object.values(onlineFinished);broadcast({type:'results',results});showResults(results)}else{status.textContent='Finished! Waiting for other players…'}}
+function createRoom(){let name=$('onlineName').value.trim()||'Host',c=code();try{localStorage.setItem('memoryMapOnlineName',name)}catch(e){}$('roomCode').value=c;isHost=true;roomPlayers=[name];conns=[];peer=new Peer('memory-map-'+c,{host:'0.peerjs.com',port:443,path:'/',secure:true});peer.on('open',()=>{$('roomInfo').textContent=`Room ${c} · waiting for friends`;$('startBtn').classList.remove('hidden');$('startBtn').textContent='Start Online Game';$('startBtn').onclick=startOnlineHost});peer.on('connection',conn=>{conns.push(conn);conn.on('data',d=>{if(d.type==='join'){roomPlayers.push(d.name);broadcast({type:'lobby',players:roomPlayers})}if(d.type==='finish'){onlineFinished[d.result.name]=d.result;checkOnline()}})})}
+function joinRoom(){let name=$('onlineName').value.trim()||'Player',c=$('roomCode').value.trim().toUpperCase();try{localStorage.setItem('memoryMapOnlineName',name)}catch(e){}isHost=false;peer=new Peer(undefined,{host:'0.peerjs.com',port:443,path:'/',secure:true});peer.on('open',()=>{hostConn=peer.connect('memory-map-'+c);hostConn.on('open',()=>{hostConn.send({type:'join',name});$('roomInfo').textContent='Joined · waiting for host'});hostConn.on('data',guestData)})}
+function broadcast(d){conns.forEach(c=>c.open&&c.send(d))}
+function guestData(d){if(d.type==='lobby')$('roomInfo').textContent='Players: '+d.players.join(', ');if(d.type==='start'){mode='online';settings=d.settings;seed=d.seed;settings.baseSeed=seed;players=[{name:$('onlineName').value.trim()||'Player'}];onlineTotal=d.total;pi=0;showTransition()}if(d.type==='results')showResults(d.results)}
+function startOnlineHost(){if(roomPlayers.length<2){$('roomInfo').textContent='At least two players are required.';return}mode='online';settings=readSettings();seed=Date.now()>>>0;settings.baseSeed=seed;onlineFinished={};onlineTotal=roomPlayers.length;broadcast({type:'start',settings,seed,total:onlineTotal});players=[{name:$('onlineName').value.trim()||'Host'}];pi=0;showTransition()}
+function sendFinish(res){if(isHost){onlineFinished[res.name]=res;checkOnline()}else if(hostConn&&hostConn.open){hostConn.send({type:'finish',result:res});$('feedback').textContent='Finished · waiting for other players';show('game')}}
+function checkOnline(){if(Object.keys(onlineFinished).length>=onlineTotal){let r=Object.values(onlineFinished);broadcast({type:'results',results:r});showResults(r)}else{$('feedback').textContent='Finished · waiting for other players';show('game')}}
+try{$('onlineName').value=localStorage.getItem('memoryMapOnlineName')||''}catch(e){}renderNames();
 </script></body></html>
-
-<style>
-/* V29: simple flat color circles with text directly on the color */
-.color-card{border:3px solid rgba(22,50,74,.16)!important;box-shadow:none!important;filter:none!important;transition:transform .12s ease!important}
-.color-card::after{display:none!important}
-.color-card.speaking{transform:none!important;filter:none!important;box-shadow:none!important}
-.color-card .card-name{background:transparent!important;box-shadow:none!important;padding:0!important;border-radius:0!important;color:#111;font-size:clamp(13px,3.7vw,19px);font-weight:1000;text-shadow:none!important}
-.tutorial-demo .mini{box-shadow:none!important;border:3px solid rgba(22,50,74,.16)!important;filter:none!important;display:flex;align-items:center;justify-content:center;font-weight:1000;color:#111;text-shadow:none!important}
-.tutorial-demo .mini::after{display:none!important}
-
-/* V33: larger written color names during gameplay */
-#game .color-card .card-name{font-size:clamp(17px,5vw,25px)!important;line-height:1!important}
-</style>
-<style>
-/* V30: phone-first board uses at most three columns; 12 colors = 3 x 4 */
-#game .board,
-#game .board.many,
-#game .board.very-many{grid-template-columns:repeat(3,1fr)!important;gap:8px!important}
-#game .color-card,
-#game .board.many .color-card,
-#game .board.very-many .color-card{width:min(112px,27vw)!important}
-@media(max-height:760px){
- #game .color-card,#game .board.many .color-card,#game .board.very-many .color-card{width:min(100px,25vw)!important}
-}
-@media(max-height:650px){
- #game .color-card,#game .board.many .color-card,#game .board.very-many .color-card{width:min(86px,22vw)!important}
-}
-@media(min-width:650px){
- #game .board,#game .board.many,#game .board.very-many{grid-template-columns:repeat(3,1fr)!important}
- #game .color-card,#game .board.many .color-card,#game .board.very-many .color-card{width:142px!important}
-}
-</style>
-
-<style>
-/* V36: compact portrait layouts and hidden version label */
-.ver{display:none!important}
-#game .board{grid-template-columns:repeat(2,1fr)!important}
-#game .board.many,#game .board.very-many{grid-template-columns:repeat(3,1fr)!important}
-#game .card-name.turquoise-name{font-size:clamp(12px,3.7vw,18px)!important;letter-spacing:-.4px}
-
-/* Tutorial: fit each page on a typical portrait phone without scrolling */
-#tutorial{padding:8px 10px!important;min-height:100vh!important;justify-content:center}
-#tutorial .panel{padding:10px 12px!important;border-radius:18px;max-width:520px}
-#tutorial h1{font-size:clamp(23px,6vw,31px)!important;margin:0 0 2px!important}
-#tutorial h2{font-size:clamp(17px,4.8vw,22px)!important;margin:4px 0!important}
-#tutorial .sub{font-size:12px!important;line-height:1.2!important;margin:2px 0 6px!important}
-#tutorial p{font-size:12px;line-height:1.25;margin:6px 0}
-#tutorial .tutorial-demo{gap:7px!important;padding:7px!important;border-radius:15px}
-#tutorial .mini{width:min(64px,17vw)!important;height:min(64px,17vw)!important;border-width:2px!important;font-size:11px!important}
-#tutorial .mini.demo-picked{outline-width:4px!important;outline-offset:2px!important;box-shadow:0 0 0 7px rgba(239,35,60,.16)!important}
-#tutorial .mini.demo-picked::before{top:-35px!important;font-size:29px!important}
-#tutorial .demo-caption{font-size:12px!important;line-height:1.2!important;min-height:30px!important;margin:5px 0!important}
-#tutorial .demo-dialog{margin:5px auto!important;padding:6px!important;border-radius:12px!important}
-#tutorial .demo-swatch{width:48px!important;height:48px!important;margin:4px auto!important;border-width:2px!important}
-#tutorial .wide{padding:8px 10px!important;margin-top:5px!important;border-radius:11px!important;font-size:12px!important}
-
-/* Tutorial page 2: compact grid; selected 12 colors fit as 3 x 4 */
-#tutorial .colors-list{grid-template-columns:repeat(3,1fr)!important;gap:6px!important}
-#tutorial .learn{height:min(58px,14vw)!important;border-radius:12px!important;font-size:clamp(11px,3.2vw,14px)!important;padding:4px!important}
-#tutorial .learn.turquoise-learn{font-size:clamp(9px,2.7vw,12px)!important;letter-spacing:-.3px}
-@media(max-height:700px){
- #tutorial{padding:4px 8px!important}
- #tutorial .panel{padding:7px 9px!important}
- #tutorial h1{font-size:22px!important}
- #tutorial h2{font-size:17px!important}
- #tutorial .mini{width:52px!important;height:52px!important}
- #tutorial .learn{height:46px!important}
- #tutorial p,#tutorial .sub,#tutorial .demo-caption{font-size:11px!important}
- #tutorial .wide{padding:6px 8px!important;margin-top:3px!important}
-}
-</style>
